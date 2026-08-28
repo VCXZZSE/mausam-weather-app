@@ -1,0 +1,10 @@
+{
+  "description": "This app provides tailored weather and environmental insights for Kolkata, helping users manage health, plan outdoor activities, and stay informed on local conditions.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
