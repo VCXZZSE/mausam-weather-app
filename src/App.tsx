@@ -95,12 +95,12 @@ function SectionLabel({ children }: { children: ReactNode }) {
 }
 
 function Card({
-  grad, border, children, span2, pad = 16,
+  grad, border, children, span2, pad = 16, className,
 }: {
-  grad: string; border?: string; children: ReactNode; span2?: boolean; pad?: number
+  grad: string; border?: string; children: ReactNode; span2?: boolean; pad?: number; className?: string
 }) {
   return (
-    <div className="futuristic-card interactive-tile" style={{
+    <div className={`futuristic-card interactive-tile${className ? ` ${className}` : ''}`} style={{
       background: grad,
       border: `1px solid ${border ?? 'rgba(255,255,255,0.05)'}`,
       borderRadius: 20, padding: pad, overflow: 'hidden', position: 'relative',
@@ -232,7 +232,7 @@ function AudienceFocus() {
 
 // ── Home Tab ───────────────────────────────────────────────────────────────────
 
-function HomeTab({ time, profile }: { time: Date; profile: Profile }) {
+function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void }) {
   const fmt = (d: Date) =>
     d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
   const fmtDate = (d: Date) =>
@@ -242,7 +242,13 @@ function HomeTab({ time, profile }: { time: Date; profile: Profile }) {
   return (
     <div className="home-screen" style={{ padding: '52px 16px 24px', animation: 'fadeUp 0.4s ease' }}>
 
-      {/* Header */}
+      <header className="app-top-header" aria-label="Mausam header">
+        <span className="app-header-title">mausam</span>
+        <button className="theme-toggle" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>
+          <span>{theme === 'dark' ? '☼' : '☾'}</span>
+        </button>
+      </header>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
@@ -286,7 +292,7 @@ function HomeTab({ time, profile }: { time: Date; profile: Profile }) {
 
         {/* Rain animation */}
         {RAIN_DROPS.map((r, i) => (
-          <div key={i} className="hourly-tile" style={{
+          <div key={i} className="hourly-tile rain-drop" style={{
             position: 'absolute', left: r.left, top: 0,
             width: 1, height: r.h,
             background: 'linear-gradient(to bottom, transparent, rgba(147,197,253,0.28))',
@@ -457,18 +463,18 @@ function HomeTab({ time, profile }: { time: Date; profile: Profile }) {
             </div>
           </Card>
 
-          {/* Digha Beach */}
+          {/* Local swimming conditions for Kolkata. */}
           <Card grad="linear-gradient(140deg,#083344 0%,#031520 100%)" border="rgba(34,211,238,0.08)">
             <Badge color="#f87171" bg="rgba(239,68,68,0.14)">ROUGH</Badge>
-            <CardLabel>Digha Beach · 180km</CardLabel>
+            <CardLabel>Kolkata Swimming Pool · 12km</CardLabel>
             <div style={{ fontSize: 28, fontWeight: 800, color: 'white', lineHeight: 1 }}>
               {W.waveHeight}<span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>m</span>
             </div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 5 }}>Wave height</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 5 }}>Pool depth</div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>
-              💧 {W.waterTemp}°C · High {W.tideHigh}
+              💧 {W.waterTemp}°C · Peak 11:23 AM
             </div>
-            <div style={{ fontSize: 9, color: '#f87171', marginTop: 5 }}>🚫 No swimming advised</div>
+            <div style={{ fontSize: 9, color: '#f87171', marginTop: 5 }}>🚫 Swimming not advised due to heavy rain</div>
           </Card>
 
           {/* Garden */}
@@ -700,7 +706,7 @@ function ForecastTab() {
       {/* Sun & Moon */}
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>Sun & Moon</SectionLabel>
-        <Card grad="linear-gradient(140deg,#1a2a4a 0%,#0d1730 100%)" border="rgba(255,255,255,0.06)" pad={20}>
+        <Card className="sun-moon-card" grad="linear-gradient(140deg,#1a2a4a 0%,#0d1730 100%)" border="rgba(255,255,255,0.06)" pad={20}>
           <div className="sun-times-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div className="sun-time-tile">
               <div className="sun-time-icon sunrise-icon">☼</div>
@@ -713,7 +719,7 @@ function ForecastTab() {
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)' }}>Sunset</div>
             </div>
           </div>
-          <svg viewBox="0 0 280 68" style={{ width: '100%', height: 58, marginBottom: 4 }}>
+          <svg className="sun-path" viewBox="0 0 280 68" style={{ width: '100%', height: 58, marginBottom: 4 }}>
             <path d="M10 60 Q140 -12 270 60" fill="none" stroke="rgba(251,191,36,0.22)" strokeWidth="2" strokeDasharray="5 4" />
             <circle cx="140" cy="18" r="9" fill="#fbbf24" />
             <circle cx="140" cy="18" r="15" fill="rgba(251,191,36,0.14)" />
@@ -950,9 +956,17 @@ function Setup({ onComplete }: { onComplete: (profile: Profile) => void }) {
   const [goals, setGoals] = useState<string[]>(['Daily energy'])
   const [activity, setActivity] = useState('Moderate')
   const [entryProgress, setEntryProgress] = useState(0)
+  const [nameError, setNameError] = useState('')
   const stepIndex = SETUP_STEPS.indexOf(step)
   const toggle = (value: string, values: string[], setValues: (next: string[]) => void) => setValues(values.includes(value) ? values.filter(item => item !== value) : [...values, value])
-  const next = () => setStep(SETUP_STEPS[Math.min(stepIndex + 1, SETUP_STEPS.length - 1)])
+  const next = () => {
+    if (step === 'location' && !name.trim()) {
+      setNameError('Please enter your name to continue.')
+      return
+    }
+    setNameError('')
+    setStep(SETUP_STEPS[Math.min(stepIndex + 1, SETUP_STEPS.length - 1)])
+  }
   const back = () => setStep(SETUP_STEPS[Math.max(stepIndex - 1, 0)])
   const slider = (label: string, value: number, min: number, max: number, unit: string, setValue: (value: number) => void) => (
     <div className="setup-slider-row">
@@ -969,7 +983,7 @@ function Setup({ onComplete }: { onComplete: (profile: Profile) => void }) {
     <main className="setup-shell"><div className="setup-noise" /><div className="setup-topbar"><div className="brand-mark"><span>✦</span> MAUSAM</div>{step !== 'welcome' && step !== 'ready' && <div className="setup-progress"><span style={{ width: `${Math.max(9, (stepIndex / 5) * 100)}%` }} /></div>}{step !== 'welcome' && <button className="setup-back" onClick={back} type="button">←</button>}</div>
       <div className="setup-content">
         {step === 'welcome' && <section className="setup-hero welcome-glass setup-animate"><div className="welcome-orb welcome-orb-a" /><div className="welcome-orb welcome-orb-b" /><div className="welcome-menu"><span className="welcome-menu-active">today</span><span>discover</span><span>for you</span><span>mausam</span></div><div className="welcome-brand"><span>✦</span> MAUSAM</div><div className="setup-eyebrow">PERSONAL WEATHER INTELLIGENCE</div><h1>feel the<br /><em>weather.</em></h1><p>Personal signals for a clearer day. Mausam turns the air, light and rain around you into guidance made for your body.</p><div className="welcome-reading"><span className="reading-dot" /><div><small>FIRST READING</small><strong>Kolkata · monsoon</strong></div><b>31°</b></div><button className="welcome-start" onClick={next} type="button"><span>start your profile</span><b>→</b></button><div className="setup-footnote">Your weather. Your rhythm. Your way.</div></section>}
-        {step === 'location' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">01 / YOUR PLACE</div><h2>Where should we<br /><em>start looking?</em></h2><p className="setup-copy">Your local weather, air quality and seasonal patterns will shape every insight.</p><label className="setup-label">YOUR NAME <span>OPTIONAL</span></label><input className="setup-input" placeholder="What should we call you?" value={name} onChange={event => setName(event.target.value)} /><label className="setup-label">HOME LOCATION</label><div className="location-field"><span>⌖</span><input className="setup-input" value={location} onChange={event => setLocation(event.target.value)} /><b>Current</b></div><div className="location-card"><span className="location-icon">◉</span><div><strong>{location || 'Your location'}</strong><small>West Bengal · India</small></div><span className="location-check">✓</span></div><button className="setup-primary" onClick={next} type="button">That’s right <span>→</span></button></section>}
+        {step === 'location' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">01 / YOUR PLACE</div><h2>Where should we<br /><em>start looking?</em></h2><p className="setup-copy">Your local weather, air quality and seasonal patterns will shape every insight.</p><label className="setup-label">YOUR NAME <span>REQUIRED</span></label><input className={`setup-input${nameError ? ' input-error' : ''}`} placeholder="What should we call you?" value={name} onChange={event => { setName(event.target.value); setNameError('') }} aria-invalid={Boolean(nameError)} />{nameError && <div className="setup-error">{nameError}</div>}<label className="setup-label">HOME LOCATION</label><div className="location-field"><span>⌖</span><input className="setup-input" value={location} onChange={event => setLocation(event.target.value)} /><b>Current</b></div><div className="location-card"><span className="location-icon">◉</span><div><strong>{location || 'Your location'}</strong><small>West Bengal · India</small></div><span className="location-check">✓</span></div><button className="setup-primary" onClick={next} type="button">That’s right <span>→</span></button></section>}
         {step === 'body' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">02 / YOUR BASELINE</div><h2>A little context<br /><em>goes a long way.</em></h2><p className="setup-copy">These numbers help us make hydration, heat and activity guidance more personal.</p><div className="setup-body-stack"><div><label className="setup-label">AGE</label>{slider('Age', age, 13, 90, 'yrs', setAge)}</div><div><label className="setup-label">GENDER</label><div className="gender-options">{['Female', 'Male', 'Non-binary', 'Prefer not to say'].map(item => <button key={item} className={sex === item ? 'active' : ''} onClick={() => setSex(item)} type="button">{item}</button>)}</div></div>{slider('Height', height, 120, 220, 'cm', setHeight)}{slider('Weight', weight, 35, 180, 'kg', setWeight)}</div><button className="setup-primary" onClick={() => setStep('sensitivities')} type="button">Save baseline <span>→</span></button></section>}
         {step === 'sensitivities' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">03 / YOUR RESPONSE</div><h2>What does the<br /><em>weather stir up?</em></h2><p className="setup-copy">Select everything that affects you. We’ll surface the risk before it becomes a bad day.</p><label className="setup-label">WEATHER & AIR TRIGGERS</label><div className="setup-chips">{choiceSets.sensitivities.map(item => <SetupChip key={item} label={item} selected={sensitivities.includes(item)} onClick={() => toggle(item, sensitivities, setSensitivities)} />)}</div><label className="setup-label">HEALTH CONCERNS <span>OPTIONAL</span></label><div className="setup-chips">{choiceSets.concerns.map(item => <SetupChip key={item} label={item} selected={concerns.includes(item)} onClick={() => toggle(item, concerns, setConcerns)} />)}</div><button className="setup-primary" onClick={next} type="button">Tune my alerts <span>→</span></button></section>}
         {step === 'routine' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">04 / YOUR RHYTHM</div><h2>What should your<br /><em>day feel like?</em></h2><p className="setup-copy">We’ll turn conditions into useful nudges for the way you actually live.</p><label className="setup-label">WHAT MATTERS MOST</label><div className="setup-chips">{choiceSets.goals.map(item => <SetupChip key={item} label={item} selected={goals.includes(item)} onClick={() => toggle(item, goals, setGoals)} />)}</div><label className="setup-label">YOUR USUAL ACTIVITY</label><div className="setup-segmented">{['Low', 'Moderate', 'High'].map(item => <button key={item} className={activity === item ? 'active' : ''} onClick={() => setActivity(item)} type="button">{item}</button>)}</div><div className="setup-preview"><span>✦</span><div><strong>Your first insight</strong><small>Monsoon humidity is high today. We’ll suggest your best outdoor window and hydration target.</small></div></div><button className="setup-primary" onClick={next} type="button">See my plan <span>→</span></button></section>}
@@ -985,6 +999,11 @@ export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [tab, setTab] = useState<Tab>('home')
   const [time, setTime] = useState(new Date())
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('mausam-theme') as 'dark' | 'light') || 'light')
+
+  useEffect(() => {
+    localStorage.setItem('mausam-theme', theme)
+  }, [theme])
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000)
@@ -994,7 +1013,7 @@ export default function App() {
   if (!profile) return <Setup onComplete={setProfile} />
 
   return (
-    <div className="mausam-app" style={{
+    <div className={`mausam-app theme-${theme}`} style={{
       background: '#04050a',
       height: '100%',
       display: 'flex',
@@ -1011,7 +1030,7 @@ export default function App() {
         overflow: 'hidden',
       }}>
         <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
-          {tab === 'home' && <HomeTab time={time} profile={profile} />}
+          {tab === 'home' && <HomeTab time={time} profile={profile} theme={theme} setTheme={setTheme} />}
           {tab === 'health' && <HealthTab />}
           {tab === 'forecast' && <ForecastTab />}
           {tab === 'alerts' && <AlertsTab />}
