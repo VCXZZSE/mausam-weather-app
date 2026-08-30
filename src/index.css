@@ -138,7 +138,7 @@ input:-webkit-autofill {
 .gender-options button { min-width: 0; padding: 12px 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 3px; background: rgba(255,255,255,.035); color: rgba(247,244,237,.58); font: 500 10px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }
 .gender-options button.active { border-color: #7f6bff; background: linear-gradient(110deg, rgba(187,66,230,.45), rgba(48,110,239,.36)); color: #f7f4ed; box-shadow: 0 0 17px rgba(108,81,255,.22); }
 .setup-slider-row { margin: 0 0 22px; }.setup-slider-heading { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; color: rgba(247,244,237,.65); font-size: 12px; }.setup-slider-heading strong { color: #f7f4ed; font-size: 17px; }.setup-slider-heading small { color: rgba(247,244,237,.4); font-size: 9px; font-weight: 400; }.setup-range { background: linear-gradient(90deg, #d4a15b 0%, #d4a15b 50%, rgba(255,255,255,.12) 50%); }.range-ends { display: flex; justify-content: space-between; color: rgba(247,244,237,.25); font: 9px 'DM Mono', monospace; margin-top: 8px; }
-.setup-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }.setup-chip { display: inline-flex; align-items: center; gap: 7px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 3px; background: rgba(255,255,255,.035); color: rgba(247,244,237,.66); font: 500 11px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }.setup-chip.selected { border-color: #7f6bff; background: linear-gradient(110deg, rgba(187,66,230,.4), rgba(48,110,239,.3)); color: #f7f4ed; box-shadow: 0 0 14px rgba(108,81,255,.2); }.chip-mark { color: #64eaff; font-size: 14px; line-height: 1; }
+.setup-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }.setup-chip { display: inline-flex; align-items: center; gap: 7px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 3px; background: rgba(255,255,255,.035); color: rgba(247,244,237,.66); font: 500 11px 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: opacity .2s ease, transform .2s ease, border-color .2s ease, background .2s ease; }.setup-chip:hover:not(:disabled) { transform: translateY(-1px); }.setup-chip.selected { border-color: #7f6bff; background: linear-gradient(110deg, rgba(187,66,230,.4), rgba(48,110,239,.3)); color: #f7f4ed; box-shadow: 0 0 14px rgba(108,81,255,.2); }.setup-chip.disabled { opacity: .45; cursor: not-allowed; }.setup-chip:disabled { opacity: .45; cursor: not-allowed; }.chip-mark { color: #64eaff; font-size: 14px; line-height: 1; }
 .setup-segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 27px; padding: 4px; background: rgba(255,255,255,.06); }.setup-segmented button { border: 0; padding: 11px; background: transparent; color: rgba(247,244,237,.46); font: 600 11px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }.setup-segmented button.active { background: #e6b66e; color: #17110a; }
 .setup-preview { margin: 0 0 24px; border-color: rgba(212,161,91,.25); }.setup-step-count { position: absolute; z-index: 2; bottom: 24px; left: 24px; color: #d4a15b; font: 11px 'DM Mono', monospace; }.setup-step-count span { color: rgba(247,244,237,.25); }
 .setup-login { text-align: center; }.login-symbol { font-size: 46px; margin-bottom: 18px; }.setup-login .setup-copy { margin: 0 auto 30px; }.login-button { width: 100%; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 15px; border: 1px solid rgba(255,255,255,.22); border-radius: 3px; background: #f7f4ed; color: #151311; font: 700 12px 'Plus Jakarta Sans', sans-serif; cursor: pointer; text-align: left; }.login-button b { margin-left: auto; font-size: 18px; font-weight: 400; }.login-button.secondary { justify-content: space-between; background: transparent; color: #f7f4ed; }.login-google { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: #151311; color: #f7f4ed; font-size: 12px; }.setup-skip { margin-top: 22px; border: 0; background: none; color: rgba(247,244,237,.42); text-decoration: underline; font-size: 10px; cursor: pointer; }
@@ -417,8 +417,12 @@ input:-webkit-autofill {
   backdrop-filter: blur(18px);
 }
 .mausam-app nav {
-  position: relative !important;
-  z-index: 5;
+  position: sticky !important;
+  bottom: 12px !important;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 18px 16px !important;
   min-height: 72px;
   padding: 7px 8px 7px !important;
@@ -431,6 +435,7 @@ input:-webkit-autofill {
 .mausam-app nav button {
   min-height: 58px !important;
   border-radius: 999px !important;
+  transition: transform .2s ease, opacity .2s ease;
 }
 .mausam-app nav button::before {
   inset: 3px 5px !important;
@@ -447,6 +452,19 @@ input:-webkit-autofill {
 .mausam-app nav button span { display: none !important; }
 .mausam-app .mausam-nav-button.active { color: #f5ffff; }
 .mausam-app .mausam-nav-button:not(.active) { color: rgba(220,240,243,.72); }
+.mausam-app .mausam-nav-button.active { transform: translateY(-1px); }
+.no-scrollbar {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+.interactive-tile,
+.audience-focus-card,
+.hourly-tile,
+.sun-time-tile,
+.sun-detail-tile {
+  will-change: transform;
+}
 
 /* ── Apple-inspired final dashboard pass ───────────────────── */
 .mausam-app,
@@ -537,18 +555,31 @@ input:-webkit-autofill {
   flex: 0 0 28px;
   place-items: center;
   border-radius: 10px;
-  background: rgba(255,255,255,.1);
+  background: rgba(255,255,255,.11);
   color: #d8f7ff;
   font-size: 15px;
+  box-shadow: inset 0 1px rgba(255,255,255,.24);
 }
 .audience-focus-card strong,
 .audience-focus-card small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .audience-focus-card strong { color: #f5f5f7; font-size: 11px; font-weight: 650; }
 .audience-focus-card small { margin-top: 3px; color: rgba(245,245,247,.48); font-size: 8px; }
-.focus-health .audience-focus-icon { color: #ffaaa9; }
-.focus-move .audience-focus-icon { color: #d8f279; }
-.focus-commute .audience-focus-icon { color: #ffc56f; }
-.focus-outdoors .audience-focus-icon { color: #8ee8ff; }
+.focus-health .audience-focus-icon {
+  background: rgba(255, 152, 170, 0.18);
+  color: #ff8aa0;
+}
+.focus-move .audience-focus-icon {
+  background: rgba(200, 235, 108, 0.18);
+  color: #b6db52;
+}
+.focus-commute .audience-focus-icon {
+  background: rgba(255, 195, 96, 0.18);
+  color: #ffb648;
+}
+.focus-outdoors .audience-focus-icon {
+  background: rgba(124, 228, 255, 0.18);
+  color: #71d8ff;
+}
 
 /* Reference-led home tiles and floating controls. */
 .home-screen > div:first-child {
@@ -636,8 +667,17 @@ input:-webkit-autofill {
   padding: 18px 0 14px;
   margin-bottom: 8px;
 }
+.app-header-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+}
 .app-header-title {
   display: block;
+  margin: 0 auto;
   font-size: clamp(28px, 8vw, 54px);
   line-height: 0.9;
   font-weight: 800;
@@ -647,6 +687,23 @@ input:-webkit-autofill {
   background-clip: text;
   color: transparent;
   text-shadow: 0 0 18px rgba(123, 183, 255, 0.16);
+}
+.theme-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(220, 247, 255, .22);
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: #dff9ff;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: inset 0 1px rgba(255,255,255,.18), 0 8px 18px rgba(0,0,0,.18);
 }
 
 .sun-times-grid { gap: 10px !important; }
@@ -946,6 +1003,18 @@ input:-webkit-autofill {
     box-shadow: inset 0 1px rgba(255,255,255,.75), 0 16px 34px rgba(67, 145, 189, .18) !important;
     backdrop-filter: blur(24px);
   }
+  .theme-light .audience-focus-icon,
+  .theme-light .focus-health .audience-focus-icon,
+  .theme-light .focus-move .audience-focus-icon,
+  .theme-light .focus-commute .audience-focus-icon,
+  .theme-light .focus-outdoors .audience-focus-icon {
+    color: #1f466e !important;
+    background: rgba(255,255,255,.42) !important;
+  }
+  .theme-light .focus-health .audience-focus-icon { color: #d95f80 !important; background: rgba(255, 164, 182, 0.28) !important; }
+  .theme-light .focus-move .audience-focus-icon { color: #7fa92a !important; background: rgba(192, 229, 107, 0.28) !important; }
+  .theme-light .focus-commute .audience-focus-icon { color: #cf7d18 !important; background: rgba(255, 204, 110, 0.28) !important; }
+  .theme-light .focus-outdoors .audience-focus-icon { color: #2a86ba !important; background: rgba(140, 221, 255, 0.28) !important; }
   .theme-light .personal-insight strong,
   .theme-light .audience-focus-card strong,
   .theme-light .futuristic-card [style*="color: white"],
@@ -957,13 +1026,13 @@ input:-webkit-autofill {
   .theme-light .futuristic-card [style*="rgba(255,255,255"] {
     color: rgba(23, 51, 78, .62) !important;
   }
-  .theme-light .mausam-app nav {
+  .mausam-app.theme-light nav {
     background: rgba(239, 252, 255, .66) !important;
     border-color: rgba(64, 139, 177, .25) !important;
     box-shadow: inset 0 1px rgba(255,255,255,.8), 0 16px 32px rgba(46, 116, 155, .2) !important;
   }
-  .theme-light .mausam-app nav button:not(.active) { color: rgba(28, 79, 113, .62) !important; }
-  .theme-light .mausam-app nav button.active::before { background: rgba(77, 157, 199, .25) !important; }
+  .mausam-app.theme-light nav button:not(.active) { color: rgba(28, 79, 113, .62) !important; }
+  .mausam-app.theme-light nav button.active::before { background: rgba(77, 157, 199, .25) !important; }
   .theme-light .section-label,
   .theme-light .card-label {
     color: rgba(20, 58, 86, .68) !important;
@@ -1021,10 +1090,10 @@ input:-webkit-autofill {
   .theme-light .home-screen [style*="color: 'rgba(255"] {
     color: rgba(22, 59, 92, .68) !important;
   }
-  .theme-light .mausam-app nav button svg {
+  .mausam-app.theme-light nav button svg {
     stroke: #245d8d !important;
   }
-  .theme-light .mausam-app nav button.active svg {
+  .mausam-app.theme-light nav button.active svg {
     stroke: #123e68 !important;
   }
   .theme-light .futuristic-card .card-label,
@@ -1118,7 +1187,7 @@ input:-webkit-autofill {
 .theme-light .mausam-app .card-label {
   color: #315d7b !important;
 }
-.theme-light .mausam-app .mausam-nav-button svg {
+.mausam-app.theme-light .mausam-nav-button svg {
   stroke: #245d8d !important;
 }
 

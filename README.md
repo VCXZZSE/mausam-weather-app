@@ -30,8 +30,29 @@ npm run build
 
 React 19 · TypeScript · Vite · Tailwind CSS
 
+## Android app
+
+The Android app is a Capacitor wrapper around the same production web build. The website remains the source of truth.
+
+```bash
+npm install
+npm run android
+```
+
+`npm run android` builds the website, syncs it into the native Android project, and opens Android Studio. To only rebuild and sync:
+
+```bash
+npm run android:sync
+```
+
+In Android Studio, connect a physical device or start an emulator and press **Run**. To create a debug APK, use **Build > Build Bundle(s) / APK(s) > Build APK(s)**. For Google Play, use **Build > Generate Signed Bundle / APK**, choose **Android App Bundle**, and create or select a private keystore. Never commit the keystore or signing credentials.
+
+For future releases, make and test web changes, run `npm run android:sync`, verify the Android build, then commit and push the source and Android project to GitHub. Increase the Android version code/name in Android Studio before generating each release AAB.
+
 ## Project structure
 
 - `src/App.tsx` — application screens and weather dashboard components
 - `src/index.css` — global styles, glass surfaces, responsive layout, and animations
 - `src/main.tsx` — application entry point
+- `capacitor.config.ts` — Capacitor app ID, name, and `dist` web directory
+- `android/` — generated native Android project
