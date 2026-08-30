@@ -269,7 +269,7 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
           <div style={{ fontSize: 17, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
             {fmt(time)}
           </div>
-          <div style={{
+           <div style={{
             display: 'inline-block', marginTop: 5,
             background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.22)',
             borderRadius: 20, padding: '2px 9px',
@@ -1036,21 +1036,23 @@ export default function App() {
   return (
     <div className={`mausam-app theme-${theme}`} style={{
       background: '#04050a',
-      height: '100%',
+      height: '100dvh',
+      minHeight: '100dvh',
       display: 'flex',
       justifyContent: 'center',
       fontFamily: "'Plus Jakarta Sans', sans-serif",
     }}>
-      <div style={{
+     <div style={{
         width: '100%',
         maxWidth: 430,
-        height: '100%',
+        height: '100dvh',
+        minHeight: '100dvh',
         background: '#07080e',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
       }}>
-        <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="no-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {tab === 'home' && <HomeTab time={time} profile={profile} theme={theme} setTheme={setTheme} />}
           {tab === 'health' && <HealthTab />}
           {tab === 'forecast' && <ForecastTab />}
