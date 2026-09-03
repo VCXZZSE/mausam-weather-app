@@ -504,15 +504,9 @@ input:-webkit-autofill {
   border-radius: 28px !important;
   box-shadow: inset 0 1px rgba(255,255,255,.2), 0 24px 50px rgba(0,0,0,.22) !important;
 }
-  .mausam-app .weather-hero-card > div > div:last-child {
-    border-top-color: rgba(255,255,255,.14) !important;
-  }
-  .mausam-app .weather-stats-grid {
-    gap: 6px !important;
-  }
-  .mausam-app .weather-stats-grid > div {
-    padding: 8px 4px !important;
-  }
+.mausam-app .weather-hero-card > div > div:last-child {
+  border-top-color: rgba(255,255,255,.14) !important;
+}
 .mausam-app .futuristic-card,
 .mausam-app [style*="border-radius: 16px"],
 .mausam-app [style*="border-radius: 20px"] {
@@ -604,22 +598,6 @@ input:-webkit-autofill {
 }
 
 /* Reference-led home tiles and floating controls. */
-.home-screen > div:first-child {
-  padding: 24px 12px 18px !important;
-  margin-bottom: 4px !important;
-}
-.home-screen > div:first-child > div:first-child {
-  padding: 4px 4px 0 !important;
-  margin-bottom: 18px !important;
-}
-.home-screen > div:first-child > div:first-child span {
-  color: #e6f7fb !important;
-  font-size: 15px !important;
-  font-weight: 650 !important;
-}
-.home-screen > div:first-child > div:first-child div:last-child {
-  color: rgba(235,245,247,.52) !important;
-}
 .home-insight {
   min-height: 66px;
   box-sizing: border-box;
@@ -846,9 +824,8 @@ input:-webkit-autofill {
 .metric-grid > .futuristic-card {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  text-align: left;
-  padding-top: 28px !important;
+  align-items: center;
+  text-align: center;
 }
 .metric-grid > .futuristic-card > span {
   position: absolute;
@@ -859,14 +836,14 @@ input:-webkit-autofill {
 }
 .metric-grid > .futuristic-card > .card-label {
   width: 100%;
-  margin: 6px 0 10px;
-  padding: 0;
+  margin: 18px 0 8px;
+  padding: 0 8px;
   box-sizing: border-box;
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
   overflow-wrap: anywhere;
-  text-align: left;
+  text-align: center;
 }
 .home-screen .weather-hero-card {
   min-width: 0;
@@ -1636,4 +1613,92 @@ input:-webkit-autofill {
   border-color: rgba(75,139,175,.34);
   color: #163b5c !important;
   box-shadow: inset 0 1px rgba(255,255,255,.98), inset 0 -6px 12px rgba(77,156,190,.12), 0 8px 18px rgba(47,137,171,.18);
+}
+
+/* ── Final dashboard theme and reference header alignment ───────────────── */
+/* The theme class is on .mausam-app itself, so these compound selectors must
+   stay outside the phone-only rules above. */
+#root .mausam-app.theme-dark { color-scheme: dark; }
+#root .mausam-app.theme-light {
+  color: #163b5c !important;
+  color-scheme: light;
+  background: linear-gradient(160deg, #f5fdff 0%, #dff4fb 48%, #d7eaff 100%) !important;
+}
+#root .mausam-app.theme-light > div {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(101, 209, 235, .28), transparent 31%),
+    radial-gradient(circle at 3% 72%, rgba(111, 177, 240, .19), transparent 34%),
+    linear-gradient(160deg, #f8feff 0%, #e4f6fb 52%, #d9e9fb 100%) !important;
+}
+
+/* Keep the header measured from the page edge instead of inherited scroll padding. */
+#root .mausam-app > div > .no-scrollbar { padding: 0 !important; }
+#root .mausam-app .home-screen {
+  padding: 20px clamp(24px, 6.2vw, 40px) 24px !important;
+}
+#root .mausam-app .home-screen .app-top-header {
+  padding: 0 !important;
+  margin: 0 0 68px !important;
+}
+#root .mausam-app .home-screen .app-header-group {
+  min-height: 52px;
+  justify-content: flex-start;
+  gap: 18px;
+}
+#root .mausam-app .home-screen .app-weather-mark {
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+  margin: 0;
+  border-radius: 15px;
+}
+#root .mausam-app .home-screen .app-weather-mark svg {
+  width: 34px;
+  height: 34px;
+}
+#root .mausam-app .home-screen .app-header-title {
+  margin: 0;
+  font-size: clamp(36px, 8.9vw, 56px);
+  line-height: .9;
+  letter-spacing: -.075em;
+}
+#root .mausam-app .home-screen .theme-toggle {
+  position: relative;
+  right: auto;
+  top: auto;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  margin-left: auto;
+  transform: none;
+}
+#root .mausam-app .home-screen .theme-toggle:hover { transform: scale(1.04); }
+#root .mausam-app .home-screen .theme-toggle:focus-visible {
+  outline: 3px solid rgba(69, 166, 211, .62);
+  outline-offset: 3px;
+}
+
+/* The dark weather card is intentionally retained as a contrast anchor. */
+#root .mausam-app.theme-light .weather-context,
+#root .mausam-app.theme-light .audience-focus-card {
+  background: linear-gradient(145deg, rgba(255,255,255,.7), rgba(218,244,252,.42)) !important;
+  border-color: rgba(78, 151, 184, .22) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.82), 0 16px 30px rgba(47,137,171,.13) !important;
+}
+#root .mausam-app.theme-light .weather-context .weather-place span { color: #174d78 !important; }
+#root .mausam-app.theme-light .weather-context .weather-date { color: rgba(22,59,92,.68) !important; }
+#root .mausam-app.theme-light .weather-context .weather-clock > div:first-child { color: #163b5c !important; }
+#root .mausam-app.theme-light .weather-context .weather-status {
+  color: #c94d5a !important;
+  background: rgba(255,255,255,.46) !important;
+  border-color: rgba(205,91,105,.35) !important;
+}
+
+@media (max-width: 390px) {
+  #root .mausam-app .home-screen { padding-inline: 20px !important; }
+  #root .mausam-app .home-screen .app-top-header { margin-bottom: 40px !important; }
+  #root .mausam-app .home-screen .app-header-group { min-height: 42px; gap: 12px; }
+  #root .mausam-app .home-screen .app-weather-mark { width: 42px; height: 42px; flex-basis: 42px; border-radius: 13px; }
+  #root .mausam-app .home-screen .app-weather-mark svg { width: 28px; height: 28px; }
+  #root .mausam-app .home-screen .theme-toggle { width: 42px; height: 42px; flex-basis: 42px; }
 }
