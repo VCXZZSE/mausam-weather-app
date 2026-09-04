@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = 'home' | 'health' | 'forecast' | 'alerts'
@@ -227,11 +227,11 @@ function AudienceFocus() {
 
 // ── Home Tab ───────────────────────────────────────────────────────────────────
 
-function HomeTab({ profile, theme, setTheme }: { profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void }) {
+function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void; onOpenPersonalized: () => void }) {
   const isRainy = /rain|storm|shower|drizzle/i.test(W.condition)
 
   return (
-    <div className="home-screen" style={{ padding: '52px 16px 24px', animation: 'fadeUp 0.4s ease' }}>
+    <div className="home-screen app-page" style={{ padding: '52px 16px 24px' }}>
 
       <header className="app-top-header" aria-label="Mausam header">
         <div className="app-header-group">
@@ -256,11 +256,11 @@ function HomeTab({ profile, theme, setTheme }: { profile: Profile; theme: 'dark'
         </div>
       </header>
 
-      <div className="personal-insight home-insight">
+      <button className="personal-insight home-insight" type="button" onClick={onOpenPersonalized} aria-label="Open your personalised weather briefing">
         <div className="insight-spark">✦</div>
         <div><strong>{profile.name ? `Good morning, ${profile.name}` : 'Your Mausam briefing'}</strong><span>Personalised for {HOME_LOCATION}{profile.sensitivities.length ? ` · Watching ${profile.sensitivities.slice(0, 2).join(' + ')}` : ''}</span></div>
         <div className="insight-arrow">›</div>
-      </div>
+      </button>
       {/* Hero Card */}
       <div className={`weather-hero-card${isRainy ? ' is-rainy' : ''}`} style={{
         background: 'linear-gradient(150deg, #192f52 0%, #0e1c38 40%, #070d1e 100%)',
@@ -532,7 +532,7 @@ function HomeTab({ profile, theme, setTheme }: { profile: Profile; theme: 'dark'
 
 function HealthTab() {
   return (
-    <div style={{ padding: '52px 16px 24px', animation: 'fadeUp 0.4s ease' }}>
+    <div className="app-page health-screen" style={{ padding: '52px 16px 24px' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', marginBottom: 18 }}>Health Metrics</div>
 
       {/* AQI Detailed */}
@@ -663,7 +663,7 @@ function HealthTab() {
 
 function ForecastTab() {
   return (
-    <div style={{ padding: '52px 16px 24px', animation: 'fadeUp 0.4s ease' }}>
+    <div className="app-page forecast-screen" style={{ padding: '52px 16px 24px' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', marginBottom: 18 }}>Extended Forecast</div>
 
       {/* 7 Day */}
@@ -808,7 +808,7 @@ function ForecastTab() {
 
 function AlertsTab() {
   return (
-    <div style={{ padding: '52px 16px 24px', animation: 'fadeUp 0.4s ease' }}>
+    <div className="app-page alerts-screen" style={{ padding: '52px 16px 24px' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', marginBottom: 18 }}>Alerts & Travel</div>
 
       {/* Active Alerts */}
@@ -923,7 +923,25 @@ function AlertsTab() {
 // ── Personal setup ─────────────────────────────────────────────────────────────
 
 type SetupStep = 'welcome' | 'location' | 'body' | 'sensitivities' | 'routine' | 'ready'
-type Profile = { name: string; location: string; sensitivities: string[]; concerns: string[]; goals: string[]; age: number; height: number; weight: number; activity: string }
+export type Profile = { name: string; location: string; sensitivities: string[]; concerns: string[]; goals: string[]; age: number; height: number; weight: number; activity: string }
+type PersonalizationVariant = 'skin-sun' | 'uv-heat' | 'uv-sun' | 'air-quality' | 'cold' | 'general'
+type PersonalizedIcon = 'sun' | 'outdoor' | 'comfort' | 'shield' | 'cold' | 'temperature' | 'evening' | 'air' | 'indoor' | 'rain' | 'wind'
+type PersonalizedTone = 'blue' | 'amber' | 'green' | 'violet' | 'rose'
+type PersonalizedTile = { icon: PersonalizedIcon; title: string; value: string; detail: string; tone: PersonalizedTone }
+type PersonalizedRecommendation = { icon: PersonalizedIcon; title: string; reason: string }
+type PersonalizedFactor = { label: string; value: string }
+export type PersonalizedWeather = {
+  variant: PersonalizationVariant
+  headline: string
+  overview: string
+  windowLabel: string
+  window: string
+  basis: string
+  tiles: PersonalizedTile[]
+  recommendations: PersonalizedRecommendation[]
+  factors: PersonalizedFactor[]
+  disclaimer?: string
+}
 
 const SETUP_STEPS: SetupStep[] = ['welcome', 'location', 'body', 'sensitivities', 'routine', 'ready']
 
@@ -931,6 +949,154 @@ const choiceSets = {
   sensitivities: ['Dust', 'Pollen', 'AQI / smoke', 'Humidity', 'Heat', 'Monsoon damp', 'Cold', 'UV / sun'],
   concerns: ['Asthma', 'Allergies', 'Migraine', 'Skin sensitivity', 'Heart health', 'None of these'],
   goals: ['Daily energy', 'Outdoor plans', 'Fitness', 'Sleep', 'Travel', 'Family care'],
+}
+
+const PROFILE_STORAGE_KEY = 'mausam-profile'
+
+const PERSONALIZED_VARIANTS: Record<PersonalizationVariant, Omit<PersonalizedWeather, 'variant'>> = {
+  'skin-sun': {
+    headline: 'Plan around the strongest midday sun.',
+    overview: 'Strong UV exposure is expected around midday. Since you marked skin sensitivity, your better outdoor window is earlier in the morning or later in the day. Keep sun protection in mind during peak exposure.',
+    windowLabel: 'Lower exposure',
+    window: 'Before 9 AM or after 5 PM',
+    basis: 'Skin sensitivity + UV / sun',
+    factors: [{ label: 'UV', value: '8 · High' }, { label: 'Humidity', value: '72%' }, { label: 'Temperature', value: '31°C' }],
+    tiles: [
+      { icon: 'shield', title: 'Skin & Sun', value: 'UV 8 · High', detail: 'Extra care around midday', tone: 'rose' },
+      { icon: 'sun', title: 'Exposure', value: 'Peak 12–2 PM', detail: 'Strongest UV period', tone: 'amber' },
+      { icon: 'outdoor', title: 'Safer window', value: 'Before 9 AM', detail: 'Or return after 5 PM', tone: 'green' },
+      { icon: 'evening', title: 'Evening', value: 'Lower UV', detail: 'Exposure eases near sunset', tone: 'violet' },
+    ],
+    recommendations: [
+      { icon: 'outdoor', title: 'Finish outdoor plans before 9 AM', reason: 'UV exposure rises quickly later in the morning.' },
+      { icon: 'shield', title: 'Keep sun protection nearby', reason: 'Midday UV is the strongest factor in your briefing.' },
+      { icon: 'evening', title: 'Choose the evening for a longer walk', reason: 'Exposure falls and conditions feel calmer after 5 PM.' },
+    ],
+    disclaimer: 'Weather guidance only — not medical advice.',
+  },
+  'uv-heat': {
+    headline: 'A bright, hot day needs an earlier start.',
+    overview: 'Today will feel hot and bright in Kolkata. UV levels will become very high around midday, while temperatures peak in the afternoon. Your better outdoor window is before 10 AM or after 5 PM.',
+    windowLabel: 'Best outdoor window',
+    window: '6:00 AM – 9:30 AM',
+    basis: 'UV / sun + Heat',
+    factors: [{ label: 'UV', value: '8' }, { label: 'Heat', value: 'High' }, { label: 'Outdoor risk', value: 'Moderate' }],
+    tiles: [
+      { icon: 'sun', title: 'UV & Heat', value: 'UV 8 · High', detail: 'Peak around 12–2 PM', tone: 'amber' },
+      { icon: 'outdoor', title: 'Outdoor', value: 'Best time to move', detail: '6–9:30 AM', tone: 'green' },
+      { icon: 'comfort', title: 'Comfort', value: 'Feels like 36°C', detail: 'Heat stress · Moderate', tone: 'rose' },
+      { icon: 'sun', title: 'Sun', value: 'Sunrise 5:42 AM', detail: 'Sunset 6:14 PM', tone: 'violet' },
+    ],
+    recommendations: [
+      { icon: 'outdoor', title: 'Go for your walk before 9:30 AM', reason: 'UV and heat will increase after that.' },
+      { icon: 'comfort', title: 'Keep the afternoon lighter', reason: 'It may feel close to 36°C at peak heat.' },
+      { icon: 'evening', title: 'Evening is your second-best window', reason: 'Sun and heat both ease after 5 PM.' },
+    ],
+  },
+  'uv-sun': {
+    headline: 'Strong sun, with a softer evening window.',
+    overview: 'Strong sunshine is expected today, with UV reaching very high levels around midday. Outdoor plans will be more comfortable earlier in the morning or toward sunset.',
+    windowLabel: 'Better outdoor light',
+    window: '5:30 PM – 6:15 PM',
+    basis: 'UV / sun',
+    factors: [{ label: 'UV', value: '8 · Very high' }, { label: 'Sunrise', value: '5:42 AM' }, { label: 'Sunset', value: '6:14 PM' }],
+    tiles: [
+      { icon: 'sun', title: 'UV', value: '8 · Very High', detail: 'Peak exposure at midday', tone: 'amber' },
+      { icon: 'evening', title: 'Sun', value: 'Golden hour', detail: 'Around 5:30 PM', tone: 'violet' },
+      { icon: 'outdoor', title: 'Outdoors', value: 'Better after 5 PM', detail: 'Or early this morning', tone: 'green' },
+      { icon: 'shield', title: 'Sun protection', value: 'Peak 12–2 PM', detail: 'Plan around this window', tone: 'rose' },
+    ],
+    recommendations: [
+      { icon: 'outdoor', title: 'Move longer plans toward 5 PM', reason: 'Sunlight softens as the peak UV window ends.' },
+      { icon: 'shield', title: 'Plan protection for midday', reason: 'UV is expected to reach very high levels.' },
+      { icon: 'evening', title: 'Use the golden-hour window', reason: '5:30–6:15 PM offers gentler outdoor light.' },
+    ],
+  },
+  'cold': {
+    headline: 'Comfortable by day, cooler at the edges.',
+    overview: 'Temperatures will remain comfortable during the day but become noticeably cooler after sunset. If you are heading outside early or late, an extra layer will make the evening more comfortable.',
+    windowLabel: 'Most comfortable',
+    window: '10 AM – 5 PM',
+    basis: 'Cold sensitivity',
+    factors: [{ label: 'Morning', value: '19°C' }, { label: 'Day', value: '27°C' }, { label: 'Night', value: '21°C' }],
+    tiles: [
+      { icon: 'cold', title: 'Cold', value: '19°C this morning', detail: 'Coolest part of the day', tone: 'blue' },
+      { icon: 'comfort', title: 'Comfort', value: 'Extra layer', detail: 'Useful early and late', tone: 'green' },
+      { icon: 'temperature', title: 'Temperature', value: '27°C peak', detail: 'Comfortable by afternoon', tone: 'amber' },
+      { icon: 'evening', title: 'Evening', value: '21°C after sunset', detail: 'Cooling gradually', tone: 'violet' },
+    ],
+    recommendations: [
+      { icon: 'outdoor', title: 'Use 10 AM–5 PM for outdoor plans', reason: 'That is the most comfortable temperature window.' },
+      { icon: 'cold', title: 'Carry a light extra layer', reason: 'Early morning and evening will feel noticeably cooler.' },
+      { icon: 'evening', title: 'Expect a cooler return home', reason: 'Temperatures fall toward 21°C after sunset.' },
+    ],
+  },
+  'air-quality': {
+    headline: 'Air quality is today’s main signal.',
+    overview: 'Air quality is the main thing to watch today. AQI is currently elevated and may remain poor through the afternoon. Consider indoor exercise and limit prolonged outdoor exposure during peak pollution.',
+    windowLabel: 'Better outdoor window',
+    window: 'After 7 PM',
+    basis: 'AQI / smoke sensitivity',
+    factors: [{ label: 'AQI', value: '164 · Elevated' }, { label: 'PM2.5', value: 'Elevated' }, { label: 'Visibility', value: '3.2 km' }],
+    tiles: [
+      { icon: 'air', title: 'Air quality', value: 'AQI 164', detail: 'Unhealthy conditions', tone: 'rose' },
+      { icon: 'air', title: 'Pollution', value: 'PM2.5 elevated', detail: 'Main air-quality factor', tone: 'amber' },
+      { icon: 'indoor', title: 'Indoor', value: 'Better for exercise', detail: 'Especially this afternoon', tone: 'green' },
+      { icon: 'evening', title: 'Cleaner window', value: 'After 7 PM', detail: 'Conditions may begin easing', tone: 'violet' },
+    ],
+    recommendations: [
+      { icon: 'indoor', title: 'Move exercise indoors today', reason: 'AQI and PM2.5 are elevated through the afternoon.' },
+      { icon: 'outdoor', title: 'Keep outdoor exposure shorter', reason: 'Poor air and reduced visibility are the main concerns.' },
+      { icon: 'evening', title: 'Recheck conditions after 7 PM', reason: 'That is the better potential outdoor window.' },
+    ],
+    disclaimer: 'This is environmental guidance, not a medical diagnosis.',
+  },
+  'general': {
+    headline: 'Warm, humid, with rain worth planning around.',
+    overview: 'Today looks warm with periods of rain. Conditions are generally comfortable, but humidity will rise through the afternoon. Keep an umbrella nearby if you’ll be out later.',
+    windowLabel: 'Best overall window',
+    window: '8 AM – 11 AM',
+    basis: 'Today’s Kolkata conditions',
+    factors: [{ label: 'Temperature', value: '31°C' }, { label: 'Rain', value: '68%' }, { label: 'Humidity', value: '82%' }, { label: 'Wind', value: '22 km/h SW' }],
+    tiles: [
+      { icon: 'rain', title: 'Rain', value: '68% chance', detail: 'Possible after 4 PM', tone: 'blue' },
+      { icon: 'comfort', title: 'Comfort', value: 'Feels like 35°C', detail: 'Humidity rises later', tone: 'rose' },
+      { icon: 'wind', title: 'Wind', value: '22 km/h SW', detail: 'Steady through the day', tone: 'green' },
+      { icon: 'evening', title: 'Sun', value: 'Sunset 6:14 PM', detail: 'Cloudy evening light', tone: 'violet' },
+    ],
+    recommendations: [
+      { icon: 'outdoor', title: 'Use 8–11 AM for outdoor plans', reason: 'It is the best overall balance of heat and rain.' },
+      { icon: 'rain', title: 'Keep an umbrella nearby', reason: 'Rain probability rises after 4 PM.' },
+      { icon: 'comfort', title: 'Expect a more humid afternoon', reason: 'It may feel warmer even if temperature holds steady.' },
+    ],
+  },
+}
+
+const PERSONALIZATION_PRIORITY: Array<{ variant: PersonalizationVariant; matches: (profile: Profile) => boolean }> = [
+  { variant: 'skin-sun', matches: profile => profile.concerns.includes('Skin sensitivity') && profile.sensitivities.includes('UV / sun') },
+  { variant: 'uv-heat', matches: profile => profile.sensitivities.includes('UV / sun') && profile.sensitivities.includes('Heat') },
+  { variant: 'uv-sun', matches: profile => profile.sensitivities.includes('UV / sun') },
+  { variant: 'air-quality', matches: profile => profile.sensitivities.includes('AQI / smoke') },
+  { variant: 'cold', matches: profile => profile.sensitivities.includes('Cold') },
+  { variant: 'general', matches: () => true },
+]
+
+export function getPersonalizedWeather(profile: Profile): PersonalizedWeather {
+  const variant = PERSONALIZATION_PRIORITY.find(rule => rule.matches(profile))?.variant ?? 'general'
+  return { variant, ...PERSONALIZED_VARIANTS[variant] }
+}
+
+function loadStoredProfile(): Profile | null {
+  try {
+    const value = localStorage.getItem(PROFILE_STORAGE_KEY)
+    if (!value) return null
+    const profile = JSON.parse(value) as Partial<Profile>
+    if (typeof profile.name !== 'string' || typeof profile.location !== 'string' || !Array.isArray(profile.sensitivities) || !Array.isArray(profile.concerns) || !Array.isArray(profile.goals)) return null
+    if (typeof profile.age !== 'number' || typeof profile.height !== 'number' || typeof profile.weight !== 'number' || typeof profile.activity !== 'string') return null
+    return profile as Profile
+  } catch {
+    return null
+  }
 }
 
 function SetupChip({ label, selected, onClick, disabled = false }: { label: string; selected: boolean; onClick: () => void; disabled?: boolean }) {
@@ -1003,11 +1169,130 @@ function Setup({ onComplete }: { onComplete: (profile: Profile) => void }) {
   )
 }
 
+// ── Personalised Weather ──────────────────────────────────────────────────────
+
+function PersonalizedIconGraphic({ name }: { name: PersonalizedIcon }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {name === 'sun' && <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M4.7 4.7l1.4 1.4M17.9 17.9l1.4 1.4M2.5 12h2M19.5 12h2M4.7 19.3l1.4-1.4M17.9 6.1l1.4-1.4" /></>}
+      {name === 'outdoor' && <><path d="M3 18h18M5 18l4-7 3 4 2-3 5 6" /><path d="M16 5h5v5M21 5l-6 6" /></>}
+      {name === 'comfort' && <><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>}
+      {name === 'shield' && <><path d="M12 3 5.5 5.7v5.2c0 4.2 2.6 7.8 6.5 10.1 3.9-2.3 6.5-5.9 6.5-10.1V5.7Z" /><path d="M9.2 12.2 11 14l3.9-4" /></>}
+      {name === 'cold' && <><path d="M12 2.5v19M4.6 6.8l14.8 10.4M19.4 6.8 4.6 17.2M8 4.8l4 2.3 4-2.3M8 19.2l4-2.3 4 2.3" /></>}
+      {name === 'temperature' && <><path d="M14.5 14.2V5.5a3 3 0 0 0-6 0v8.7a5 5 0 1 0 6 0Z" /><path d="M11.5 7v9" /></>}
+      {name === 'evening' && <path d="M20 15.3A8.5 8.5 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z" />}
+      {name === 'air' && <><path d="M3 8h10.5a2.5 2.5 0 1 0-2.3-3.5M3 12h16a2.5 2.5 0 1 1-2.3 3.5M3 16h7" /></>}
+      {name === 'indoor' && <><path d="m3 11 9-7 9 7" /><path d="M5.5 9.5V20h13V9.5M10 20v-6h4v6" /></>}
+      {name === 'rain' && <><path d="M6.5 15.5h10a4 4 0 0 0 .4-8A5.5 5.5 0 0 0 6.6 9.2a3.2 3.2 0 0 0-.1 6.3Z" /><path d="m8 18-1 2M12.5 18l-1 2M17 18l-1 2" /></>}
+      {name === 'wind' && <><path d="M3 8h11a2.5 2.5 0 1 0-2.3-3.5M3 12h17M3 16h11a2.5 2.5 0 1 1-2.3 3.5" /></>}
+    </svg>
+  )
+}
+
+function PersonalizedWeatherPage({ profile, onBack }: { profile: Profile; onBack: () => void }) {
+  const personalized = useMemo(() => getPersonalizedWeather(profile), [profile])
+  const [whyOpen, setWhyOpen] = useState(false)
+
+  return (
+    <main className="personalized-page" data-variant={personalized.variant}>
+      <header className="personalized-topbar">
+        <button className="personalized-back" type="button" onClick={onBack} aria-label="Back to home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <div>
+          <strong>Your Mausam</strong>
+          <span>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" /></svg>
+            {profile.location || HOME_LOCATION}, West Bengal
+          </span>
+        </div>
+      </header>
+
+      <section className="personalized-intro">
+        <span className="personalized-eyebrow">FOR {profile.name || 'YOU'}</span>
+        <h1>Your weather,<br /><span>made personal.</span></h1>
+        <p>A clear view of today, shaped around what matters to you.</p>
+      </section>
+
+      <article className="personalized-overview personalized-glass">
+        <div className="personalized-card-heading">
+          <span className="personalized-spark" aria-hidden="true">✦</span>
+          <div><span>Today at a glance</span></div>
+        </div>
+        <h2>{personalized.headline}</h2>
+        <p>{personalized.overview}</p>
+        <div className="personalized-factor-pills" aria-label="Key weather factors">
+          {personalized.factors.slice(0, 3).map(factor => <span key={factor.label}><small>{factor.label}</small><strong>{factor.value}</strong></span>)}
+        </div>
+        <div className="personalized-window">
+          <span className="personalized-window-icon"><PersonalizedIconGraphic name="outdoor" /></span>
+          <div><small>{personalized.windowLabel}</small><strong>{personalized.window}</strong></div>
+        </div>
+        <div className="personalized-basis"><span>✦</span> Based on your profile · {personalized.basis}</div>
+      </article>
+
+      <section className="personalized-section" aria-labelledby="personalized-tiles-title">
+        <div className="personalized-section-heading">
+          <div><span>FOR YOUR DAY</span><h2 id="personalized-tiles-title">Today, personalized for you</h2></div>
+          <small>{personalized.tiles.length} essentials</small>
+        </div>
+        <div className="personalized-tile-grid">
+          {personalized.tiles.map(tile => (
+            <article className={`personalized-tile personalized-glass tone-${tile.tone}`} key={tile.title}>
+              <span className="personalized-tile-icon"><PersonalizedIconGraphic name={tile.icon} /></span>
+              <span className="personalized-tile-title">{tile.title}</span>
+              <strong>{tile.value}</strong>
+              <small>{tile.detail}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="personalized-section" aria-labelledby="personalized-actions-title">
+        <div className="personalized-section-heading">
+          <div><span>SIMPLE NEXT STEPS</span><h2 id="personalized-actions-title">What should I do?</h2></div>
+        </div>
+        <div className="personalized-actions personalized-glass">
+          {personalized.recommendations.map((recommendation, index) => (
+            <article key={recommendation.title}>
+              <span className="personalized-action-number">0{index + 1}</span>
+              <span className="personalized-action-icon"><PersonalizedIconGraphic name={recommendation.icon} /></span>
+              <div><strong>{recommendation.title}</strong><p>{recommendation.reason}</p></div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={`personalized-why personalized-glass${whyOpen ? ' is-open' : ''}`}>
+        <button type="button" onClick={() => setWhyOpen(current => !current)} aria-expanded={whyOpen} aria-controls="personalized-why-content">
+          <span className="personalized-why-icon">?</span>
+          <span><strong>Why these recommendations?</strong><small>See the signals used for your briefing</small></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+        </button>
+        <div className="personalized-why-panel" id="personalized-why-content"><div>
+          <p>Mausam combines today’s weather factors with the sensitivities you selected during setup.</p>
+          <div className="personalized-factor-list">
+            {personalized.factors.map(factor => <div key={factor.label}><span>{factor.label}</span><strong>{factor.value}</strong></div>)}
+          </div>
+          <div className="personalized-profile-tags">
+            {[...profile.sensitivities, ...profile.concerns.filter(item => item !== 'None of these')].slice(0, 5).map(item => <span key={item}>{item}</span>)}
+            {!profile.sensitivities.length && !profile.concerns.filter(item => item !== 'None of these').length && <span>General weather profile</span>}
+          </div>
+        </div></div>
+      </section>
+
+      {personalized.disclaimer && <p className="personalized-disclaimer">{personalized.disclaimer}</p>}
+    </main>
+  )
+}
+
 // ── App Root ───────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [profile, setProfile] = useState<Profile | null>(loadStoredProfile)
   const [tab, setTab] = useState<Tab>('home')
+  const [showPersonalized, setShowPersonalized] = useState(false)
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     localStorage.getItem('mausam-theme') === 'light' ? 'light' : 'dark',
   )
@@ -1015,6 +1300,15 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('mausam-theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    if (!profile) return
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
+  }, [profile])
+
+  useLayoutEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+  }, [tab, showPersonalized])
 
   if (!profile) return <Setup onComplete={setProfile} />
 
@@ -1025,7 +1319,7 @@ export default function App() {
       minHeight: '100dvh',
       display: 'flex',
       justifyContent: 'center',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif",
     }}>
      <div style={{
         width: '100%',
@@ -1037,13 +1331,17 @@ export default function App() {
         flexDirection: 'column',
         overflow: 'hidden',
       }}>
-        <div className="no-scrollbar app-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          {tab === 'home' && <HomeTab profile={profile} theme={theme} setTheme={setTheme} />}
-          {tab === 'health' && <HealthTab />}
-          {tab === 'forecast' && <ForecastTab />}
-          {tab === 'alerts' && <AlertsTab />}
+        <div ref={scrollRef} className="no-scrollbar app-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          {showPersonalized ? (
+            <PersonalizedWeatherPage profile={profile} onBack={() => setShowPersonalized(false)} />
+          ) : <>
+            {tab === 'home' && <HomeTab profile={profile} theme={theme} setTheme={setTheme} onOpenPersonalized={() => setShowPersonalized(true)} />}
+            {tab === 'health' && <HealthTab />}
+            {tab === 'forecast' && <ForecastTab />}
+            {tab === 'alerts' && <AlertsTab />}
+          </>}
         </div>
-        <BottomNav tab={tab} setTab={setTab} />
+        {!showPersonalized && <BottomNav tab={tab} setTab={setTab} />}
       </div>
     </div>
   )

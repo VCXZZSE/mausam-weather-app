@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap');
 @import 'tailwindcss';
 
 html, body, #root {
@@ -12,6 +10,7 @@ html, body, #root {
 
 body {
   overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 }
 
 #root {
@@ -2360,10 +2359,10 @@ input:-webkit-autofill {
 #root .mausam-app .app-scroll {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   scroll-padding-block: 18px 92px;
   touch-action: pan-y pinch-zoom;
-  overflow-anchor: auto;
+  overflow-anchor: none;
   isolation: isolate;
 }
 
@@ -2391,14 +2390,13 @@ input:-webkit-autofill {
 }
 #root .mausam-app .theme-toggle-thumb,
 #root .mausam-app .theme-icon,
-#root .mausam-app .cloud-character-rain,
-#root .mausam-app .cloud-character-storm,
-#root .mausam-app .cloud-drop,
-#root .mausam-app .illustration-person,
-#root .mausam-app .illustration-puddle,
-#root .mausam-app .illustration-reflection {
+#root .mausam-app .weather-companion {
   will-change: transform, opacity;
   backface-visibility: hidden;
+}
+#root .mausam-app .weather-companion {
+  contain: layout paint style;
+  transform: translateZ(0);
 }
 
 /* Transform-only entrance motion stays fluid on both 60 Hz and high-refresh screens. */
@@ -2418,17 +2416,32 @@ input:-webkit-autofill {
 }
 
 @media (max-width: 700px) {
-  /* A smaller blur radius avoids repeated full-card blur passes while scrolling. */
+  /* Opaque-enough surfaces keep their glass character without costly live blur
+     passes while the page is moving. */
   #root .mausam-app .futuristic-card,
   #root .mausam-app .personal-insight,
   #root .mausam-app .audience-focus-card,
   #root .mausam-app .hourly-tile,
   #root .mausam-app .sun-time-tile,
   #root .mausam-app .sun-detail-tile,
+  #root .mausam-app .personalized-glass,
+  #root .mausam-app .personalized-back,
   #root .mausam-app [style*="border-radius: 16px"],
   #root .mausam-app [style*="border-radius: 12px"] {
-    -webkit-backdrop-filter: blur(14px) saturate(118%);
-    backdrop-filter: blur(14px) saturate(118%);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  #root .mausam-app .futuristic-card,
+  #root .mausam-app .personal-insight,
+  #root .mausam-app .audience-focus-card,
+  #root .mausam-app .hourly-tile,
+  #root .mausam-app .sun-time-tile,
+  #root .mausam-app .sun-detail-tile,
+  #root .mausam-app .personalized-tile {
+    transition-property: transform !important;
+  }
+  #root .mausam-app .companion-illustration {
+    filter: none;
   }
 }
 
@@ -2457,6 +2470,10 @@ input:-webkit-autofill {
   #root .mausam-app .illustration-reflection {
     will-change: auto;
   }
+  #root .mausam-app .weather-companion,
+  #root .mausam-app .weather-companion * {
+    animation: none !important;
+  }
 }
 
 /* Slightly larger current-weather character without changing its animation. */
@@ -2473,7 +2490,7 @@ input:-webkit-autofill {
     height: 136px;
     flex-basis: 136px;
     margin: -11px -14px -16px 0;
-    transform: none;
+    transform: translateZ(0);
     transform-origin: right top;
   }
 }
@@ -2488,4 +2505,460 @@ input:-webkit-autofill {
 #root .mausam-app.theme-light .weather-hero-card .hero-location-pin path {
   color: #d8f8ff !important;
   fill: #d8f8ff !important;
+}
+
+/* ── Personalised weather briefing ────────────────────────── */
+#root .mausam-app button.personal-insight {
+  width: 100%;
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#root .mausam-app button.personal-insight:focus-visible {
+  outline: 3px solid rgba(111, 218, 240, .46);
+  outline-offset: 3px;
+}
+
+#root .mausam-app .personalized-page {
+  --pw-text: #f5fbfc;
+  --pw-muted: rgba(222, 241, 245, .62);
+  --pw-faint: rgba(211, 235, 240, .42);
+  --pw-border: rgba(215, 246, 250, .15);
+  --pw-surface: linear-gradient(145deg, rgba(34, 53, 62, .88), rgba(15, 27, 34, .92));
+  --pw-soft-surface: rgba(224, 247, 250, .055);
+  --pw-accent: #70d7eb;
+  --pw-accent-soft: rgba(112, 215, 235, .13);
+  min-height: 100%;
+  padding: 18px clamp(18px, 5.4vw, 34px) 44px;
+  color: var(--pw-text) !important;
+}
+#root .mausam-app.theme-light .personalized-page {
+  --pw-text: #153f60;
+  --pw-muted: rgba(28, 75, 107, .7);
+  --pw-faint: rgba(28, 75, 107, .48);
+  --pw-border: rgba(91, 162, 190, .2);
+  --pw-surface: linear-gradient(145deg, rgba(255, 255, 255, .66), rgba(222, 245, 250, .48));
+  --pw-soft-surface: rgba(255, 255, 255, .36);
+  --pw-accent: #238bb4;
+  --pw-accent-soft: rgba(65, 171, 207, .13);
+}
+#root .mausam-app .personalized-page *,
+#root .mausam-app .personalized-page *::before,
+#root .mausam-app .personalized-page *::after { box-sizing: border-box; }
+#root .mausam-app .personalized-page,
+#root .mausam-app .personalized-page h1,
+#root .mausam-app .personalized-page h2,
+#root .mausam-app .personalized-page strong { color: var(--pw-text) !important; }
+#root .mausam-app .personalized-page p,
+#root .mausam-app .personalized-page small { color: var(--pw-muted) !important; }
+#root .mausam-app .personalized-page svg { color: inherit !important; }
+
+#root .mausam-app .personalized-page[data-variant="skin-sun"] { --pw-accent: #f19aa5; --pw-accent-soft: rgba(241, 154, 165, .14); }
+#root .mausam-app .personalized-page[data-variant="uv-heat"],
+#root .mausam-app .personalized-page[data-variant="uv-sun"] { --pw-accent: #f5b956; --pw-accent-soft: rgba(245, 185, 86, .14); }
+#root .mausam-app .personalized-page[data-variant="air-quality"] { --pw-accent: #f5a55b; --pw-accent-soft: rgba(245, 165, 91, .14); }
+#root .mausam-app .personalized-page[data-variant="cold"] { --pw-accent: #83bffc; --pw-accent-soft: rgba(131, 191, 252, .14); }
+
+#root .mausam-app .personalized-topbar {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 42px;
+  margin-bottom: 30px;
+}
+#root .mausam-app .personalized-back {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--pw-border);
+  border-radius: 50%;
+  background: var(--pw-soft-surface);
+  color: var(--pw-text) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .13), 0 5px 14px rgba(0, 17, 29, .07);
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  transition: transform .22s ease, background .22s ease, border-color .22s ease;
+}
+#root .mausam-app .personalized-back:hover { transform: translateX(-2px); border-color: rgba(112, 215, 235, .38); }
+#root .mausam-app .personalized-back:active { transform: translateX(-2px) scale(.94); }
+#root .mausam-app .personalized-back:focus-visible { outline: 3px solid rgba(111, 218, 240, .42); outline-offset: 3px; }
+#root .mausam-app .personalized-back svg { width: 19px; height: 19px; }
+#root .mausam-app .personalized-topbar > div { min-width: 0; }
+#root .mausam-app .personalized-topbar strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 760;
+  letter-spacing: -.025em;
+}
+#root .mausam-app .personalized-topbar span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--pw-muted) !important;
+  font-size: 9px;
+  font-weight: 650;
+}
+#root .mausam-app .personalized-topbar span svg { width: 11px; height: 11px; color: var(--pw-accent) !important; }
+
+#root .mausam-app .personalized-intro { margin: 0 2px 22px; }
+#root .mausam-app .personalized-eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--pw-accent) !important;
+  font-size: 8px;
+  font-weight: 780;
+  line-height: 1.2;
+  letter-spacing: .14em;
+}
+#root .mausam-app .personalized-intro h1 {
+  margin: 0;
+  font-size: clamp(34px, 8.7vw, 45px);
+  font-weight: 780;
+  line-height: 1.01;
+  letter-spacing: -.052em;
+}
+#root .mausam-app .personalized-intro h1 span {
+  color: var(--pw-accent) !important;
+  font: inherit;
+}
+#root .mausam-app .personalized-intro p {
+  max-width: 360px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 520;
+  line-height: 1.55;
+}
+
+#root .mausam-app .personalized-glass {
+  border: 1px solid var(--pw-border);
+  background: var(--pw-surface) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .11), 0 12px 32px rgba(0, 20, 32, .08);
+  backdrop-filter: blur(18px) saturate(116%);
+}
+#root .mausam-app.theme-light .personalized-glass {
+  box-shadow: inset 0 1px rgba(255, 255, 255, .78), 0 12px 32px rgba(47, 137, 171, .09);
+}
+#root .mausam-app .personalized-overview {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-bottom: 32px;
+  padding: 18px;
+  border-radius: 24px;
+}
+#root .mausam-app .personalized-overview::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -74px;
+  right: -62px;
+  width: 176px;
+  height: 176px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--pw-accent-soft), transparent 68%);
+  pointer-events: none;
+}
+#root .mausam-app .personalized-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 17px;
+}
+#root .mausam-app .personalized-spark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--pw-accent) 42%, transparent);
+  border-radius: 10px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font-size: 14px;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .15);
+}
+#root .mausam-app .personalized-card-heading > div > span {
+  display: block;
+  color: var(--pw-text) !important;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+#root .mausam-app .personalized-overview h2 {
+  max-width: 400px;
+  margin: 0;
+  font-size: clamp(22px, 5.7vw, 29px);
+  font-weight: 760;
+  line-height: 1.12;
+  letter-spacing: -.035em;
+}
+#root .mausam-app .personalized-overview > p {
+  margin: 11px 0 16px;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+#root .mausam-app .personalized-factor-pills {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-bottom: 14px;
+  padding: 11px 0;
+  border-top: 1px solid var(--pw-border);
+  border-bottom: 1px solid var(--pw-border);
+}
+#root .mausam-app .personalized-factor-pills > span {
+  min-width: 0;
+  padding: 0 10px;
+  border-left: 1px solid var(--pw-border);
+}
+#root .mausam-app .personalized-factor-pills > span:first-child { padding-left: 0; border-left: 0; }
+#root .mausam-app .personalized-factor-pills > span:last-child { padding-right: 0; }
+#root .mausam-app .personalized-factor-pills small,
+#root .mausam-app .personalized-factor-pills strong { display: block; }
+#root .mausam-app .personalized-factor-pills small { overflow: hidden; font-size: 7px; font-weight: 720; letter-spacing: .055em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+#root .mausam-app .personalized-factor-pills strong { overflow: hidden; margin-top: 3px; font-size: 11px; font-weight: 790; text-overflow: ellipsis; white-space: nowrap; }
+
+#root .mausam-app .personalized-window {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--pw-accent-soft);
+}
+#root .mausam-app .personalized-window-icon {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .1);
+  color: var(--pw-accent) !important;
+}
+#root .mausam-app.theme-light .personalized-window-icon { background: rgba(255, 255, 255, .5); }
+#root .mausam-app .personalized-window-icon svg { width: 16px; height: 16px; }
+#root .mausam-app .personalized-window > div { min-width: 0; flex: 1; }
+#root .mausam-app .personalized-window small,
+#root .mausam-app .personalized-window strong { display: block; }
+#root .mausam-app .personalized-window small { font-size: 7px; font-weight: 730; letter-spacing: .05em; text-transform: uppercase; }
+#root .mausam-app .personalized-window strong { margin-top: 2px; font-size: 13px; font-weight: 780; letter-spacing: -.015em; }
+#root .mausam-app .personalized-basis {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--pw-faint) !important;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .025em;
+}
+#root .mausam-app .personalized-basis span { color: var(--pw-accent) !important; }
+
+#root .mausam-app .personalized-section { margin: 0 0 34px; }
+#root .mausam-app .personalized-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 13px;
+}
+#root .mausam-app .personalized-section-heading span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--pw-accent) !important;
+  font: 750 8px/1 "DM Mono", monospace;
+  letter-spacing: .15em;
+}
+#root .mausam-app .personalized-section-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+#root .mausam-app .personalized-section-heading > small { padding-bottom: 2px; font-size: 8px; white-space: nowrap; }
+
+#root .mausam-app .personalized-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+#root .mausam-app .personalized-tile {
+  --tile-accent: #70d7eb;
+  min-width: 0;
+  min-height: 148px;
+  padding: 15px;
+  border-radius: 22px;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), border-color .25s ease, box-shadow .25s ease;
+}
+#root .mausam-app .personalized-tile.tone-blue { --tile-accent: #65bafa; }
+#root .mausam-app .personalized-tile.tone-amber { --tile-accent: #f5b956; }
+#root .mausam-app .personalized-tile.tone-green { --tile-accent: #54d6a6; }
+#root .mausam-app .personalized-tile.tone-violet { --tile-accent: #b29cf8; }
+#root .mausam-app .personalized-tile.tone-rose { --tile-accent: #f19aa5; }
+#root .mausam-app .personalized-tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--tile-accent) 36%, transparent); }
+#root .mausam-app .personalized-tile-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 14px;
+  place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tile-accent) 13%, transparent);
+  color: var(--tile-accent) !important;
+}
+#root .mausam-app .personalized-tile-icon svg { width: 19px; height: 19px; }
+#root .mausam-app .personalized-tile-title {
+  display: block;
+  color: var(--pw-muted) !important;
+  font-size: 8px;
+  font-weight: 820;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+#root .mausam-app .personalized-tile > strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 820;
+  line-height: 1.16;
+  letter-spacing: -.025em;
+}
+#root .mausam-app .personalized-tile > small { display: block; margin-top: 5px; font-size: 9px; line-height: 1.35; }
+
+#root .mausam-app .personalized-actions {
+  overflow: hidden;
+  border-radius: 24px;
+}
+#root .mausam-app .personalized-actions article {
+  display: grid;
+  grid-template-columns: 23px 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border-bottom: 1px solid var(--pw-border);
+}
+#root .mausam-app .personalized-actions article:last-child { border-bottom: 0; }
+#root .mausam-app .personalized-action-number {
+  color: var(--pw-faint) !important;
+  font: 700 8px/1 "DM Mono", monospace;
+  letter-spacing: .08em;
+}
+#root .mausam-app .personalized-action-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+}
+#root .mausam-app .personalized-action-icon svg { width: 18px; height: 18px; }
+#root .mausam-app .personalized-actions strong { display: block; font-size: 11px; font-weight: 800; line-height: 1.3; }
+#root .mausam-app .personalized-actions p { margin: 4px 0 0; font-size: 9px; line-height: 1.45; }
+
+#root .mausam-app .personalized-why {
+  overflow: hidden;
+  border-radius: 22px;
+}
+#root .mausam-app .personalized-why > button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 34px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 15px;
+  border: 0;
+  background: transparent;
+  color: var(--pw-text) !important;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#root .mausam-app .personalized-why-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font-size: 13px;
+  font-weight: 850;
+}
+#root .mausam-app .personalized-why button span:nth-child(2) { min-width: 0; }
+#root .mausam-app .personalized-why button strong,
+#root .mausam-app .personalized-why button small { display: block; }
+#root .mausam-app .personalized-why button strong { font-size: 11px; font-weight: 800; }
+#root .mausam-app .personalized-why button small { margin-top: 3px; font-size: 8px; }
+#root .mausam-app .personalized-why button > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--pw-muted) !important;
+  transition: transform .3s cubic-bezier(.2, .8, .2, 1);
+}
+#root .mausam-app .personalized-why.is-open button > svg { transform: rotate(180deg); }
+#root .mausam-app .personalized-why-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows .36s cubic-bezier(.2, .8, .2, 1), opacity .26s ease;
+}
+#root .mausam-app .personalized-why.is-open .personalized-why-panel { grid-template-rows: 1fr; opacity: 1; }
+#root .mausam-app .personalized-why-panel > div { min-height: 0; overflow: hidden; }
+#root .mausam-app .personalized-why-panel > div > p { margin: 0; padding: 2px 15px 12px; font-size: 9px; line-height: 1.55; }
+#root .mausam-app .personalized-factor-list { margin: 0 15px; border-top: 1px solid var(--pw-border); }
+#root .mausam-app .personalized-factor-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 1px;
+  border-bottom: 1px solid var(--pw-border);
+}
+#root .mausam-app .personalized-factor-list span { color: var(--pw-muted) !important; font-size: 9px; }
+#root .mausam-app .personalized-factor-list strong { font-size: 9px; font-weight: 800; }
+#root .mausam-app .personalized-profile-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 15px 15px; }
+#root .mausam-app .personalized-profile-tags span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font-size: 7px;
+  font-weight: 780;
+}
+#root .mausam-app .personalized-disclaimer {
+  margin: 12px 4px 0;
+  color: var(--pw-faint) !important;
+  font-size: 8px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 390px) {
+  #root .mausam-app .personalized-page { padding-inline: 16px; }
+  #root .mausam-app .personalized-topbar { margin-bottom: 27px; }
+  #root .mausam-app .personalized-intro h1 { font-size: 34px; }
+  #root .mausam-app .personalized-overview { padding: 17px; border-radius: 23px; }
+  #root .mausam-app .personalized-overview h2 { font-size: 22px; }
+  #root .mausam-app .personalized-tile { min-height: 143px; padding: 13px; }
+  #root .mausam-app .personalized-tile > strong { font-size: 14px; }
+}
+
+@media (hover: none), (pointer: coarse) {
+  #root .mausam-app .personalized-tile:hover { transform: none; }
+  #root .mausam-app .personalized-tile:active { transform: scale(.985); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .mausam-app .personalized-page { animation: none; }
+  #root .mausam-app .personalized-back,
+  #root .mausam-app .personalized-tile,
+  #root .mausam-app .personalized-why button > svg,
+  #root .mausam-app .personalized-why-panel { transition: none; }
 }

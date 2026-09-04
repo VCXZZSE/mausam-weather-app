@@ -26,7 +26,7 @@ The current build is a responsive product prototype focused on Kolkata during mo
 | Area | What it provides |
 | --- | --- |
 | Personal setup | Name, location, body context, health sensitivities, priorities, and activity level |
-| Home | Personal greeting, current conditions, animated weather companion, hourly rain outlook, daily metrics, and seven-day forecast |
+| Home | Personal greeting, current conditions, animated weather companion, tailored briefing, hourly rain outlook, daily metrics, and seven-day forecast |
 | Health | AQI, particulate levels, pollen, UV, humidity, heat stress, and practical health guidance |
 | Forecast | Extended daily outlook, sunrise and sunset, golden-hour details, and nearby-location weather |
 | Alerts | Rain warnings, waterlogging, travel disruption, and local transport context |
@@ -41,6 +41,8 @@ The current build is a responsive product prototype focused on Kolkata during mo
 - Balanced metric cards for air quality, UV exposure, best run time, and rainfall
 - Practical cards for commuting, swimming conditions, gardening, and seasonal context
 - Personalised guidance based on the onboarding profile
+- A dedicated “Your Mausam” page with profile-prioritized insights, relevant tiles, and practical next steps
+- A restrained, system-native visual hierarchy for the personalised briefing in both themes
 - Touch-friendly navigation, horizontal forecast snapping, and momentum scrolling
 - Responsive layout designed for phone screens first and larger screens second
 - Reduced-motion support and visible keyboard focus states
@@ -59,9 +61,16 @@ The interface has gone through a focused visual and usability refinement:
 - Matched the swimming and garden cards to a consistent tile system
 - Corrected light-theme text and icon contrast, including the weather location marker
 - Added a smoother, more expressive light/dark theme toggle
-- Optimised scrolling and motion for 60 Hz and high-refresh displays
-- Removed unnecessary once-per-second rendering work and broad GPU layer promotion
-- Added touch momentum, overscroll containment, and gentle hourly-card snapping
+- Added a clickable personalised banner and a profile-aware “Your Mausam” briefing with deterministic health and weather priorities
+- Persisted onboarding selections locally so the personalised experience survives refreshes
+- Simplified the briefing header and overview with a system-native type hierarchy, fewer boxed elements, and quieter glass surfaces
+- Removed full-page transform animations so long screens appear immediately without promoting the entire page to a GPU layer
+- Switched to native vertical scrolling, reset new views before paint, and prevented scroll anchoring from causing position jumps
+- Removed live backdrop-filter passes from mobile content cards while preserving their translucent appearance
+- Isolated the animated weather companion, removed its expensive mobile SVG filter, and retained its cloud, rain, and puddle motion
+- Reduced permanent compositor layers and limited mobile card transitions to lightweight transforms
+- Removed external web-font requests to prevent font-loading layout shifts and use the device’s native interface font
+- Added touch momentum, overscroll containment, gentle hourly-card snapping, and complete reduced-motion behaviour
 - Simplified the build configuration and retained search-engine blocking in standard project files
 - Verified the production build after the UI and performance changes
 
@@ -133,10 +142,10 @@ For a release build, update the Android version code and name, run the sync comm
 
 - Weather, AQI, forecast, and alert values currently come from constants in `src/App.tsx`.
 - Theme preference is stored locally in the browser.
-- The onboarding profile remains in application state and resets after a full reload.
+- The onboarding profile and its selected weather and health concerns are stored locally on the device.
 - No account, remote database, analytics service, or live weather endpoint is currently connected.
 
-These boundaries make the next engineering steps clear: connect a trusted weather source, persist the profile, model loading and failure states, and validate guidance against live data.
+These boundaries make the next engineering steps clear: connect a trusted weather source, optionally sync profiles across devices, model loading and failure states, and validate guidance against live data.
 
 ## Design principles
 
@@ -148,7 +157,7 @@ These boundaries make the next engineering steps clear: connect a trusted weathe
 
 ## Current status
 
-The responsive interface, onboarding flow, core dashboard tabs, theme system, animations, and Android wrapper are in place. The repository builds successfully with:
+The responsive interface, persistent onboarding flow, personalized weather briefing, core dashboard tabs, theme system, animations, and Android wrapper are in place. The repository builds successfully with:
 
 ```bash
 npm run build
