@@ -78,13 +78,6 @@ const LOCATIONS = [
   { name: 'Siliguri', temp: 24, icon: '🌧️', cond: 'Heavy Rain', dist: '570 km' },
 ]
 
-const RAIN_DROPS = Array.from({ length: 22 }, (_, i) => ({
-  left: `${(i * 4.7 + 1.5) % 97}%`,
-  h: 22 + (i * 9) % 44,
-  delay: `${((i * 0.28) % 2.9).toFixed(2)}s`,
-  dur: `${(0.7 + (i * 0.11) % 0.65).toFixed(2)}s`,
-}))
-
 // ── Shared UI ──────────────────────────────────────────────────────────────────
 
 function SectionLabel({ children }: { children: ReactNode }) {
@@ -234,11 +227,7 @@ function AudienceFocus() {
 
 // ── Home Tab ───────────────────────────────────────────────────────────────────
 
-function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void }) {
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-  const fmtDate = (d: Date) =>
-    d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })
+function HomeTab({ profile, theme, setTheme }: { profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void }) {
   const isRainy = /rain|storm|shower|drizzle/i.test(W.condition)
 
   return (
@@ -255,41 +244,17 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
             </svg>
           </span>
           <span className="app-header-title">Mausam</span>
-          <button className="theme-toggle" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>
-            <svg className={`theme-icon theme-icon-sun${theme === 'dark' ? ' is-hidden' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <button className={`theme-toggle theme-toggle-${theme}`} type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} aria-pressed={theme === 'dark'}>
+            <span className="theme-toggle-thumb" aria-hidden="true" />
+            <svg className="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M4.7 4.7l1.4 1.4M17.9 17.9l1.4 1.4M2.5 12h2M19.5 12h2M4.7 19.3l1.4-1.4M17.9 6.1l1.4-1.4" />
             </svg>
-            <svg className={`theme-icon theme-icon-moon${theme === 'dark' ? '' : ' is-hidden'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <svg className="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
               <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
             </svg>
           </button>
         </div>
       </header>
-
-      <div className="weather-context">
-        <div className="weather-place">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="#60a5fa">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-            </svg>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#60a5fa', letterSpacing: '-0.01em' }}>
-              {W.city}, {W.region}
-            </span>
-          </div>
-          <div className="weather-date" style={{ fontSize: 11, color: '#35374a', fontWeight: 600 }}>{fmtDate(time)}</div>
-        </div>
-        <div className="weather-clock">
-          <div style={{ fontSize: 17, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
-            {fmt(time)}
-          </div>
-           <div className="weather-status" style={{
-            display: 'inline-block', marginTop: 5,
-            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.22)',
-            borderRadius: 20, padding: '2px 9px',
-            fontSize: 8, fontWeight: 900, color: '#f87171', letterSpacing: '0.08em',
-          }}>● MONSOON ACTIVE</div>
-        </div>
-      </div>
 
       <div className="personal-insight home-insight">
         <div className="insight-spark">✦</div>
@@ -297,7 +262,7 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
         <div className="insight-arrow">›</div>
       </div>
       {/* Hero Card */}
-      <div className="weather-hero-card" style={{
+      <div className={`weather-hero-card${isRainy ? ' is-rainy' : ''}`} style={{
         background: 'linear-gradient(150deg, #192f52 0%, #0e1c38 40%, #070d1e 100%)',
         borderRadius: 24, padding: '26px 22px 22px', marginBottom: 14,
         position: 'relative', overflow: 'hidden',
@@ -307,19 +272,15 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
         <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 65%)', borderRadius: '50%', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -50, left: -30, width: 180, height: 180, background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 65%)', borderRadius: '50%', pointerEvents: 'none' }} />
 
-        {/* Rain animation */}
-        {RAIN_DROPS.map((r, i) => (
-          <div key={i} className="hourly-tile rain-drop" style={{
-            position: 'absolute', left: r.left, top: 0,
-            width: 1, height: r.h,
-            background: 'linear-gradient(to bottom, transparent, rgba(147,197,253,0.28))',
-            borderRadius: 1, pointerEvents: 'none',
-            animation: `rainFall ${r.dur} ${r.delay} linear infinite`,
-          }} />
-        ))}
+        <div className="weather-hero-content" style={{ position: 'relative', zIndex: 1 }}>
+          <div className="hero-location hero-location-inline">
+            <span className="hero-location-pin" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" /></svg>
+            </span>
+            <span className="hero-location-name">{W.city}, {W.region}</span>
+          </div>
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="weather-hero-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div className="weather-temp-value" style={{ fontSize: 82, fontWeight: 800, color: 'white', lineHeight: 1, letterSpacing: '-0.05em', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
                 <span>{W.temp}</span>
@@ -330,7 +291,7 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
                 Feels {W.feelsLike}° &nbsp;·&nbsp; H:{W.high}° L:{W.low}°
               </div>
             </div>
-            <div className={`weather-companion ${isRainy ? 'weather-companion-rain' : 'weather-companion-sun'}`} aria-label={isRainy ? 'Person opening an umbrella in the rain' : 'Person putting on a sun cap'}>
+            <div className={`weather-companion ${isRainy ? 'weather-companion-rain' : 'weather-companion-sun'}`} aria-label={isRainy ? 'Animated rain cloud' : 'Animated sunny companion'}>
               <svg className="companion-illustration" viewBox="0 0 140 140" aria-hidden="true">
                 {isRainy ? <>
                   <g className="illustration-rain" stroke="#c8f2fa" strokeWidth="2" strokeLinecap="round" opacity=".65">
@@ -382,22 +343,20 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
           </div>
 
           <div className="weather-stats-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
             marginTop: 20, paddingTop: 18,
             borderTop: '1px solid rgba(255,255,255,0.07)',
           }}>
             {[
-              { icon: '💨', v: `${W.wind}`, u: 'km/h', l: W.windDir },
-              { icon: '💧', v: `${W.humidity}`, u: '%', l: 'Humidity' },
-              { icon: '👁️', v: `${W.visibility}`, u: 'km', l: 'Visibility' },
-              { icon: '🌡️', v: `${W.dewPoint}`, u: '°', l: 'Dew Pt.' },
+              { v: `${W.wind}`, u: 'km/h', l: `Wind · ${W.windDir}` },
+              { v: `${W.humidity}`, u: '%', l: 'Humidity' },
+              { v: `${W.visibility}`, u: 'km', l: 'Visibility' },
             ].map((s, i) => (
-              <div key={i} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 15 }}>{s.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: 'white', marginTop: 4 }}>
+              <div className="weather-stat" key={i} style={{ textAlign: 'center' }}>
+                <div className="weather-stat-label">{s.l}</div>
+                <div className="weather-stat-value" style={{ fontSize: 13, fontWeight: 800, color: 'white', marginTop: 4 }}>
                   {s.v}<span style={{ fontSize: 9, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>{s.u}</span>
                 </div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 1 }}>{s.l}</div>
               </div>
             ))}
           </div>
@@ -409,7 +368,7 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
       {/* Hourly Forecast */}
       <div style={{ marginBottom: 22 }}>
         <SectionLabel>Hourly · Rain Chance</SectionLabel>
-        <div className="no-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+        <div className="no-scrollbar horizontal-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
           {HOURLY.map((h, i) => (
             <div key={i} style={{
               flexShrink: 0, width: 62, borderRadius: 16, padding: '11px 6px',
@@ -432,51 +391,50 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
         <div className="metric-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
 
           {/* AQI */}
-          <Card grad="linear-gradient(140deg,#431407 0%,#1c0803 100%)" border="rgba(245,158,11,0.12)">
+          <Card className="metric-primary-card aqi-tile" grad="linear-gradient(140deg,#431407 0%,#1c0803 100%)" border="rgba(245,158,11,0.12)">
             <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">AQI 78</Badge>
             <CardLabel>Air Quality</CardLabel>
-            <div style={{ fontSize: 20, fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: 8 }}>Satisfactory</div>
-            <Bar pct={(78 / 300) * 100} fill="linear-gradient(90deg,#22c55e,#f59e0b 50%,#ef4444)" height={5} />
-            <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
+            <div className="aqi-status">Satisfactory</div>
+            <div className="aqi-meter">
+              <Bar pct={(78 / 300) * 100} fill="linear-gradient(90deg,#22c55e,#f59e0b 50%,#ef4444)" height={5} />
+            </div>
+            <div className="aqi-pollutants">
               {[['PM2.5','42','#f59e0b'],['PM10','68','#f97316']].map(([l,v,c]) => (
-                <div key={l} style={{ flex: 1, background: 'rgba(255,255,255,0.07)', borderRadius: 8, padding: '4px 6px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>{l}</div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: c }}>{v}</div>
+                <div className="aqi-pollutant" key={l}>
+                  <div className="aqi-pollutant-label">{l}</div>
+                  <div className="aqi-pollutant-value" style={{ color: c }}>{v}</div>
                 </div>
               ))}
             </div>
           </Card>
 
           {/* UV */}
-          <Card grad="linear-gradient(140deg,#7c2d12 0%,#2c0e07 100%)" border="rgba(251,146,60,0.1)">
+          <Card className="metric-primary-card uv-tile" grad="linear-gradient(140deg,#7c2d12 0%,#2c0e07 100%)" border="rgba(251,146,60,0.1)">
             <Badge color="#fb923c" bg="rgba(251,146,60,0.14)">HIGH</Badge>
             <CardLabel>UV Index</CardLabel>
-            <div style={{ fontSize: 46, fontWeight: 800, color: 'white', lineHeight: 1 }}>{W.uvIndex}</div>
-            <div style={{ fontSize: 11, color: '#fb923c', fontWeight: 700, marginTop: 5 }}>SPF 30+ needed</div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>Peak 11AM–2PM</div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 3 }}>Burn time ~25 min</div>
+            <div className="metric-card-number metric-index">{W.uvIndex}</div>
+            <div className="metric-card-emphasis">Use SPF 30+</div>
+            <div className="metric-card-note">Peak · 11 AM–2 PM</div>
           </Card>
 
           {/* Best Run */}
-          <Card grad="linear-gradient(140deg,#064e3b 0%,#022c22 100%)" border="rgba(52,211,153,0.1)">
+          <Card className="metric-primary-card run-tile" grad="linear-gradient(140deg,#064e3b 0%,#022c22 100%)" border="rgba(52,211,153,0.1)">
             <Badge color="#34d399" bg="rgba(52,211,153,0.14)">FITNESS</Badge>
             <CardLabel>Best Run Time</CardLabel>
-            <div style={{ fontSize: 21, fontWeight: 800, color: 'white', lineHeight: 1.3 }}>
-              {W.bestRunStart}–<br />{W.bestRunEnd}
-            </div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 7 }}>Before peak humidity</div>
-            <div style={{ fontSize: 10, color: '#34d399', marginTop: 5 }}>🌅 Sunrise {W.sunrise}</div>
+            <div className="metric-card-number metric-run-time">{W.bestRunStart}–{W.bestRunEnd}</div>
+            <div className="metric-card-emphasis">Before humidity peaks</div>
+            <div className="metric-card-note metric-card-accent">Sunrise · {W.sunrise}</div>
           </Card>
 
           {/* Rain Today */}
-          <Card grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)" border="rgba(96,165,250,0.1)">
+          <Card className="metric-primary-card rainfall-tile" grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)" border="rgba(96,165,250,0.1)">
             <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">{W.rainChance}%</Badge>
             <CardLabel>Rainfall Today</CardLabel>
-            <div style={{ fontSize: 28, fontWeight: 800, color: 'white', lineHeight: 1 }}>
-              {W.rainfall24h}<span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>mm</span>
+            <div className="metric-card-number metric-rainfall">
+              {W.rainfall24h}<span> mm</span>
             </div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>Recorded today</div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 3 }}>Month: {W.rainfallMonth}mm</div>
+            <div className="metric-card-emphasis">Today</div>
+            <div className="metric-card-note">Month · {W.rainfallMonth} mm</div>
           </Card>
 
           {/* Commute — full width */}
@@ -500,7 +458,7 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
           </Card>
 
           {/* Local swimming conditions for Kolkata. */}
-          <Card grad="linear-gradient(140deg,#083344 0%,#031520 100%)" border="rgba(34,211,238,0.08)">
+          <Card className="secondary-pair-card swimming-tile" grad="linear-gradient(140deg,#083344 0%,#031520 100%)" border="rgba(34,211,238,0.08)">
             <Badge color="#f87171" bg="rgba(239,68,68,0.14)">ROUGH</Badge>
             <CardLabel>Kolkata Swimming Pool · 12km</CardLabel>
             <div style={{ fontSize: 28, fontWeight: 800, color: 'white', lineHeight: 1 }}>
@@ -514,7 +472,7 @@ function HomeTab({ time, profile, theme, setTheme }: { time: Date; profile: Prof
           </Card>
 
           {/* Garden */}
-          <Card grad="linear-gradient(140deg,#14532d 0%,#071a10 100%)" border="rgba(74,222,128,0.08)">
+          <Card className="secondary-pair-card garden-tile" grad="linear-gradient(140deg,#14532d 0%,#071a10 100%)" border="rgba(74,222,128,0.08)">
             <Badge color="#4ade80" bg="rgba(74,222,128,0.14)">AMAN</Badge>
             <CardLabel>Garden & Crops</CardLabel>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.45 }}>{W.cropAdvice}</div>
@@ -1050,7 +1008,6 @@ function Setup({ onComplete }: { onComplete: (profile: Profile) => void }) {
 export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [tab, setTab] = useState<Tab>('home')
-  const [time, setTime] = useState(new Date())
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     localStorage.getItem('mausam-theme') === 'light' ? 'light' : 'dark',
   )
@@ -1058,11 +1015,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('mausam-theme', theme)
   }, [theme])
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   if (!profile) return <Setup onComplete={setProfile} />
 
@@ -1085,8 +1037,8 @@ export default function App() {
         flexDirection: 'column',
         overflow: 'hidden',
       }}>
-        <div className="no-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          {tab === 'home' && <HomeTab time={time} profile={profile} theme={theme} setTheme={setTheme} />}
+        <div className="no-scrollbar app-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          {tab === 'home' && <HomeTab profile={profile} theme={theme} setTheme={setTheme} />}
           {tab === 'health' && <HealthTab />}
           {tab === 'forecast' && <ForecastTab />}
           {tab === 'alerts' && <AlertsTab />}

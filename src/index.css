@@ -20,10 +20,10 @@ body {
 
 /* ── Animations ─────────────────────────────────────────────── */
 @keyframes rainFall {
-  0%   { transform: translateY(-30px); opacity: 0; }
-  8%   { opacity: 0.4; }
-  92%  { opacity: 0.4; }
-  100% { transform: translateY(340px); opacity: 0; }
+  0%   { transform: translate3d(-10px, -56px, 0) rotate(10deg); opacity: 0; }
+  12%  { opacity: .42; }
+  88%  { opacity: .42; }
+  100% { transform: translate3d(24px, 420px, 0) rotate(10deg); opacity: 0; }
 }
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
@@ -845,6 +845,180 @@ input:-webkit-autofill {
   overflow-wrap: anywhere;
   text-align: center;
 }
+
+/* AQI needs a little more vertical structure than the number-led metric cards. */
+.metric-grid > .futuristic-card.aqi-tile {
+  align-items: stretch;
+  min-height: 218px;
+  padding: 18px !important;
+  text-align: left;
+}
+.aqi-tile .aqi-overview { min-width: 0; }
+.aqi-tile .card-label {
+  width: auto;
+  min-height: 0;
+  margin: 2px 76px 7px 0;
+  padding: 0;
+  overflow: visible;
+  text-align: left;
+  white-space: nowrap;
+}
+.aqi-status {
+  color: #fff;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  line-height: 1.08;
+}
+.aqi-meter {
+  margin-top: 16px;
+  padding: 9px 10px 8px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 11px;
+  background: rgba(255,255,255,.045);
+}
+.aqi-meter-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  color: rgba(255,255,255,.42);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.aqi-meter-caption span:last-child { color: rgba(255,255,255,.58); }
+.aqi-pollutants {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 16px;
+}
+.aqi-pollutant {
+  min-width: 0;
+  padding: 9px 10px 8px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 11px;
+  background: rgba(255,255,255,.07);
+}
+.aqi-pollutant-label {
+  color: rgba(255,255,255,.43);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.aqi-pollutant-value {
+  margin-top: 3px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+/* The four headline metrics share one footprint and one information rhythm. */
+.metric-grid > .futuristic-card.metric-primary-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  height: 184px;
+  min-height: 184px;
+  padding: 14px !important;
+  text-align: center;
+}
+.metric-grid > .metric-primary-card > .card-label,
+.metric-grid > .metric-primary-card.aqi-tile .card-label {
+  width: 100%;
+  min-height: 12px;
+  margin: 18px 0 7px;
+  padding: 0 4px;
+  text-align: center;
+  white-space: normal;
+}
+.metric-primary-card .metric-card-number {
+  color: #fff;
+  font-size: 29px;
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.05;
+}
+.metric-primary-card .metric-index { font-size: 43px; }
+.metric-primary-card .metric-run-time {
+  padding-top: 7px;
+  font-size: clamp(18px, 4.9vw, 22px);
+  white-space: nowrap;
+}
+.metric-primary-card .metric-rainfall { padding-top: 5px; }
+.metric-primary-card .metric-rainfall span {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  opacity: .65;
+}
+.metric-primary-card .metric-card-emphasis {
+  margin-top: 7px;
+  color: rgba(255,255,255,.78);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.metric-primary-card .metric-card-note {
+  margin-top: 6px;
+  color: rgba(255,255,255,.42);
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.metric-primary-card .metric-card-accent { color: #6ee7b7; }
+.metric-grid > .futuristic-card.metric-primary-card.aqi-tile { min-height: 184px; }
+.metric-primary-card.aqi-tile .aqi-status {
+  overflow: hidden;
+  font-size: clamp(19px, 5.4vw, 23px);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.metric-primary-card.aqi-tile .aqi-meter {
+  margin: 10px 5px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.metric-primary-card.aqi-tile .aqi-meter-caption {
+  display: block;
+  margin-top: 5px;
+  color: rgba(255,255,255,.48);
+  font-size: 7px;
+  line-height: 1.25;
+  text-align: left;
+}
+.metric-primary-card.aqi-tile .aqi-pollutants {
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.metric-primary-card.aqi-tile .aqi-pollutant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 6px 7px;
+  border-radius: 9px;
+}
+.metric-primary-card.aqi-tile .aqi-pollutant-label { font-size: 7px; }
+.metric-primary-card.aqi-tile .aqi-pollutant-value {
+  margin: 0;
+  font-size: 14px;
+}
+
+#root .mausam-app.theme-light .metric-primary-card .metric-card-number,
+#root .mausam-app.theme-light .metric-primary-card .aqi-status { color: #123b61 !important; }
+#root .mausam-app.theme-light .metric-primary-card .metric-card-emphasis { color: rgba(18, 59, 97, .86) !important; }
+#root .mausam-app.theme-light .metric-primary-card .metric-card-note,
+#root .mausam-app.theme-light .metric-primary-card .aqi-meter-caption { color: rgba(18, 59, 97, .62) !important; }
+#root .mausam-app.theme-light .metric-primary-card .metric-card-accent { color: #15725e !important; }
 .home-screen .weather-hero-card {
   min-width: 0;
 }
@@ -1476,7 +1650,7 @@ input:-webkit-autofill {
   border-color: rgba(226,245,250,.2) !important;
   box-shadow: inset 0 1px rgba(255,255,255,.2), 0 24px 50px rgba(0,0,0,.22) !important;
 }
-#root .mausam-app .weather-hero-card::before {
+#root .mausam-app .weather-hero-card.is-rainy::before {
   background-image: none !important;
   opacity: 0 !important;
   animation: none !important;
@@ -1701,4 +1875,617 @@ input:-webkit-autofill {
   #root .mausam-app .home-screen .app-weather-mark { width: 42px; height: 42px; flex-basis: 42px; border-radius: 13px; }
   #root .mausam-app .home-screen .app-weather-mark svg { width: 28px; height: 28px; }
   #root .mausam-app .home-screen .theme-toggle { width: 42px; height: 42px; flex-basis: 42px; }
+}
+
+/* ── Home hero: one immersive weather moment, not three competing cards ── */
+#root .mausam-app .home-screen .app-top-header { margin-bottom: 24px !important; }
+#root .mausam-app .weather-hero-card {
+  isolation: isolate;
+  min-height: 0;
+  margin-bottom: 18px !important;
+  padding: 18px 18px 16px !important;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 84% 10%, rgba(128, 216, 242, .25), transparent 25%),
+    radial-gradient(circle at 11% 115%, rgba(55, 100, 177, .32), transparent 50%),
+    linear-gradient(145deg, #183743 0%, #10242d 50%, #09151d 100%) !important;
+  border-color: rgba(196, 239, 249, .24) !important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.25),
+    inset 0 -38px 62px rgba(1, 11, 17, .24),
+    0 24px 48px rgba(0, 22, 31, .26) !important;
+}
+#root .mausam-app .weather-hero-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,.09), transparent 32%),
+    radial-gradient(ellipse at 73% 78%, rgba(102, 203, 232, .11), transparent 35%);
+}
+#root .mausam-app .weather-hero-content { position: relative; z-index: 1; }
+.hero-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hero-location-inline { margin: 0 0 8px; }
+.hero-location-pin {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(174, 232, 245, .1);
+  color: #8be1f4;
+}
+.hero-location-name {
+  overflow: hidden;
+  color: rgba(235, 250, 252, .74);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .005em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.weather-hero-main { margin-top: 0; }
+#root .mausam-app .weather-hero-card .weather-temp-value { font-size: 76px !important; }
+#root .mausam-app .weather-hero-card .weather-condition {
+  margin-top: 8px !important;
+  color: rgba(246, 253, 255, .74) !important;
+  font-size: 16px !important;
+  font-weight: 650 !important;
+  letter-spacing: -.02em;
+}
+#root .mausam-app .weather-hero-card .weather-meta {
+  margin-top: 5px !important;
+  color: rgba(211, 239, 244, .48) !important;
+  font-size: 11px !important;
+}
+#root .mausam-app .weather-hero-card .weather-companion {
+  width: 142px;
+  height: 142px;
+  flex-basis: 142px;
+  margin: -12px -16px -14px 0;
+}
+#root .mausam-app .weather-hero-card .weather-stats-grid {
+  gap: 4px;
+  margin-top: 16px !important;
+  padding: 7px !important;
+  border: 0 !important;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(184, 231, 241, .1), rgba(255,255,255,.035));
+  box-shadow: inset 0 1px rgba(255,255,255,.11), 0 10px 24px rgba(0, 10, 18, .13);
+}
+#root .mausam-app .weather-hero-card .weather-stat {
+  position: relative;
+  min-width: 0;
+  padding: 8px 3px 9px;
+  border-radius: 13px;
+  transition: background .25s ease, transform .25s ease;
+}
+#root .mausam-app .weather-hero-card .weather-stat:nth-child(1) { background: radial-gradient(circle at 50% 120%, rgba(79, 201, 228, .14), transparent 62%); }
+#root .mausam-app .weather-hero-card .weather-stat:nth-child(2) { background: radial-gradient(circle at 50% 120%, rgba(102, 154, 255, .14), transparent 62%); }
+#root .mausam-app .weather-hero-card .weather-stat:nth-child(3) { background: radial-gradient(circle at 50% 120%, rgba(170, 137, 245, .13), transparent 62%); }
+#root .mausam-app .weather-hero-card .weather-stat + .weather-stat::before {
+  content: none;
+}
+#root .mausam-app .weather-hero-card .weather-stat-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  overflow: hidden;
+  color: rgba(213, 239, 244, .48) !important;
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: .02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#root .mausam-app .weather-hero-card .weather-stat-label::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: #5ad5ed;
+  box-shadow: 0 0 8px rgba(90, 213, 237, .7);
+}
+#root .mausam-app .weather-hero-card .weather-stat:nth-child(2) .weather-stat-label::before { background: #78a7ff; box-shadow: 0 0 8px rgba(120, 167, 255, .7); }
+#root .mausam-app .weather-hero-card .weather-stat:nth-child(3) .weather-stat-label::before { background: #b299f7; box-shadow: 0 0 8px rgba(178, 153, 247, .7); }
+#root .mausam-app .weather-hero-card .weather-stat-value {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  letter-spacing: -.035em;
+  line-height: 1.1;
+}
+
+/* This card is deliberately dark in both themes, so its copy never inherits
+   the light-mode ink used by the rest of the dashboard. */
+#root .mausam-app .weather-hero-card .hero-location-name {
+  color: #e9f9fc !important;
+}
+#root .mausam-app .weather-hero-card .hero-location-pin {
+  color: #9aeafa !important;
+}
+#root .mausam-app .weather-hero-card .hero-location-pin svg {
+  color: inherit !important;
+}
+#root .mausam-app .weather-hero-card .weather-condition {
+  color: rgba(247, 253, 255, .9) !important;
+}
+#root .mausam-app .weather-hero-card .weather-meta {
+  color: rgba(218, 240, 245, .7) !important;
+}
+#root .mausam-app .weather-hero-card .weather-stat-label {
+  color: rgba(221, 243, 247, .68) !important;
+}
+#root .mausam-app .weather-hero-card .weather-stat-value {
+  color: #f6fdff !important;
+}
+#root .mausam-app .weather-hero-card .weather-stat-value span {
+  color: rgba(220, 242, 247, .72) !important;
+}
+#root .mausam-app .weather-hero-card .weather-stats-grid .weather-stat .weather-stat-value {
+  color: #ffffff !important;
+  text-shadow: 0 1px 12px rgba(173, 232, 247, .18);
+}
+#root .mausam-app .weather-hero-card .weather-stats-grid .weather-stat .weather-stat-value span {
+  display: inline-block;
+  margin-left: 4px;
+  color: rgba(235, 249, 252, .82) !important;
+  letter-spacing: 0;
+}
+
+@media (max-width: 390px) {
+  #root .mausam-app .home-screen .app-top-header { margin-bottom: 20px !important; }
+  #root .mausam-app .weather-hero-card { padding: 16px 15px 14px !important; }
+  .hero-location-name { max-width: 182px; }
+  #root .mausam-app .weather-hero-card .weather-temp-value { font-size: 68px !important; }
+  #root .mausam-app .weather-hero-card .weather-companion {
+    width: 122px;
+    height: 122px;
+    flex-basis: 122px;
+    margin: -7px -14px -12px 0;
+  }
+  #root .mausam-app .weather-hero-card .weather-condition { font-size: 14px !important; }
+  #root .mausam-app .weather-hero-card .weather-meta { font-size: 10px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .mausam-app .weather-hero-card > .rain-drop { animation: none !important; opacity: .22 !important; }
+  #root .mausam-app .weather-hero-card.is-rainy::before { animation: none !important; opacity: 0 !important; }
+}
+
+/* ── Compact primary metric system ─────────────────────────── */
+#root .mausam-app .metric-grid { align-items: start; }
+#root .mausam-app .metric-grid > .secondary-pair-card {
+  align-self: stretch !important;
+  height: auto;
+  box-sizing: border-box;
+}
+#root .mausam-app .metric-grid > .futuristic-card.metric-primary-card {
+  --metric-glow: 103, 203, 234;
+  position: relative;
+  align-self: start !important;
+  width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 1 / 1;
+  padding: 14px !important;
+  overflow: hidden;
+  border-radius: 22px !important;
+}
+#root .mausam-app .metric-grid > .uv-tile { --metric-glow: 251, 146, 60; }
+#root .mausam-app .metric-grid > .run-tile { --metric-glow: 52, 211, 153; }
+#root .mausam-app .metric-grid > .rainfall-tile { --metric-glow: 96, 165, 250; }
+#root .mausam-app .metric-grid > .metric-primary-card::before {
+  content: '';
+  position: absolute;
+  top: -48px;
+  left: -38px;
+  z-index: 0;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--metric-glow), .17), transparent 67%);
+  pointer-events: none;
+}
+#root .mausam-app .metric-grid > .metric-primary-card > * { position: relative; z-index: 1; }
+#root .mausam-app .metric-grid > .metric-primary-card > span { position: absolute; z-index: 2; }
+#root .mausam-app .metric-grid > .metric-primary-card > .card-label,
+#root .mausam-app .metric-grid > .metric-primary-card.aqi-tile > .card-label {
+  width: 100%;
+  min-height: 11px;
+  margin: 18px 0 7px;
+  padding: 0 3px;
+  font-size: 9px !important;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+#root .mausam-app .metric-primary-card .metric-card-number {
+  margin-top: 3px;
+  color: #f8fdff !important;
+  font-size: 29px !important;
+  font-weight: 850 !important;
+  letter-spacing: -.05em;
+  line-height: 1;
+}
+#root .mausam-app .metric-primary-card .metric-index {
+  margin-top: 0;
+  font-size: 44px !important;
+}
+#root .mausam-app .metric-primary-card .metric-run-time {
+  margin-top: 9px;
+  padding: 0;
+  font-size: clamp(17px, 4.8vw, 21px) !important;
+  white-space: nowrap;
+}
+#root .mausam-app .metric-primary-card .metric-rainfall { margin-top: 8px; padding: 0; }
+#root .mausam-app .metric-primary-card .metric-rainfall span {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0;
+  opacity: .7;
+}
+#root .mausam-app .metric-primary-card .metric-card-emphasis {
+  margin-top: 8px;
+  color: rgba(242, 250, 252, .78) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.25;
+}
+#root .mausam-app .metric-primary-card .metric-card-note {
+  margin-top: auto;
+  padding-top: 7px;
+  color: rgba(222, 241, 246, .48) !important;
+  font-size: 8px !important;
+  font-weight: 650 !important;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+#root .mausam-app .metric-primary-card .metric-card-accent { color: #6ee7b7 !important; }
+#root .mausam-app .metric-primary-card.aqi-tile .aqi-status {
+  color: #f8fdff !important;
+  font-size: clamp(18px, 5.2vw, 21px) !important;
+  font-weight: 850;
+  line-height: 1.05;
+}
+#root .mausam-app .metric-primary-card.aqi-tile .aqi-meter {
+  width: 72%;
+  margin: 11px auto 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+#root .mausam-app .metric-primary-card.aqi-tile .aqi-pollutants {
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+#root .mausam-app .metric-primary-card.aqi-tile .aqi-pollutant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 6px 7px;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(255,255,255,.055);
+}
+#root .mausam-app .metric-primary-card.aqi-tile .aqi-pollutant-label {
+  font-size: 7px !important;
+  white-space: nowrap;
+}
+#root .mausam-app .metric-primary-card.aqi-tile .aqi-pollutant-value {
+  margin: 0;
+  font-size: 14px !important;
+}
+
+#root .mausam-app.theme-light .metric-primary-card .metric-card-number,
+#root .mausam-app.theme-light .metric-primary-card.aqi-tile .aqi-status { color: #153f64 !important; }
+#root .mausam-app.theme-light .metric-primary-card .metric-card-emphasis { color: rgba(21, 63, 100, .82) !important; }
+#root .mausam-app.theme-light .metric-primary-card .metric-card-note { color: rgba(21, 63, 100, .62) !important; }
+#root .mausam-app.theme-light .metric-primary-card .metric-card-accent { color: #14705d !important; }
+#root .mausam-app.theme-light .metric-primary-card.aqi-tile .aqi-pollutant { background: rgba(61, 139, 179, .075); }
+
+@media (max-width: 350px) {
+  #root .mausam-app .metric-grid > .futuristic-card.metric-primary-card { padding: 12px !important; }
+  #root .mausam-app .metric-primary-card .metric-run-time { font-size: 16px !important; }
+  #root .mausam-app .metric-primary-card .metric-card-note { font-size: 7px !important; }
+}
+
+/* Anchor the two text-led readings to the card's true visual midpoint. */
+#root .mausam-app .metric-grid > .aqi-tile .aqi-status,
+#root .mausam-app .metric-grid > .run-tile .metric-run-time {
+  position: absolute !important;
+  top: 50%;
+  right: 12px;
+  left: 12px;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center;
+  transform: translateY(-50%);
+}
+#root .mausam-app .metric-grid > .aqi-tile .aqi-meter {
+  position: absolute;
+  top: calc(50% + 31px);
+  right: 14%;
+  left: 14%;
+  width: auto;
+  margin: 0;
+}
+#root .mausam-app .metric-grid > .run-tile .metric-card-emphasis {
+  position: absolute;
+  top: calc(50% + 27px);
+  right: 10px;
+  left: 10px;
+  margin: 0;
+  text-align: center;
+}
+
+/* One shared reading axis keeps all four square tiles visually aligned. */
+#root .mausam-app .metric-grid > .metric-primary-card .aqi-status,
+#root .mausam-app .metric-grid > .metric-primary-card .metric-index,
+#root .mausam-app .metric-grid > .metric-primary-card .metric-run-time,
+#root .mausam-app .metric-grid > .metric-primary-card .metric-rainfall {
+  position: absolute !important;
+  top: 47% !important;
+  right: 10px;
+  left: 10px;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center;
+  transform: translateY(-50%);
+}
+#root .mausam-app .metric-grid > .metric-primary-card .metric-card-emphasis {
+  position: absolute;
+  top: calc(47% + 28px);
+  right: 8px;
+  left: 8px;
+  margin: 0;
+  text-align: center;
+}
+#root .mausam-app .metric-grid > .aqi-tile .aqi-meter {
+  top: calc(47% + 27px);
+}
+#root .mausam-app .metric-grid > .uv-tile .metric-card-emphasis {
+  top: calc(47% + 31px);
+}
+
+/* ── Animated day / night switch ───────────────────────────── */
+#root .mausam-app .home-screen .theme-toggle {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  width: 72px !important;
+  height: 38px !important;
+  flex: 0 0 72px !important;
+  margin-left: auto;
+  padding: 4px 9px !important;
+  overflow: hidden;
+  border: 1px solid rgba(175, 218, 235, .32) !important;
+  border-radius: 999px !important;
+  cursor: pointer;
+  transform: none !important;
+  transition: background .45s ease, border-color .35s ease, box-shadow .35s ease, transform .2s ease !important;
+}
+#root .mausam-app .home-screen .theme-toggle::before,
+#root .mausam-app .home-screen .theme-toggle::after { content: none !important; }
+#root .mausam-app .home-screen .theme-toggle-light {
+  background: linear-gradient(135deg, #dff7ff, #b8def1) !important;
+  border-color: rgba(68, 144, 181, .34) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.92), 0 8px 20px rgba(51, 133, 173, .2) !important;
+}
+#root .mausam-app .home-screen .theme-toggle-dark {
+  background:
+    radial-gradient(circle at 78% 22%, rgba(161, 181, 255, .16), transparent 30%),
+    linear-gradient(135deg, #263348, #111925) !important;
+  border-color: rgba(161, 190, 224, .28) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.15), 0 9px 22px rgba(0, 9, 22, .32) !important;
+}
+#root .mausam-app .home-screen .theme-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fffdf1, #fff0b8) !important;
+  box-shadow: 0 3px 10px rgba(83, 101, 112, .25), inset 0 1px rgba(255,255,255,.95);
+  transform: translateX(0);
+  transition: transform .56s cubic-bezier(.2, .9, .22, 1.15), background .4s ease, box-shadow .4s ease;
+}
+#root .mausam-app .home-screen .theme-toggle-dark .theme-toggle-thumb {
+  background: linear-gradient(145deg, #52627d, #344158) !important;
+  box-shadow: 0 4px 12px rgba(0, 7, 20, .38), inset 0 1px rgba(255,255,255,.22);
+  transform: translateX(35px);
+}
+#root .mausam-app .home-screen .theme-toggle .theme-icon {
+  position: relative !important;
+  z-index: 2;
+  width: 17px !important;
+  height: 17px !important;
+  opacity: .38;
+  color: #536579 !important;
+  stroke: currentColor !important;
+  transform: scale(.82);
+  transition: color .35s ease, opacity .35s ease, transform .56s cubic-bezier(.2, .9, .22, 1.15) !important;
+}
+#root .mausam-app .home-screen .theme-toggle-light .theme-icon-sun {
+  color: #e88a16 !important;
+  opacity: 1;
+  transform: scale(1) rotate(0);
+}
+#root .mausam-app .home-screen .theme-toggle-light .theme-icon-moon {
+  color: #54718f !important;
+  transform: scale(.78) rotate(18deg);
+}
+#root .mausam-app .home-screen .theme-toggle-dark .theme-icon-sun {
+  color: #9b7e49 !important;
+  transform: scale(.76) rotate(-70deg);
+}
+#root .mausam-app .home-screen .theme-toggle-dark .theme-icon-moon {
+  color: #dce7ff !important;
+  opacity: 1;
+  transform: scale(1) rotate(-8deg);
+}
+#root .mausam-app .home-screen .theme-toggle:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(126, 201, 229, .56) !important;
+}
+#root .mausam-app .home-screen .theme-toggle:active { transform: scale(.96) !important; }
+#root .mausam-app .home-screen .theme-toggle:focus-visible {
+  outline: 3px solid rgba(80, 184, 226, .48);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .mausam-app .home-screen .theme-toggle,
+  #root .mausam-app .home-screen .theme-toggle-thumb,
+  #root .mausam-app .home-screen .theme-toggle .theme-icon { transition: none !important; }
+}
+
+/* ── High-refresh motion and touch scrolling ───────────────── */
+#root .mausam-app .app-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  scroll-padding-block: 18px 92px;
+  touch-action: pan-y pinch-zoom;
+  overflow-anchor: auto;
+  isolation: isolate;
+}
+
+#root .mausam-app .horizontal-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 2px;
+  touch-action: pan-x;
+}
+#root .mausam-app .horizontal-scroll > * {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+/* Keep the long page out of permanent GPU layers. Promote only the small,
+   continuously animated pieces that benefit from compositor rendering. */
+#root .mausam-app .interactive-tile,
+#root .mausam-app .audience-focus-card,
+#root .mausam-app .hourly-tile,
+#root .mausam-app .sun-time-tile,
+#root .mausam-app .sun-detail-tile {
+  will-change: auto;
+}
+#root .mausam-app .theme-toggle-thumb,
+#root .mausam-app .theme-icon,
+#root .mausam-app .cloud-character-rain,
+#root .mausam-app .cloud-character-storm,
+#root .mausam-app .cloud-drop,
+#root .mausam-app .illustration-person,
+#root .mausam-app .illustration-puddle,
+#root .mausam-app .illustration-reflection {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Transform-only entrance motion stays fluid on both 60 Hz and high-refresh screens. */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes cloudPop {
+  0%, 45% { opacity: 1; transform: translate3d(-8px, 0, 0) scale(.98); }
+  50%, 95% { opacity: 0; transform: translate3d(-8px, 3px, 0) scale(.9); }
+  100% { opacity: 1; transform: translate3d(-8px, 0, 0) scale(.98); }
+}
+@keyframes cloudSwap {
+  0%, 45% { opacity: 0; transform: translate3d(-8px, 3px, 0) scale(.9); }
+  50%, 95% { opacity: 1; transform: translate3d(-8px, 0, 0) scale(.98); }
+  100% { opacity: 0; transform: translate3d(-8px, 3px, 0) scale(.9); }
+}
+
+@media (max-width: 700px) {
+  /* A smaller blur radius avoids repeated full-card blur passes while scrolling. */
+  #root .mausam-app .futuristic-card,
+  #root .mausam-app .personal-insight,
+  #root .mausam-app .audience-focus-card,
+  #root .mausam-app .hourly-tile,
+  #root .mausam-app .sun-time-tile,
+  #root .mausam-app .sun-detail-tile,
+  #root .mausam-app [style*="border-radius: 16px"],
+  #root .mausam-app [style*="border-radius: 12px"] {
+    -webkit-backdrop-filter: blur(14px) saturate(118%);
+    backdrop-filter: blur(14px) saturate(118%);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  /* Touch browsers can leave :hover stuck after a tap; keep scrolling visually stable. */
+  #root .mausam-app .futuristic-card:hover,
+  #root .mausam-app .personal-insight:hover,
+  #root .mausam-app .audience-focus-card:hover,
+  #root .mausam-app .hourly-tile:hover,
+  #root .mausam-app .sun-time-tile:hover,
+  #root .mausam-app .sun-detail-tile:hover,
+  #root .mausam-app [style*="border-radius: 16px"]:hover,
+  #root .mausam-app [style*="border-radius: 12px"]:hover {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .mausam-app .app-scroll,
+  #root .mausam-app .horizontal-scroll { scroll-behavior: auto; }
+  #root .mausam-app .cloud-character-rain,
+  #root .mausam-app .cloud-character-storm,
+  #root .mausam-app .cloud-drop,
+  #root .mausam-app .illustration-person,
+  #root .mausam-app .illustration-puddle,
+  #root .mausam-app .illustration-reflection {
+    will-change: auto;
+  }
+}
+
+/* Slightly larger current-weather character without changing its animation. */
+#root .mausam-app .weather-hero-card .weather-companion {
+  width: 170px;
+  height: 170px;
+  flex-basis: 170px;
+  margin: -17px -18px -19px 0;
+}
+
+@media (max-width: 390px) {
+  #root .mausam-app .weather-hero-card .weather-companion {
+    width: 136px;
+    height: 136px;
+    flex-basis: 136px;
+    margin: -11px -14px -16px 0;
+    transform: none;
+    transform-origin: right top;
+  }
+}
+
+/* Keep the weather-card location marker luminous in light mode. */
+#root .mausam-app.theme-light .weather-hero-card .hero-location-pin {
+  color: #d8f8ff !important;
+  background: rgba(126, 220, 241, .24) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .18), 0 0 14px rgba(105, 218, 242, .16);
+}
+#root .mausam-app.theme-light .weather-hero-card .hero-location-pin svg,
+#root .mausam-app.theme-light .weather-hero-card .hero-location-pin path {
+  color: #d8f8ff !important;
+  fill: #d8f8ff !important;
 }
