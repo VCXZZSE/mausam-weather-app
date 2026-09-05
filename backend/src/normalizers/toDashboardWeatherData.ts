@@ -1,6 +1,6 @@
 import type { OpenMeteoResponse } from '../providers/openMeteoClient.js'
 import type { OpenMeteoAirQualityResponse } from '../providers/openMeteoAirQualityClient.js'
-import type { DailyForecast, DashboardWeatherData, HourlyForecast } from '../types/dashboard.js'
+import type { DailyForecast, DashboardWeatherData, HourlyForecast, ResolvedLocation } from '../types/dashboard.js'
 import { degreesToCompass, resolveCondition, resolveHeroVariant } from './conditionCode.js'
 import { findClosestTimeIndex } from './timeIndex.js'
 import { normalizeAirQuality } from './airQuality.js'
@@ -15,20 +15,26 @@ import { computeGarden } from '../rules/garden.js'
 import { computeLocations } from '../rules/locations.js'
 import { computePacking } from '../rules/packing.js'
 import { computeEvent } from '../rules/event.js'
-import { parseKolkataCalendarDate, toKolkataInstant } from '../utils/kolkataTime.js'
+import { computeRunning } from '../rules/running.js'
+import { parseLocalCalendarDate, toLocationInstant } from '../utils/locationTime.js'
 
-// Sections intentionally NOT produced here (running, rainfall.month/
-// monthlyAverage/history) are left out of the returned object so the
-// frontend's deep merge preserves DEMO_WEATHER_DATA's fallback values.
+// Sections intentionally NOT produced here (rainfall.month/monthlyAverage/
+// history) require data this app doesn't fetch (Open-Meteo's separate
+// historical archive API) and are left out rather than fabricated — see
+// backend-v0.2 handoff §9 ("never replace a missing live field with a
+// hardcoded demo value"). The frontend now surfaces these as an explicit
+// "Unavailable" state instead of silently merging in demo numbers.
 //
-// Data provenance (see BACKEND_HANDOFF_LOCAL.md §16):
+// Data provenance:
 //  LIVE:    current/hourly/daily (Open-Meteo forecast), airQuality (Open-Meteo AQI)
-//  LOCAL COMPUTATION: uv, astronomy, comfort, rainfall (derived from live values)
+//  LOCAL COMPUTATION: uv, astronomy, comfort, rainfall, overview, running
 //  CURATED/RULE-BASED: pollen, alerts, commute, swimming, garden, locations,
-//                       packing, event — deterministic demo content, not live
+//                       packing, event — deterministic content, not live
 //                       measurements. See each module's header comment.
 export type WeatherPayload = {
   updatedAt: string
+  observedAt: string
+  location: ResolvedLocation
   current: Partial<DashboardWeatherData['current']>
   hourly: HourlyForecast[]
   daily: DailyForecast[]
@@ -38,6 +44,7 @@ export type WeatherPayload = {
   comfort: DashboardWeatherData['comfort']
   rainfall: Pick<DashboardWeatherData['rainfall'], 'chance' | 'today' | 'unit' | 'periodLabel' | 'monthLabel'>
   overview: DashboardWeatherData['overview']
+  running: DashboardWeatherData['running']
   pollen: DashboardWeatherData['pollen']
   alerts: DashboardWeatherData['alerts']
   commute: DashboardWeatherData['commute']
@@ -48,27 +55,24 @@ export type WeatherPayload = {
   event: DashboardWeatherData['event']
 }
 
-/** @deprecated kept for backward compatibility with earlier Phase 1 imports */
-export type Phase1WeatherPayload = WeatherPayload
-
 export type NormalizeContext = {
   city: string
   region: string
+  country: string
   latitude: number
   longitude: number
+  source: ResolvedLocation['source']
 }
 
 function formatHourLabel(isoTime: string, index: number): string {
   if (index === 0) return 'Now'
-  // Kolkata wall-clock hour — parsed and formatted independent of the
-  // server's local timezone (see utils/kolkataTime.ts).
-  const date = parseKolkataCalendarDate(isoTime)
+  const date = parseLocalCalendarDate(isoTime)
   return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: undefined, hour12: true, timeZone: 'UTC' })
 }
 
 function formatDayLabel(isoDate: string, index: number): string {
   if (index === 0) return 'Today'
-  const date = parseKolkataCalendarDate(isoDate)
+  const date = parseLocalCalendarDate(isoDate)
   return date.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' })
 }
 
@@ -115,11 +119,21 @@ export function toDashboardWeatherData(
     }
   })
 
-  // Astronomy needs the real absolute instant (see kolkataTime.ts).
-  const astronomy = calculateAstronomy(toKolkataInstant(data.current_weather.time), {
-    latitude: context.latitude,
-    longitude: context.longitude,
-  })
+  // Astronomy needs the real absolute instant, computed using the
+  // provider's own UTC offset for the requested coordinates (not a
+  // hardcoded Kolkata +05:30 — see utils/locationTime.ts).
+  const currentInstant = toLocationInstant(data.current_weather.time, data.utc_offset_seconds)
+  const astronomy = calculateAstronomy(
+    currentInstant,
+    { latitude: context.latitude, longitude: context.longitude },
+    data.timezone,
+  )
+  // Prefer Open-Meteo's own daily sunrise/sunset over the suncalc estimate
+  // (backend-v0.2 handoff §7) — format them in the same requested timezone.
+  const sunriseInstant = toLocationInstant(data.daily.sunrise[0], data.utc_offset_seconds)
+  const sunsetInstant = toLocationInstant(data.daily.sunset[0], data.utc_offset_seconds)
+  astronomy.sunrise = sunriseInstant.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: data.timezone })
+  astronomy.sunset = sunsetInstant.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: data.timezone })
 
   const uv = normalizeUv({
     currentUvIndex: data.hourly.uv_index[currentHourIndex] ?? 0,
@@ -135,7 +149,7 @@ export function toDashboardWeatherData(
   const rainfall = computeRainfall({
     chance: data.daily.precipitation_probability_max[0] ?? 0,
     todayTotal: data.daily.precipitation_sum[0] ?? 0,
-    monthLabel: parseKolkataCalendarDate(data.current_weather.time).toLocaleDateString('en-IN', { month: 'long', timeZone: 'UTC' }),
+    monthLabel: parseLocalCalendarDate(data.current_weather.time).toLocaleDateString('en-IN', { month: 'long', timeZone: 'UTC' }),
   })
 
   const bestWindowLabel = uv.index >= 6 ? `before ${astronomy.sunrise !== '—' ? astronomy.sunrise : '9 AM'}` : 'most of the day'
@@ -150,9 +164,11 @@ export function toDashboardWeatherData(
     bestWindowLabel,
   })
 
-  // Kolkata CALENDAR date — read only with UTC getters/timeZone:'UTC'
-  // formatting (see utils/kolkataTime.ts). Do not use for real instant math.
-  const currentDate = parseKolkataCalendarDate(data.current_weather.time)
+  const running = computeRunning(data)
+
+  // Local CALENDAR date — read only with UTC getters/timeZone:'UTC'
+  // formatting (see utils/locationTime.ts). Do not use for real instant math.
+  const currentDate = parseLocalCalendarDate(data.current_weather.time)
   const month = currentDate.getUTCMonth()
   const rainChanceToday = daily[0]?.rainChance ?? 0
   const visibilityKm = Math.round((visibilityMeters / 1000) * 10) / 10
@@ -208,8 +224,23 @@ export function toDashboardWeatherData(
 
   const event = computeEvent({ daily, currentDate, month })
 
+  const observedAt = currentInstant.toISOString()
+  const updatedAtLabel = currentInstant.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: data.timezone })
+
   return {
-    updatedAt: 'Updated just now',
+    // A real provider-based timestamp, never the literal "Updated just
+    // now" (backend-v0.2 handoff §4).
+    updatedAt: `Updated at ${updatedAtLabel}`,
+    observedAt,
+    location: {
+      latitude: context.latitude,
+      longitude: context.longitude,
+      locality: context.city,
+      region: context.region,
+      country: context.country,
+      timezone: data.timezone,
+      source: context.source,
+    },
     current: {
       city: context.city,
       region: context.region,
@@ -239,6 +270,7 @@ export function toDashboardWeatherData(
     comfort,
     rainfall,
     overview,
+    running,
     pollen,
     alerts,
     commute,

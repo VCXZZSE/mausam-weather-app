@@ -12,6 +12,17 @@ import {
   mapProfileToPersona,
   mapProfileToSensitivity,
 } from './personalizedBriefing'
+import {
+  defaultDemoLocation,
+  fromSearchResult,
+  GeolocationError,
+  loadStoredLocation,
+  resolveDeviceLocation,
+  saveLocation,
+  searchLocations,
+  type LocationSearchResult,
+  type UserLocation,
+} from './location'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = 'home' | 'health' | 'forecast' | 'alerts'
@@ -322,20 +333,30 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { pr
 
           {/* AQI */}
           <Card className="metric-primary-card aqi-tile" grad="linear-gradient(140deg,#431407 0%,#1c0803 100%)" border="rgba(245,158,11,0.12)">
-            <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">US AQI {weather.airQuality.index}</Badge>
-            <CardLabel>Air Quality</CardLabel>
-            <div className="aqi-status">{weather.airQuality.label}</div>
-            <div className="aqi-meter">
-              <Bar pct={(weather.airQuality.index / weather.airQuality.scaleMax) * 100} fill="linear-gradient(90deg,#22c55e,#f59e0b 50%,#ef4444)" height={5} />
-            </div>
-            <div className="aqi-pollutants">
-              {weather.airQuality.pollutants.slice(0, 2).map(pollutant => (
-                <div className="aqi-pollutant" key={pollutant.label}>
-                  <div className="aqi-pollutant-label">{pollutant.label}</div>
-                  <div className="aqi-pollutant-value" style={{ color: pollutant.color }}>{pollutant.value}</div>
+            {weather.airQuality ? (
+              <>
+                <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">US AQI {weather.airQuality.index}</Badge>
+                <CardLabel>Air Quality</CardLabel>
+                <div className="aqi-status">{weather.airQuality.label}</div>
+                <div className="aqi-meter">
+                  <Bar pct={(weather.airQuality.index / weather.airQuality.scaleMax) * 100} fill="linear-gradient(90deg,#22c55e,#f59e0b 50%,#ef4444)" height={5} />
                 </div>
-              ))}
-            </div>
+                <div className="aqi-pollutants">
+                  {weather.airQuality.pollutants.slice(0, 2).map(pollutant => (
+                    <div className="aqi-pollutant" key={pollutant.label}>
+                      <div className="aqi-pollutant-label">{pollutant.label}</div>
+                      <div className="aqi-pollutant-value" style={{ color: pollutant.color }}>{pollutant.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <CardLabel>Air Quality</CardLabel>
+                <div className="aqi-status">Unavailable</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>Air quality data could not be retrieved right now.</div>
+              </>
+            )}
           </Card>
 
           {/* UV */}
@@ -364,7 +385,7 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { pr
               {weather.rainfall.today}<span> {weather.rainfall.unit}</span>
             </div>
             <div className="metric-card-emphasis">{weather.rainfall.periodLabel}</div>
-            <div className="metric-card-note">Month · {weather.rainfall.month} {weather.rainfall.unit}</div>
+            <div className="metric-card-note">Month · {weather.rainfall.month !== undefined ? `${weather.rainfall.month} ${weather.rainfall.unit}` : 'Unavailable'}</div>
           </Card>
 
           {/* Commute — full width */}
@@ -451,33 +472,41 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
       {/* AQI Detailed */}
       <Card grad="linear-gradient(140deg,#431407 0%,#1a0803 100%)" border="rgba(245,158,11,0.12)" pad={20}>
         <CardLabel>Air Quality Index (US AQI) · {weather.current.city}</CardLabel>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
-          <div>
-            <div style={{ fontSize: 52, fontWeight: 800, color: 'white', lineHeight: 1 }}>{weather.airQuality.index}</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fbbf24', marginTop: 5 }}>{weather.airQuality.label}</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{weather.airQuality.updatedLabel}</div>
-          </div>
-          <div style={{ fontSize: 40 }}>{weather.airQuality.icon}</div>
-        </div>
-        <Bar pct={(weather.airQuality.index / weather.airQuality.scaleMax) * 100} fill="linear-gradient(90deg,#22c55e 0%,#f59e0b 35%,#ef4444 70%,#dc2626 100%)" height={6} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, color: 'rgba(255,255,255,0.22)', marginTop: 5, marginBottom: 16 }}>
-          {weather.airQuality.scaleLabels.map(label => <span key={label}>{label}</span>)}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {weather.airQuality.pollutants.map(p => (
-            <div key={p.label} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>{p.label}</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: p.color }}>{p.value}</span>
+        {weather.airQuality ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 52, fontWeight: 800, color: 'white', lineHeight: 1 }}>{weather.airQuality.index}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#fbbf24', marginTop: 5 }}>{weather.airQuality.label}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{weather.airQuality.updatedLabel}</div>
               </div>
-              <Bar pct={(p.value / p.scaleMax) * 100} fill={p.color} height={3} />
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', marginTop: 3 }}>{p.unit}</div>
+              <div style={{ fontSize: 40 }}>{weather.airQuality.icon}</div>
             </div>
-          ))}
-        </div>
-        <div style={{ marginTop: 12, background: 'rgba(245,158,11,0.08)', borderRadius: 10, padding: '10px 12px', fontSize: 11, color: '#fbbf24', lineHeight: 1.55 }}>
-          {weather.airQuality.advice}
-        </div>
+            <Bar pct={(weather.airQuality.index / weather.airQuality.scaleMax) * 100} fill="linear-gradient(90deg,#22c55e 0%,#f59e0b 35%,#ef4444 70%,#dc2626 100%)" height={6} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, color: 'rgba(255,255,255,0.22)', marginTop: 5, marginBottom: 16 }}>
+              {weather.airQuality.scaleLabels.map(label => <span key={label}>{label}</span>)}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {weather.airQuality.pollutants.map(p => (
+                <div key={p.label} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>{p.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: p.color }}>{p.value}</span>
+                  </div>
+                  <Bar pct={(p.value / p.scaleMax) * 100} fill={p.color} height={3} />
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', marginTop: 3 }}>{p.unit}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 12, background: 'rgba(245,158,11,0.08)', borderRadius: 10, padding: '10px 12px', fontSize: 11, color: '#fbbf24', lineHeight: 1.55 }}>
+              {weather.airQuality.advice}
+            </div>
+          </>
+        ) : (
+          <div style={{ padding: '20px 0', color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
+            Air quality data is temporarily unavailable.
+          </div>
+        )}
       </Card>
 
       <div style={{ height: 12 }} />
@@ -566,9 +595,11 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
 // ── Forecast Tab ───────────────────────────────────────────────────────────────
 
 function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
-  const maxRainfall = Math.max(1, ...weather.rainfall.history.map(item => item.value))
-  const monthlyRainfallPercent = weather.rainfall.monthlyAverage > 0
-    ? (weather.rainfall.month / weather.rainfall.monthlyAverage) * 100
+  const rainfallHistory = weather.rainfall.history
+  const maxRainfall = rainfallHistory ? Math.max(1, ...rainfallHistory.map(item => item.value)) : 1
+  const hasMonthlyRainfall = weather.rainfall.month !== undefined && weather.rainfall.monthlyAverage !== undefined
+  const monthlyRainfallPercent = hasMonthlyRainfall && weather.rainfall.monthlyAverage! > 0
+    ? (weather.rainfall.month! / weather.rainfall.monthlyAverage!) * 100
     : 0
 
   return (
@@ -654,30 +685,38 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>{weather.rainfall.monthLabel} Rainfall</SectionLabel>
         <Card grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)" border="rgba(96,165,250,0.08)" pad={20}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 34, fontWeight: 800, color: 'white', lineHeight: 1 }}>
-                {weather.rainfall.month} <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>{weather.rainfall.unit}</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>of ~{weather.rainfall.monthlyAverage}{weather.rainfall.unit} {weather.rainfall.monthLabel} avg</div>
-            </div>
-            <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 800 }}>{Math.round(monthlyRainfallPercent)}%</div>
-          </div>
-          <Bar pct={monthlyRainfallPercent} fill="linear-gradient(90deg,#60a5fa,#818cf8)" height={5} />
-          <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 60, marginTop: 16 }}>
-            {weather.rainfall.history.map((item, i) => (
-              <div key={`${item.label}-${i}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                <div style={{
-                  width: '100%', borderRadius: '3px 3px 0 0',
-                  height: `${(item.value / maxRainfall) * 46}px`,
-                  background: i === weather.rainfall.history.length - 1 ? '#60a5fa' : 'rgba(96,165,250,0.22)',
-                }} />
-                <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.22)' }}>
-                  {item.label}
+          {hasMonthlyRainfall ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 34, fontWeight: 800, color: 'white', lineHeight: 1 }}>
+                    {weather.rainfall.month} <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>{weather.rainfall.unit}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>of ~{weather.rainfall.monthlyAverage}{weather.rainfall.unit} {weather.rainfall.monthLabel} avg</div>
                 </div>
+                <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 800 }}>{Math.round(monthlyRainfallPercent)}%</div>
               </div>
-            ))}
-          </div>
+              <Bar pct={monthlyRainfallPercent} fill="linear-gradient(90deg,#60a5fa,#818cf8)" height={5} />
+            </>
+          ) : (
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Monthly rainfall data unavailable.</div>
+          )}
+          {rainfallHistory && (
+            <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 60, marginTop: 16 }}>
+              {rainfallHistory.map((item, i) => (
+                <div key={`${item.label}-${i}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <div style={{
+                    width: '100%', borderRadius: '3px 3px 0 0',
+                    height: `${(item.value / maxRainfall) * 46}px`,
+                    background: i === rainfallHistory.length - 1 ? '#60a5fa' : 'rgba(96,165,250,0.22)',
+                  }} />
+                  <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.22)' }}>
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 
@@ -980,10 +1019,14 @@ const PERSONALIZATION_PRIORITY: Array<{ variant: PersonalizationVariant; matches
 ]
 
 export function getPersonalizedWeather(profile: Profile, weather: DashboardWeatherData = DEMO_WEATHER_DATA): PersonalizedWeather {
-  const variant = PERSONALIZATION_PRIORITY.find(rule => rule.matches(profile))?.variant ?? 'general'
+  let variant = PERSONALIZATION_PRIORITY.find(rule => rule.matches(profile))?.variant ?? 'general'
+  // airQuality can be genuinely absent (provider unavailable — see
+  // weatherData.ts) rather than always demo-filled; the air-quality
+  // variant needs real data to be meaningful, so fall through to general.
+  if (variant === 'air-quality' && !weather.airQuality) variant = 'general'
   const base = PERSONALIZED_VARIANTS[variant]
   const { current, airQuality, uv, rainfall, running, astronomy } = weather
-  const primaryPollutant = airQuality.pollutants[0]
+  const primaryPollutant = airQuality?.pollutants[0]
   const temperatureRange = `${current.low}–${current.high}°C`
   const outdoorWindow = `${running.start}–${running.end}`
 
@@ -1091,7 +1134,7 @@ export function getPersonalizedWeather(profile: Profile, weather: DashboardWeath
     }
   }
 
-  if (variant === 'air-quality') {
+  if (variant === 'air-quality' && airQuality) {
     return {
       variant,
       ...base,
@@ -1264,8 +1307,12 @@ function PersonalizedWeatherPage({ profile, weather, onBack }: { profile: Profil
       persona: mapProfileToPersona(profile),
       sensitivity: mapProfileToSensitivity(profile),
       location: weather.current.city,
+      // v0.2: reason over the SAME coordinates this page's weather came
+      // from, when the backend has resolved them (absent for demo data).
+      latitude: weather.location?.latitude,
+      longitude: weather.location?.longitude,
     }, controller.signal)
-      .then(briefing => setPersonalized(adaptBriefingToPersonalizedWeather(briefing, localFallback)))
+      .then(briefing => setPersonalized(adaptBriefingToPersonalizedWeather(briefing, localFallback, weather)))
       .catch(() => { /* keep the local fallback already set */ })
     return () => controller.abort()
   }, [profile, weather, localFallback])
@@ -1363,14 +1410,134 @@ function PersonalizedWeatherPage({ profile, weather, onBack }: { profile: Profil
   )
 }
 
+// ── Location setup (location-first flow) ────────────────────────────────────────
+// Runs once, after onboarding completes and before the first live weather
+// request — never a silently substituted default location (backend-v0.2
+// handoff §1/§2). navigator.geolocation is only ever called from this
+// button's click handler, never automatically on mount.
+
+function LocationSetup({ onResolved }: { onResolved: (location: UserLocation) => void }) {
+  const [locating, setLocating] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [manualOpen, setManualOpen] = useState(false)
+  const [manualQuery, setManualQuery] = useState('')
+  const [manualResults, setManualResults] = useState<LocationSearchResult[]>([])
+  const [searching, setSearching] = useState(false)
+
+  const useCurrentLocation = async () => {
+    setLocating(true)
+    setErrorMessage('')
+    try {
+      const resolved = await resolveDeviceLocation()
+      saveLocation(resolved)
+      onResolved(resolved)
+    } catch (error) {
+      const reason = error instanceof GeolocationError ? error.reason : 'position-unavailable'
+      setErrorMessage(
+        reason === 'permission-denied'
+          ? 'Location permission was denied. Search for your area instead.'
+          : reason === 'unsupported'
+            ? "Location isn't supported on this device. Search for your area instead."
+            : "We couldn't get your location right now. Search for your area instead.",
+      )
+      setManualOpen(true)
+    } finally {
+      setLocating(false)
+    }
+  }
+
+  const runSearch = async (query: string) => {
+    setManualQuery(query)
+    if (!query.trim()) {
+      setManualResults([])
+      return
+    }
+    setSearching(true)
+    try {
+      const results = await searchLocations(query)
+      setManualResults(results)
+    } catch {
+      setManualResults([])
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  const chooseResult = (result: LocationSearchResult) => {
+    const resolved = fromSearchResult(result)
+    saveLocation(resolved)
+    onResolved(resolved)
+  }
+
+  const useDemoLocation = () => {
+    const resolved = defaultDemoLocation()
+    saveLocation(resolved)
+    onResolved(resolved)
+  }
+
+  return (
+    <main className="setup-shell">
+      <div className="setup-noise" />
+      <div className="setup-topbar"><div className="brand-mark"><span>✦</span> MAUSAM</div></div>
+      <div className="setup-content">
+        <section className="setup-panel setup-animate">
+          <div className="setup-eyebrow">ALMOST THERE</div>
+          <h2>Where are<br /><em>you right now?</em></h2>
+          <p className="setup-copy">Mausam needs your real location to show live, accurate weather for where you actually are — not a fixed city.</p>
+
+          <button className="setup-primary" type="button" onClick={useCurrentLocation} disabled={locating}>
+            {locating ? 'Finding you…' : 'Use my current area'} <span>→</span>
+          </button>
+
+          {errorMessage && <div className="setup-error">{errorMessage}</div>}
+
+          <button type="button" style={{ marginTop: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setManualOpen(open => !open)}>
+            Search manually instead
+          </button>
+
+          {manualOpen && (
+            <div style={{ marginTop: 12 }}>
+              <label className="setup-label">SEARCH BY CITY OR POSTAL CODE</label>
+              <input
+                className="setup-input"
+                placeholder="e.g. Mumbai, or a postal code"
+                value={manualQuery}
+                onChange={event => void runSearch(event.target.value)}
+              />
+              {searching && <div className="setup-copy">Searching…</div>}
+              {manualResults.map(result => (
+                <button
+                  key={`${result.name}-${result.latitude}-${result.longitude}`}
+                  type="button"
+                  className="location-card"
+                  style={{ width: '100%', textAlign: 'left', marginTop: 8, cursor: 'pointer' }}
+                  onClick={() => chooseResult(result)}
+                >
+                  <span className="location-icon">◉</span>
+                  <div><strong>{result.name}</strong><small>{[result.region, result.country].filter(Boolean).join(', ')}</small></div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button type="button" style={{ marginTop: 16, background: 'none', border: 0, color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={useDemoLocation}>
+            Continue with Kolkata demo location
+          </button>
+        </section>
+      </div>
+    </main>
+  )
+}
+
 // ── App Root ───────────────────────────────────────────────────────────────────
 
 export default function App() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [profile, setProfile] = useState<Profile | null>(loadStoredProfile)
   const [weather, setWeather] = useState<DashboardWeatherData>(DEMO_WEATHER_DATA)
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(loadStoredLocation)
   const [weatherSource, setWeatherSource] = useState<'demo' | 'loading' | 'live' | 'error'>(() =>
-    import.meta.env.VITE_WEATHER_API_URL?.trim() ? 'loading' : 'demo',
+    import.meta.env.VITE_WEATHER_API_URL?.trim() && loadStoredLocation() ? 'loading' : 'demo',
   )
   const [tab, setTab] = useState<Tab>('home')
   const [showPersonalized, setShowPersonalized] = useState(false)
@@ -1388,6 +1555,12 @@ export default function App() {
   }, [profile])
 
   useEffect(() => {
+    // Location-first (backend-v0.2 handoff §1): no live weather request is
+    // ever attempted until a real location has been resolved (device GPS,
+    // manual search, or an explicitly chosen demo location) — never a
+    // silently substituted default.
+    if (!userLocation) return
+
     const controller = new AbortController()
     const endpointConfigured = Boolean(import.meta.env.VITE_WEATHER_API_URL?.trim())
     const configuredRefresh = Number(import.meta.env.VITE_WEATHER_REFRESH_MS)
@@ -1395,7 +1568,7 @@ export default function App() {
 
     const refreshWeather = async () => {
       try {
-        const nextWeather = await fetchWeatherDashboard(controller.signal)
+        const nextWeather = await fetchWeatherDashboard(userLocation, controller.signal)
         setWeather(nextWeather)
         setWeatherSource(endpointConfigured ? 'live' : 'demo')
       } catch (error) {
@@ -1411,13 +1584,14 @@ export default function App() {
       controller.abort()
       if (refreshTimer !== undefined) window.clearInterval(refreshTimer)
     }
-  }, [])
+  }, [userLocation])
 
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [tab, showPersonalized])
 
   if (!profile) return <Setup weather={weather} onComplete={setProfile} />
+  if (!userLocation) return <LocationSetup onResolved={setUserLocation} />
 
   return (
     <div className={`mausam-app theme-${theme}`} data-theme={theme} data-weather-source={weatherSource} style={{

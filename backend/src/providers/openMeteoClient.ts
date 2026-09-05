@@ -13,6 +13,11 @@ export type OpenMeteoCoordinates = {
 const numberArray = z.array(z.number())
 
 const openMeteoResponseSchema = z.object({
+  // Open-Meteo always returns these two top-level fields for the
+  // requested coordinates when timezone=auto is used. They replace the
+  // old hardcoded Asia/Kolkata assumption (see utils/locationTime.ts).
+  timezone: z.string().min(1),
+  utc_offset_seconds: z.number(),
   current_weather: z.object({
     time: z.string().min(1),
     temperature: z.number(),
@@ -41,6 +46,8 @@ const openMeteoResponseSchema = z.object({
     precipitation_probability_max: numberArray,
     precipitation_sum: numberArray,
     uv_index_max: numberArray,
+    sunrise: z.array(z.string()).min(1),
+    sunset: z.array(z.string()).min(1),
   }),
 })
 
@@ -66,6 +73,8 @@ const DAILY_VARS = [
   'precipitation_probability_max',
   'precipitation_sum',
   'uv_index_max',
+  'sunrise',
+  'sunset',
 ].join(',')
 
 export type FetchOpenMeteoOptions = {

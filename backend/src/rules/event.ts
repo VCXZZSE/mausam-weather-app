@@ -6,10 +6,10 @@ import { getIndiaSeason } from '../data/season.js'
 
 export type EventInput = {
   daily: DailyForecast[]
-  // Must be a Kolkata CALENDAR date (see backend/src/utils/kolkataTime.ts
-  // parseKolkataCalendarDate) — its UTC getters/setters are read as the
-  // Kolkata wall-clock date, independent of the server's local timezone.
-  // Do not pass a real instant (e.g. from toKolkataInstant) here.
+  // Must be a location CALENDAR date (see backend/src/utils/locationTime.ts
+  // parseLocalCalendarDate) — its UTC getters/setters are read as that
+  // location's wall-clock date, independent of the server's local timezone.
+  // Do not pass a real instant (e.g. from toLocationInstant) here.
   currentDate: Date
   month: number
 }

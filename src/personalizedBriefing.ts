@@ -1,4 +1,5 @@
 import type { Profile, PersonalizedFactor, PersonalizedIcon, PersonalizedRecommendation, PersonalizedTile, PersonalizedTone, PersonalizedWeather } from './App'
+import type { DashboardWeatherData } from './weatherData'
 
 export type Persona = 'commuter' | 'student' | 'outdoor' | 'health' | 'general'
 export type Sensitivity = 'low' | 'normal' | 'high'
@@ -8,6 +9,10 @@ export type BriefingRequest = {
   activity?: string
   sensitivity?: Sensitivity
   location?: string
+  // v0.2 location-first architecture: the briefing must reason over the
+  // SAME coordinates the caller's weather view is showing.
+  latitude?: number
+  longitude?: number
 }
 
 export type BriefingRisk = {
@@ -125,7 +130,13 @@ function capitalize(value: string): string {
   return value.length ? value[0].toUpperCase() + value.slice(1) : value
 }
 
-function buildTiles(briefing: BriefingResponse): PersonalizedTile[] {
+// Per backend-v0.2 handoff §11 ("do not use the briefing response as an
+// independent source of weather numbers"), every numeric tile/factor below
+// is read from the SAME shared `weather` object the rest of the app is
+// already displaying — never from `briefing.dataContext`. Only the
+// generated prose (title/summary/recommendation/risk messages/actions)
+// comes from the briefing itself.
+function buildTiles(briefing: BriefingResponse, weather: DashboardWeatherData): PersonalizedTile[] {
   const riskTiles: PersonalizedTile[] = briefing.risks.slice(0, 4).map(risk => ({
     icon: RISK_ICONS[risk.type] ?? 'comfort',
     title: capitalize(risk.type),
@@ -137,11 +148,11 @@ function buildTiles(briefing: BriefingResponse): PersonalizedTile[] {
   if (riskTiles.length >= 4) return riskTiles
 
   const infoTiles: PersonalizedTile[] = [
-    { icon: 'temperature', title: 'Temperature', value: `${briefing.dataContext.temperature}°C`, detail: 'Current reading', tone: 'amber' },
-    { icon: 'sun', title: 'UV', value: `${briefing.dataContext.uvIndex}`, detail: 'Current UV index', tone: 'violet' },
-    { icon: 'rain', title: 'Rain', value: `${briefing.dataContext.rainChance}%`, detail: 'Chance today', tone: 'blue' },
-    ...(briefing.dataContext.aqi !== null
-      ? [{ icon: 'air' as const, title: 'Air quality', value: `US AQI ${briefing.dataContext.aqi}`, detail: 'Current reading', tone: 'green' as const }]
+    { icon: 'temperature', title: 'Temperature', value: `${weather.current.temperature}°C`, detail: 'Current reading', tone: 'amber' },
+    { icon: 'sun', title: 'UV', value: `${weather.uv.index}`, detail: 'Current UV index', tone: 'violet' },
+    { icon: 'rain', title: 'Rain', value: `${weather.daily[0]?.rainChance ?? 0}%`, detail: 'Chance today', tone: 'blue' },
+    ...(weather.airQuality
+      ? [{ icon: 'air' as const, title: 'Air quality', value: `US AQI ${weather.airQuality.index}`, detail: 'Current reading', tone: 'green' as const }]
       : []),
   ]
 
@@ -158,23 +169,29 @@ function buildRecommendations(briefing: BriefingResponse): PersonalizedRecommend
   }))
 }
 
-function buildFactors(briefing: BriefingResponse): PersonalizedFactor[] {
+function buildFactors(weather: DashboardWeatherData): PersonalizedFactor[] {
   const factors: PersonalizedFactor[] = [
-    { label: 'Temperature', value: `${briefing.dataContext.temperature}°C` },
-    { label: 'Rain chance', value: `${briefing.dataContext.rainChance}%` },
-    { label: 'UV', value: `${briefing.dataContext.uvIndex}` },
+    { label: 'Temperature', value: `${weather.current.temperature}°C` },
+    { label: 'Rain chance', value: `${weather.daily[0]?.rainChance ?? 0}%` },
+    { label: 'UV', value: `${weather.uv.index}` },
   ]
-  if (briefing.dataContext.aqi !== null) factors.push({ label: 'US AQI', value: `${briefing.dataContext.aqi}` })
+  if (weather.airQuality) factors.push({ label: 'US AQI', value: `${weather.airQuality.index}` })
   return factors
 }
 
 /**
  * Adapts the backend's BriefingResponse into the existing local
  * PersonalizedWeather shape so PersonalizedWeatherPage can render it with
- * zero UI changes. `variant` and `disclaimer` are carried over from the
- * local fallback purely for visual theming continuity.
+ * zero UI changes. All displayed numbers come from `weather` (the same
+ * object the homepage is already showing), not from the briefing response
+ * itself. `variant` and `disclaimer` are carried over from the local
+ * fallback purely for visual theming continuity.
  */
-export function adaptBriefingToPersonalizedWeather(briefing: BriefingResponse, fallback: PersonalizedWeather): PersonalizedWeather {
+export function adaptBriefingToPersonalizedWeather(
+  briefing: BriefingResponse,
+  fallback: PersonalizedWeather,
+  weather: DashboardWeatherData,
+): PersonalizedWeather {
   const hasWindow = Boolean(briefing.bestWindow.start && briefing.bestWindow.end)
 
   return {
@@ -184,9 +201,9 @@ export function adaptBriefingToPersonalizedWeather(briefing: BriefingResponse, f
     windowLabel: hasWindow ? 'Best outdoor window' : 'Outdoor outlook',
     window: hasWindow ? `${briefing.bestWindow.start}–${briefing.bestWindow.end}` : briefing.bestWindow.reason,
     basis: 'Backend personalized briefing',
-    tiles: buildTiles(briefing),
+    tiles: buildTiles(briefing, weather),
     recommendations: buildRecommendations(briefing),
-    factors: buildFactors(briefing),
+    factors: buildFactors(weather),
     disclaimer: fallback.disclaimer,
   }
 }

@@ -5,6 +5,8 @@ import { loadEnv } from '../src/config/env.js'
 function openMeteoForecastFixture() {
   const times = Array.from({ length: 24 }, (_, i) => `2026-09-05T${String(i).padStart(2, '0')}:00`)
   return {
+    timezone: 'Asia/Kolkata',
+    utc_offset_seconds: 19800,
     current_weather: { time: times[6], temperature: 26, windspeed: 12, winddirection: 225, weathercode: 0 },
     hourly: {
       time: times,
@@ -27,6 +29,8 @@ function openMeteoForecastFixture() {
       precipitation_probability_max: [10, 15, 20, 10, 5, 10, 15],
       precipitation_sum: [0, 0, 0, 0, 0, 0, 0],
       uv_index_max: [5, 5, 5, 5, 5, 5, 5],
+      sunrise: Array(7).fill('2026-09-05T05:35'),
+      sunset: Array(7).fill('2026-09-05T17:55'),
     },
   }
 }
@@ -116,6 +120,26 @@ describe('POST /api/personalized-briefing', () => {
     const response = await app.inject({ method: 'POST', url: '/api/personalized-briefing', payload: { persona: 'health' } })
     expect(response.statusCode).toBe(200)
     expect(response.json().dataContext.aqi).toBeNull()
+    await app.close()
+  })
+
+  it('accepts explicit latitude/longitude and reuses the shared coordinate-keyed weather cache', async () => {
+    stubFetchByUrl()
+    const app = await buildApp(loadEnv({}))
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/personalized-briefing',
+      payload: { persona: 'outdoor', latitude: 28.6139, longitude: 77.2090, location: 'New Delhi' },
+    })
+    expect(response.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('rejects when no coordinates are supplied and ALLOW_DEFAULT_LOCATION is disabled', async () => {
+    stubFetchByUrl()
+    const app = await buildApp(loadEnv({ ALLOW_DEFAULT_LOCATION: 'false' }))
+    const response = await app.inject({ method: 'POST', url: '/api/personalized-briefing', payload: { persona: 'general' } })
+    expect(response.statusCode).toBe(400)
     await app.close()
   })
 

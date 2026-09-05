@@ -6,6 +6,8 @@ const briefingRequestSchema = z.object({
   activity: z.string().trim().min(1).max(60).optional(),
   sensitivity: z.enum(['low', 'normal', 'high']).optional(),
   location: z.string().trim().min(1).max(80).optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
 })
 
 /**

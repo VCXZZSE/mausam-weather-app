@@ -7,6 +7,8 @@ const BASE_URL = 'https://api.open-meteo.com/v1/forecast'
 function validForecastBody() {
   const times = Array.from({ length: 24 }, (_, i) => `2026-09-05T${String(i).padStart(2, '0')}:00`)
   return {
+    timezone: 'Asia/Kolkata',
+    utc_offset_seconds: 19800,
     current_weather: { time: times[0], temperature: 31, windspeed: 22, winddirection: 225, weathercode: 95 },
     hourly: {
       time: times,
@@ -29,6 +31,8 @@ function validForecastBody() {
       precipitation_probability_max: [92],
       precipitation_sum: [34.2],
       uv_index_max: [8],
+      sunrise: ['2026-09-05T05:21'],
+      sunset: ['2026-09-05T17:52'],
     },
   }
 }

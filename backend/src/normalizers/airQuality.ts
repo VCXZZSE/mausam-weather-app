@@ -51,6 +51,16 @@ export function normalizeAirQuality(
     updatedLabel: 'Updated just now',
     icon,
     advice: adviceFor(label),
+    // v0.2 honesty fields (see backend-v0.2 handoff §8): this is always
+    // Open-Meteo's modeled US AQI in the current implementation — CPCB
+    // station-based India NAQI integration is deferred (it requires a
+    // data.gov.in API key, which conflicts with this project's zero-cost
+    // constraint). `standard`/`source` must never be set to the Indian
+    // values unless a genuine CPCB reading is actually being returned.
+    standard: 'US_AQI',
+    source: 'OPEN_METEO',
+    stationName: null,
+    stationDistanceKm: null,
     pollutants: [
       { label: 'PM2.5', value: Math.round(data.hourly.pm2_5[index] ?? 0), scaleMax: 100, unit: 'µg/m³', color: '#f59e0b' },
       { label: 'PM10', value: Math.round(data.hourly.pm10[index] ?? 0), scaleMax: 150, unit: 'µg/m³', color: '#f97316' },

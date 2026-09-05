@@ -1,11 +1,9 @@
 import SunCalc from 'suncalc'
 import type { DashboardWeatherData } from '../types/dashboard.js'
 
-const TIME_ZONE = 'Asia/Kolkata'
-
-function formatTime(date: Date | undefined): string {
+function formatTime(date: Date | undefined, timeZone: string): string {
   if (!date || Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: TIME_ZONE })
+  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone })
 }
 
 const MOON_PHASES = [
@@ -29,17 +27,30 @@ export type AstronomyCoordinates = {
   longitude: number
 }
 
-export function calculateAstronomy(date: Date, coordinates: AstronomyCoordinates): DashboardWeatherData['astronomy'] {
+/**
+ * Sunrise/sunset are preferred directly from Open-Meteo's own daily
+ * fields (see toDashboardWeatherData.ts) rather than recalculated here —
+ * per backend-v0.2 handoff §7. suncalc is retained only for solar noon,
+ * golden hour, and moon phase/moonrise, none of which Open-Meteo
+ * provides. `timeZone` must be the IANA timezone Open-Meteo returned for
+ * the requested coordinates (e.g. "Asia/Kolkata", "America/Chicago") —
+ * this function no longer assumes any specific location.
+ */
+export function calculateAstronomy(
+  date: Date,
+  coordinates: AstronomyCoordinates,
+  timeZone: string,
+): DashboardWeatherData['astronomy'] {
   const sunTimes = SunCalc.getTimes(date, coordinates.latitude, coordinates.longitude)
   const moonIllumination = SunCalc.getMoonIllumination(date)
   const moonTimes = SunCalc.getMoonTimes(date, coordinates.latitude, coordinates.longitude)
 
   return {
-    sunrise: formatTime(sunTimes.sunrise),
-    sunset: formatTime(sunTimes.sunset),
-    solarNoon: formatTime(sunTimes.solarNoon),
+    sunrise: formatTime(sunTimes.sunrise, timeZone),
+    sunset: formatTime(sunTimes.sunset, timeZone),
+    solarNoon: formatTime(sunTimes.solarNoon, timeZone),
     moonPhase: moonPhaseLabel(moonIllumination.phase),
-    goldenHour: formatTime(sunTimes.goldenHour),
-    moonrise: formatTime(moonTimes.rise),
+    goldenHour: formatTime(sunTimes.goldenHour, timeZone),
+    moonrise: formatTime(moonTimes.rise, timeZone),
   }
 }

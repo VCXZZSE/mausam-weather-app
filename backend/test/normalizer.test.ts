@@ -3,13 +3,15 @@ import { toDashboardWeatherData } from '../src/normalizers/toDashboardWeatherDat
 import type { OpenMeteoResponse } from '../src/providers/openMeteoClient.js'
 import type { OpenMeteoAirQualityResponse } from '../src/providers/openMeteoAirQualityClient.js'
 
-const CONTEXT = { city: 'Kolkata', region: 'West Bengal', latitude: 22.5726, longitude: 88.3639 }
+const CONTEXT = { city: 'Kolkata', region: 'West Bengal', country: 'India', latitude: 22.5726, longitude: 88.3639, source: 'default' as const }
 
 function buildFixture(overrides: Partial<OpenMeteoResponse> = {}): OpenMeteoResponse {
   const hourlyLength = 24
   const times = Array.from({ length: hourlyLength }, (_, i) => `2026-08-28T${String(i).padStart(2, '0')}:00`)
 
   return {
+    timezone: 'Asia/Kolkata',
+    utc_offset_seconds: 19800,
     current_weather: {
       time: times[5],
       temperature: 31,
@@ -38,6 +40,8 @@ function buildFixture(overrides: Partial<OpenMeteoResponse> = {}): OpenMeteoResp
       precipitation_probability_max: [92, 85, 60],
       precipitation_sum: [34.2, 20.1, 5.4],
       uv_index_max: [8, 7, 6],
+      sunrise: ['2026-08-28T05:21', '2026-08-29T05:21', '2026-08-30T05:22'],
+      sunset: ['2026-08-28T18:14', '2026-08-29T18:13', '2026-08-30T18:13'],
     },
     ...overrides,
   }
@@ -87,6 +91,8 @@ describe('toDashboardWeatherData', () => {
         precipitation_probability_max: [92, 85, 60, 30, 40, 80, 90],
         precipitation_sum: [34.2, 20.1, 5.4, 0, 0, 12.3, 40.1],
         uv_index_max: [8, 7, 6, 5, 4, 6, 7],
+        sunrise: Array(7).fill('2026-08-28T05:21'),
+        sunset: Array(7).fill('2026-08-28T18:14'),
       },
     })
     const result = toDashboardWeatherData(fixture, undefined, CONTEXT)

@@ -19,8 +19,24 @@ export type DailyForecast = {
   rainChance: number
 }
 
+// v0.2 location-first architecture: the backend now resolves and returns
+// the actual coordinates/place-name/timezone a payload was fetched for,
+// plus a real provider-based observation timestamp. Both optional so
+// DEMO_WEATHER_DATA and any older/partial payload remain valid.
+export type ResolvedLocation = {
+  latitude: number
+  longitude: number
+  locality: string
+  region: string
+  country: string
+  timezone: string
+  source: 'device' | 'manual' | 'default'
+}
+
 export type DashboardWeatherData = {
   updatedAt: string
+  observedAt?: string
+  location?: ResolvedLocation
   current: {
     city: string
     region: string
@@ -44,7 +60,10 @@ export type DashboardWeatherData = {
   hourly: HourlyForecast[]
   daily: DailyForecast[]
   overview: Array<{ icon: string; label: string; value: string; tone: string }>
-  airQuality: {
+  // Optional (backend-v0.2 handoff §9): when the AQI provider is genuinely
+  // unavailable, this is left undefined rather than silently filled with a
+  // demo value — the UI must render an explicit "Unavailable" state.
+  airQuality?: {
     index: number
     scaleMax: number
     scaleLabels: string[]
@@ -53,6 +72,13 @@ export type DashboardWeatherData = {
     icon: string
     advice: string
     pollutants: Array<{ label: string; value: number; scaleMax: number; unit: string; color: string }>
+    // v0.2 AQI-source honesty: which national standard this index uses,
+    // and whether it's from a real government station or a modeled
+    // global estimate. Optional so existing/demo data stays valid.
+    standard?: 'IN_NAQI' | 'US_AQI'
+    source?: 'CPCB' | 'OPEN_METEO'
+    stationName?: string | null
+    stationDistanceKm?: number | null
   }
   uv: {
     index: number
@@ -73,12 +99,17 @@ export type DashboardWeatherData = {
   rainfall: {
     chance: number
     today: number
-    month: number
-    monthlyAverage: number
+    // Optional (backend-v0.2 handoff §9): fetching real monthly rainfall
+    // totals/history would require Open-Meteo's separate historical
+    // archive API, which isn't integrated. Rather than show a convincing
+    // but fabricated monthly figure, these are left undefined and the UI
+    // renders an explicit "Unavailable" state instead.
+    month?: number
+    monthlyAverage?: number
     unit: string
     periodLabel: string
     monthLabel: string
-    history: Array<{ label: string; value: number }>
+    history?: Array<{ label: string; value: number }>
   }
   commute: {
     status: string
@@ -350,7 +381,10 @@ function isDashboardWeatherData(value: unknown): value is DashboardWeatherData {
   const candidate = value as Partial<DashboardWeatherData>
   return Boolean(
     candidate.current && typeof candidate.current.temperature === 'number'
-    && candidate.airQuality && typeof candidate.airQuality.index === 'number'
+    // airQuality is intentionally NOT required here — it may be
+    // legitimately absent when the provider is unavailable (see the
+    // `airQuality` field comment above); the UI handles that explicitly.
+    && (!candidate.airQuality || typeof candidate.airQuality.index === 'number')
     && candidate.uv && typeof candidate.uv.index === 'number'
     && candidate.rainfall
     && Array.isArray(candidate.hourly) && Array.isArray(candidate.daily)
@@ -358,26 +392,75 @@ function isDashboardWeatherData(value: unknown): value is DashboardWeatherData {
   )
 }
 
-export async function fetchWeatherDashboard(signal?: AbortSignal): Promise<DashboardWeatherData> {
-  const endpoint = import.meta.env.VITE_WEATHER_API_URL?.trim()
-  if (!endpoint) return DEMO_WEATHER_DATA
+/**
+ * A minimal user-location shape (see src/location.ts for the full type) —
+ * kept local to avoid a circular import; only the fields actually needed
+ * to build the request are read.
+ */
+export type WeatherLocationParam = {
+  latitude: number
+  longitude: number
+  locality?: string
+  region?: string
+  country?: string
+  source: 'device' | 'manual' | 'default'
+}
 
-  const response = await fetch(endpoint, {
+/**
+ * Fetches live weather for the given resolved location. Per the
+ * location-first architecture (backend-v0.2 handoff), no location means
+ * no live request is attempted — the caller is expected to have already
+ * resolved a location (device GPS, manual search, or an explicitly
+ * chosen demo location) before calling this.
+ */
+export async function fetchWeatherDashboard(
+  location: WeatherLocationParam | undefined,
+  signal?: AbortSignal,
+): Promise<DashboardWeatherData> {
+  const endpoint = import.meta.env.VITE_WEATHER_API_URL?.trim()
+  const forceDemo = import.meta.env.VITE_USE_DEMO_WEATHER === 'true'
+  if (!endpoint || forceDemo || !location) return DEMO_WEATHER_DATA
+
+  const url = new URL(endpoint)
+  url.searchParams.set('latitude', String(location.latitude))
+  url.searchParams.set('longitude', String(location.longitude))
+  if (location.locality) url.searchParams.set('locality', location.locality)
+  if (location.region) url.searchParams.set('region', location.region)
+  if (location.country) url.searchParams.set('country', location.country)
+  // The backend only recognizes 'device'/'manual' for an explicit-coordinate
+  // request; a deliberately-chosen demo location is treated as 'manual'
+  // since the user actively selected it (never silently substituted).
+  url.searchParams.set('source', location.source === 'default' ? 'manual' : location.source)
+
+  const response = await fetch(url.toString(), {
     signal,
     headers: { Accept: 'application/json' },
   })
   if (!response.ok) throw new Error(`Weather request failed with status ${response.status}`)
 
   const responseBody: unknown = await response.json()
-  const payload = responseBody && typeof responseBody === 'object' && 'data' in responseBody
+  const rawPayload = responseBody && typeof responseBody === 'object' && 'data' in responseBody
     ? (responseBody as { data: unknown }).data
     : responseBody
 
-  if (!isRecord(payload)) {
+  if (!isRecord(rawPayload)) {
     throw new Error('Weather response does not match the dashboard data contract')
   }
 
-  const mergedPayload = mergeWeatherPayload(DEMO_WEATHER_DATA, payload)
+  const mergedPayload = mergeWeatherPayload(DEMO_WEATHER_DATA, rawPayload) as DashboardWeatherData
+
+  // Never let a genuinely-unavailable live section silently become a
+  // convincing-looking demo number (backend-v0.2 handoff §9): these
+  // specific fields are excluded from the merge and left absent so the UI
+  // renders an explicit "Unavailable" state instead of stale/fake data.
+  if (!isRecord(rawPayload.airQuality)) {
+    mergedPayload.airQuality = undefined
+  }
+  const rawRainfall = isRecord(rawPayload.rainfall) ? rawPayload.rainfall : undefined
+  if (!rawRainfall || rawRainfall.month === undefined) mergedPayload.rainfall.month = undefined
+  if (!rawRainfall || rawRainfall.monthlyAverage === undefined) mergedPayload.rainfall.monthlyAverage = undefined
+  if (!rawRainfall || rawRainfall.history === undefined) mergedPayload.rainfall.history = undefined
+
   if (!isDashboardWeatherData(mergedPayload)) {
     throw new Error('Weather response contains invalid dashboard values')
   }

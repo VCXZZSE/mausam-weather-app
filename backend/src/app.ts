@@ -5,6 +5,7 @@ import { registerErrorHandler } from './middleware/errorHandler.js'
 import { healthRoute } from './routes/health.js'
 import { createWeatherCaches, weatherRoute } from './routes/weather.js'
 import { personalizedBriefingRoute } from './routes/personalizedBriefing.js'
+import { createLocationCaches, locationRoute } from './routes/location.js'
 
 export async function buildApp(env: Env): Promise<FastifyInstance> {
   const app = Fastify({ logger: true })
@@ -16,10 +17,12 @@ export async function buildApp(env: Env): Promise<FastifyInstance> {
   registerErrorHandler(app)
 
   const caches = createWeatherCaches(env)
+  const locationCaches = createLocationCaches(env)
 
   await app.register(healthRoute)
   await app.register(weatherRoute, { env, caches })
   await app.register(personalizedBriefingRoute, { env, caches })
+  await app.register(locationRoute, { env, caches: locationCaches })
 
   return app
 }

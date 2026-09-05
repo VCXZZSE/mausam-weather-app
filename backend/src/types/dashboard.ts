@@ -22,8 +22,27 @@ export type DailyForecast = {
   rainChance: number
 }
 
+// Added in v0.2 for the location-first architecture (see backend-v0.2
+// handoff §4/§1). Optional so the frontend's existing demo fallback and
+// any older cached/partial payload remain valid without it.
+export type ResolvedLocation = {
+  latitude: number
+  longitude: number
+  locality: string
+  region: string
+  country: string
+  timezone: string
+  source: 'device' | 'manual' | 'default'
+}
+
 export type DashboardWeatherData = {
   updatedAt: string
+  // Real provider-timestamp-based fields (see backend-v0.2 handoff §4):
+  // `observedAt` is the ISO instant of the underlying provider reading;
+  // `location` is the resolved coordinates/place-name/timezone this
+  // payload was fetched for. Both optional for the same reason as above.
+  observedAt?: string
+  location?: ResolvedLocation
   current: {
     city: string
     region: string
@@ -56,6 +75,15 @@ export type DashboardWeatherData = {
     icon: string
     advice: string
     pollutants: Array<{ label: string; value: number; scaleMax: number; unit: string; color: string }>
+    // Added in v0.2 for AQI-source honesty (see backend-v0.2 handoff §8):
+    // which national standard this index uses, and whether it came from a
+    // real government monitoring station or a modeled global estimate.
+    // Optional so older/partial responses (and the frontend's own demo
+    // fallback) remain valid without these fields.
+    standard?: 'IN_NAQI' | 'US_AQI'
+    source?: 'CPCB' | 'OPEN_METEO'
+    stationName?: string | null
+    stationDistanceKm?: number | null
   }
   uv: {
     index: number

@@ -7,6 +7,11 @@ export type BriefingRequest = {
   activity?: string
   sensitivity?: Sensitivity
   location?: string
+  // v0.2 location-first architecture: when supplied, the briefing must
+  // reason over weather for THESE coordinates (reusing the same
+  // coordinate-keyed cache as GET /api/weather), not a hardcoded default.
+  latitude?: number
+  longitude?: number
 }
 
 export type BriefingRisk = {
