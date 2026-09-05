@@ -15,6 +15,98 @@ A mobile-first Kolkata weather experience combining live conditions, health cont
 
 ![Mausam mobile weather dashboard showcase](./docs/mausam-mobile-showcase.svg)
 
+---
+
+## Recent Updates (September 2026)
+
+### Fix: TypeScript Errors in App.tsx and tsconfig.json Configuration
+
+**Problem:** 
+1. **app.tsx:** The main file `App.tsx` consistently raised strict TypeScript errors because `userLocation` (typed as `UserLocation | null`) was being passed directly into dashboard components (`HomeTab`, `PersonalizedWeatherPage`) that expected a definite `UserLocation` object.
+2. **tsconfig.json error:** The file showed confusing red error highlights in VS Code natively despite `tsc` compiling perfectly, specifically complaining around `baseUrl` directives.
+
+**Fix applying:**
+1. **Added Type Narrowing in App.tsx:** Placed a strict safety exit guard (`if (!userLocation || !weather) return null;`) directly above the main return statement, immediately after the `LocationSetup` and `Ready` configuration routines. This successfully proved non-null safety to the compiler for the entire dashboard UI tree. All frontend tests remained green.
+2. **Optimized tsconfig.json:** Stably removed `"baseUrl": "."` from the configuration. Modern TS 5 using `"moduleResolution": "bundler"` securely interprets `"paths"` (e.g. `"@/*"`) entirely relative to the configuration file, and preserving `baseUrl` needlessly triggers strict false violations in external IDE lints.
+3. **Synchronized IDE Language Server:** Produced a `.vscode/settings.json` configuring `"typescript.tsdk": "node_modules/typescript/lib"`. This decisively shifts the VS Code native TypeScript evaluator from the editor's baseline to the workspace's precisely downloaded `typescript@^5.7.0`, ensuring false-red JSON/TypeScript workspace mismatches are definitively abolished.
+
+
+### Fix: Location Access and Manual Search Both Broken
+
+**Problem:** Two things stopped working at the same time on the location setup screen:
+
+1. **"Use my current area" button** — showed *"Location took too long to respond"* even after granting browser permission.
+2. **Manual PIN / area search** — showed *"Location search is temporarily unavailable"* for any query (e.g. `700063`).
+
+**Root cause — a single missing process:** The backend server (`backend/src/server.ts`, Fastify on port 3000) was not running. The frontend's `.env` points every location API call at `http://localhost:3000`:
+
+```
+VITE_LOCATION_REVERSE_API_URL=http://localhost:3000/api/location/reverse
+VITE_LOCATION_SEARCH_API_URL=http://localhost:3000/api/location/search
+VITE_WEATHER_API_URL=http://localhost:3000/api/weather
+```
+
+With nothing listening on port 3000, every network call failed immediately with a connection-refused error, which each handler in `src/location.ts` and `src/App.tsx` translated into the two visible error messages.
+
+| Screen error | API that was failing | Handler that caught it |
+|---|---|---|
+| "Location took too long to respond" | `GET /api/location/reverse` | `enrichDeviceLocation()` → outer `useCurrentLocation` catch |
+| "Location search is temporarily unavailable" | `GET /api/location/search` | `runSearch()` catch → `setSearchError(...)` |
+
+**Fix applied:**
+
+1. **Started the backend server** — `cd backend && npm run dev` — Fastify now listens on `localhost:3000`. All three APIs confirmed working:
+   - `GET /api/location/search?query=700063` → `{ results: [{ name: "Kolkata", postalCode: "700063", … }] }` ✅
+   - `GET /api/location/reverse?latitude=22.5726&longitude=88.3639` → `{ locality: "Bowbazar", region: "West Bengal", … }` ✅
+   ```bash
+   npm run dev:all
+   ```
+
+   This uses [`concurrently`](https://github.com/open-cli-tools/concurrently) (added as a dev dependency) to run the frontend dev server (port 8443) and the backend server (port 3000) side-by-side in one terminal with labelled, colour-coded output.
+
+4. **`concurrently@^9` added** to `devDependencies` in the root `package.json` and installed.
+
+**Going forward — always start both servers:**
+
+```bash
+# Option A — single command (recommended)
+npm run dev:all
+
+# Option B — two terminals
+npm run dev          # terminal 1 → frontend on http://localhost:8443
+npm run dev:backend  # terminal 2 → backend  on http://localhost:3000
+```
+
+If only the frontend starts, the location screen will show "Location took too long to respond" and "Location search is temporarily unavailable" regardless of browser permission state, because every location API call will fail with a connection-refused error.
+
+---
+
+### Onboarding Flow Improvements
+
+The onboarding experience has been redesigned to follow a more intuitive location-first approach:
+
+**New Flow:**
+1. **Profile Setup** → User completes name, body metrics, sensitivities, and daily rhythm (4 steps)
+2. **Location Selection** → User chooses their location (device GPS, manual search, or demo)
+3. **Ready Slider** → "Your world, in sync" confirmation page with entry animation
+4. **Dashboard** → Main weather app
+
+**Key Changes:**
+- Location is now requested **before** the final entry slider, not after
+- Added a back button (←) to the location page matching other setup pages
+- The "Your world, in sync" slider now appears after location selection
+- Improved state management with `pendingLocation` to handle the multi-step flow
+- All 33 tests passing with updated flow logic
+
+**Technical Details:**
+- Removed 'ready' from `SetupStep` type (now: 'welcome' | 'name' | 'body' | 'sensitivities' | 'routine')
+- Created standalone `Ready` component for the slider page
+- Updated `LocationSetup` to accept `onBack` prop for navigation
+- Progress bar calculation updated from `/5` to `/4` steps
+- Setup component's routine step now calls `onComplete` directly
+
+---
+
 ## What is Mausam?
 
 Most weather apps stop at temperature and rain probability. Mausam focuses on the decisions people make after checking the weather: whether to run, carry protection, change a commute, limit outdoor exposure, water crops or avoid swimming.

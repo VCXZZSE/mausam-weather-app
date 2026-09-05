@@ -1,4 +1,4 @@
-export type WeatherHeroVariant = 'rainy' | 'sunny'
+export type WeatherHeroVariant = "rainy" | "sunny" | "night"
 
 export type HourlyForecast = {
   time: string
@@ -7,6 +7,7 @@ export type HourlyForecast = {
   conditionCode: string
   icon?: string
   rainChance: number
+  isDay?: boolean
 }
 
 export type DailyForecast = {
@@ -30,7 +31,7 @@ export type ResolvedLocation = {
   region: string
   country: string
   timezone: string
-  source: 'device' | 'manual' | 'default'
+  source: "device" | "manual" | "default"
 }
 
 export type DashboardWeatherData = {
@@ -63,7 +64,7 @@ export type DashboardWeatherData = {
   }
   hourly: HourlyForecast[]
   daily: DailyForecast[]
-  overview: Array<{ icon: string; label: string; value: string; tone: string }>
+  overview: Array<{ icon: string label: string value: string tone: string }>
   // Optional (backend-v0.2 handoff §9): when the AQI provider is genuinely
   // unavailable, this is left undefined rather than silently filled with a
   // demo value — the UI must render an explicit "Unavailable" state.
@@ -75,12 +76,16 @@ export type DashboardWeatherData = {
     updatedLabel: string
     icon: string
     advice: string
-    pollutants: Array<{ label: string; value: number; scaleMax: number; unit: string; color: string }>
-    // v0.2 AQI-source honesty: which national standard this index uses,
-    // and whether it's from a real government station or a modeled
-    // global estimate. Optional so existing/demo data stays valid.
-    standard?: 'IN_NAQI' | 'US_AQI'
-    source?: 'CPCB' | 'OPEN_METEO'
+    pollutants: Array<{
+      label: string
+      value: number
+      scaleMax: number
+      unit: string
+      color: string
+    }>
+    // India National AQI from the nearest usable CPCB station.
+    standard: "IN_NAQI"
+    source: "CPCB"
     stationName?: string | null
     stationDistanceKm?: number | null
   }
@@ -113,12 +118,12 @@ export type DashboardWeatherData = {
     unit: string
     periodLabel: string
     monthLabel: string
-    history?: Array<{ label: string; value: number }>
+    history?: Array<{ label: string value: number }>
   }
   commute: {
     status: string
     location: string
-    items: Array<{ icon: string; name: string; value: string; detail: string }>
+    items: Array<{ icon: string name: string value: string detail: string }>
   }
   swimming: {
     badge: string
@@ -140,7 +145,7 @@ export type DashboardWeatherData = {
     overall: string
     icon: string
     advice: string
-    items: Array<{ type: string; level: string; percent: number; color: string }>
+    items: Array<{ type: string level: string percent: number color: string }>
   }
   astronomy: {
     sunrise: string
@@ -155,7 +160,12 @@ export type DashboardWeatherData = {
     label: string
     icon: string
     advice: string
-    factors: Array<{ label: string; value: string; percent: number; color: string }>
+    factors: Array<{
+      label: string
+      value: string
+      percent: number
+      color: string
+    }>
   }
   alerts: Array<{
     level: string
@@ -177,7 +187,7 @@ export type DashboardWeatherData = {
   }>
   packing: {
     title: string
-    items: Array<{ icon: string; item: string; reason: string }>
+    items: Array<{ icon: string item: string reason: string }>
   }
   event: {
     sectionLabel: string
@@ -194,193 +204,507 @@ export type DashboardWeatherData = {
 }
 
 export const DEMO_WEATHER_DATA: DashboardWeatherData = {
-  updatedAt: 'Updated just now',
+  updatedAt: "Updated just now",
   current: {
-    city: 'Kolkata',
-    region: 'West Bengal',
+    city: "Kolkata",
+    region: "West Bengal",
     temperature: 31,
     feelsLike: 37,
-    condition: 'Bright & Sunny',
-    conditionCode: 'sunny',
+    condition: "Bright & Sunny",
+    conditionCode: "sunny",
     high: 32,
     low: 25,
     humidity: 89,
     windSpeed: 22,
-    windDirection: 'SW',
+    windDirection: "SW",
     windGust: 38,
     visibility: 3.2,
     pressure: 1008,
     dewPoint: 28,
     heatIndex: 41,
-    hydrationAdvice: '💧 Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated',
+    hydrationAdvice:
+      "💧 Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated",
   },
   hourly: [
-    { time: 'Now', temperature: 31, condition: 'Thunderstorms', conditionCode: 'thunderstorm', icon: '⛈️', rainChance: 92 },
-    { time: '1 PM', temperature: 30, condition: 'Thunderstorms', conditionCode: 'thunderstorm', icon: '⛈️', rainChance: 95 },
-    { time: '2 PM', temperature: 29, condition: 'Thunderstorms', conditionCode: 'thunderstorm', icon: '⛈️', rainChance: 88 },
-    { time: '3 PM', temperature: 30, condition: 'Showers', conditionCode: 'showers', icon: '🌦️', rainChance: 72 },
-    { time: '4 PM', temperature: 31, condition: 'Showers', conditionCode: 'showers', icon: '🌦️', rainChance: 65 },
-    { time: '5 PM', temperature: 30, condition: 'Rain', conditionCode: 'rain', icon: '🌧️', rainChance: 80 },
-    { time: '6 PM', temperature: 29, condition: 'Rain', conditionCode: 'rain', icon: '🌧️', rainChance: 85 },
-    { time: '7 PM', temperature: 28, condition: 'Showers', conditionCode: 'showers', icon: '🌦️', rainChance: 68 },
-    { time: '8 PM', temperature: 27, condition: 'Rain', conditionCode: 'rain', icon: '🌧️', rainChance: 58 },
-    { time: '9 PM', temperature: 27, condition: 'Rain', conditionCode: 'rain', icon: '🌧️', rainChance: 45 },
+    {
+      time: "Now",
+      temperature: 31,
+      condition: "Thunderstorms",
+      conditionCode: "thunderstorm",
+      icon: "⛈️",
+      rainChance: 92,
+    },
+    {
+      time: "1 PM",
+      temperature: 30,
+      condition: "Thunderstorms",
+      conditionCode: "thunderstorm",
+      icon: "⛈️",
+      rainChance: 95,
+    },
+    {
+      time: "2 PM",
+      temperature: 29,
+      condition: "Thunderstorms",
+      conditionCode: "thunderstorm",
+      icon: "⛈️",
+      rainChance: 88,
+    },
+    {
+      time: "3 PM",
+      temperature: 30,
+      condition: "Showers",
+      conditionCode: "showers",
+      icon: "🌦️",
+      rainChance: 72,
+    },
+    {
+      time: "4 PM",
+      temperature: 31,
+      condition: "Showers",
+      conditionCode: "showers",
+      icon: "🌦️",
+      rainChance: 65,
+    },
+    {
+      time: "5 PM",
+      temperature: 30,
+      condition: "Rain",
+      conditionCode: "rain",
+      icon: "🌧️",
+      rainChance: 80,
+    },
+    {
+      time: "6 PM",
+      temperature: 29,
+      condition: "Rain",
+      conditionCode: "rain",
+      icon: "🌧️",
+      rainChance: 85,
+    },
+    {
+      time: "7 PM",
+      temperature: 28,
+      condition: "Showers",
+      conditionCode: "showers",
+      icon: "🌦️",
+      rainChance: 68,
+    },
+    {
+      time: "8 PM",
+      temperature: 27,
+      condition: "Rain",
+      conditionCode: "rain",
+      icon: "🌧️",
+      rainChance: 58,
+    },
+    {
+      time: "9 PM",
+      temperature: 27,
+      condition: "Rain",
+      conditionCode: "rain",
+      icon: "🌧️",
+      rainChance: 45,
+    },
   ],
   daily: [
-    { day: 'Today', high: 31, low: 25, condition: 'Thunderstorms', conditionCode: 'thunderstorm', icon: '⛈️', rainChance: 92 },
-    { day: 'Fri', high: 30, low: 25, condition: 'Heavy Rain', conditionCode: 'heavy_rain', icon: '🌧️', rainChance: 85 },
-    { day: 'Sat', high: 32, low: 26, condition: 'Showers', conditionCode: 'showers', icon: '🌦️', rainChance: 60 },
-    { day: 'Sun', high: 33, low: 27, condition: 'Partly Cloudy', conditionCode: 'partly_cloudy', icon: '🌤️', rainChance: 30 },
-    { day: 'Mon', high: 34, low: 27, condition: 'Cloudy', conditionCode: 'cloudy', icon: '⛅', rainChance: 40 },
-    { day: 'Tue', high: 31, low: 25, condition: 'Rain', conditionCode: 'rain', icon: '🌧️', rainChance: 80 },
-    { day: 'Wed', high: 30, low: 24, condition: 'Storms', conditionCode: 'storm', icon: '⛈️', rainChance: 90 },
+    {
+      day: "Today",
+      high: 31,
+      low: 25,
+      condition: "Thunderstorms",
+      conditionCode: "thunderstorm",
+      icon: "⛈️",
+      rainChance: 92,
+    },
+    {
+      day: "Fri",
+      high: 30,
+      low: 25,
+      condition: "Heavy Rain",
+      conditionCode: "heavy_rain",
+      icon: "🌧️",
+      rainChance: 85,
+    },
+    {
+      day: "Sat",
+      high: 32,
+      low: 26,
+      condition: "Showers",
+      conditionCode: "showers",
+      icon: "🌦️",
+      rainChance: 60,
+    },
+    {
+      day: "Sun",
+      high: 33,
+      low: 27,
+      condition: "Partly Cloudy",
+      conditionCode: "partly_cloudy",
+      icon: "🌤️",
+      rainChance: 30,
+    },
+    {
+      day: "Mon",
+      high: 34,
+      low: 27,
+      condition: "Cloudy",
+      conditionCode: "cloudy",
+      icon: "⛅",
+      rainChance: 40,
+    },
+    {
+      day: "Tue",
+      high: 31,
+      low: 25,
+      condition: "Rain",
+      conditionCode: "rain",
+      icon: "🌧️",
+      rainChance: 80,
+    },
+    {
+      day: "Wed",
+      high: 30,
+      low: 24,
+      condition: "Storms",
+      conditionCode: "storm",
+      icon: "⛈️",
+      rainChance: 90,
+    },
   ],
   overview: [
-    { icon: '♥', label: 'Health', value: 'AQI 78 · UV 6', tone: 'focus-health' },
-    { icon: '↗', label: 'Move', value: 'Run 5:30–7 AM', tone: 'focus-move' },
-    { icon: '⌁', label: 'Commute', value: 'Flooding nearby', tone: 'focus-commute' },
-    { icon: '⌂', label: 'Outdoors', value: 'Rough seas · 2.1m', tone: 'focus-outdoors' },
+    {
+      icon: "♥",
+      label: "Health",
+      value: "AQI 78 · UV 6",
+      tone: "focus-health",
+    },
+    { icon: "↗", label: "Move", value: "Run 5:30–7 AM", tone: "focus-move" },
+    {
+      icon: "⌁",
+      label: "Commute",
+      value: "Flooding nearby",
+      tone: "focus-commute",
+    },
+    {
+      icon: "⌂",
+      label: "Outdoors",
+      value: "Rough seas · 2.1m",
+      tone: "focus-outdoors",
+    },
   ],
   airQuality: {
     index: 78,
-    scaleMax: 300,
-    scaleLabels: ['Good', 'Moderate', 'Sensitive', 'Poor', 'Very Poor'],
-    label: 'Satisfactory',
-    updatedLabel: 'Updated just now',
-    icon: '😷',
-    advice: '💡 Asthma / COPD sufferers: limit outdoor time. Mask recommended near high-traffic zones.',
-    pollutants: [
-      { label: 'PM2.5', value: 42, scaleMax: 100, unit: 'µg/m³', color: '#f59e0b' },
-      { label: 'PM10', value: 68, scaleMax: 150, unit: 'µg/m³', color: '#f97316' },
-      { label: 'O₃', value: 38, scaleMax: 120, unit: 'µg/m³', color: '#60a5fa' },
-      { label: 'NO₂', value: 22, scaleMax: 80, unit: 'µg/m³', color: '#a78bfa' },
+    scaleMax: 500,
+    scaleLabels: [
+      "Good",
+      "Satisfactory",
+      "Moderate",
+      "Poor",
+      "Very Poor",
+      "Severe",
     ],
+    label: "Satisfactory",
+    updatedLabel: "Updated just now",
+    icon: "😷",
+    advice:
+      "💡 Asthma / COPD sufferers: limit outdoor time. Mask recommended near high-traffic zones.",
+    pollutants: [
+      {
+        label: "PM2.5",
+        value: 42,
+        scaleMax: 100,
+        unit: "µg/m³",
+        color: "#f59e0b",
+      },
+      {
+        label: "PM10",
+        value: 68,
+        scaleMax: 150,
+        unit: "µg/m³",
+        color: "#f97316",
+      },
+      {
+        label: "O₃",
+        value: 38,
+        scaleMax: 120,
+        unit: "µg/m³",
+        color: "#60a5fa",
+      },
+      {
+        label: "NO₂",
+        value: 22,
+        scaleMax: 80,
+        unit: "µg/m³",
+        color: "#a78bfa",
+      },
+    ],
+    standard: "IN_NAQI",
+    source: "CPCB",
+    stationName: "Demo CPCB station",
+    stationDistanceKm: 4.2,
   },
   uv: {
     index: 6,
     scaleMax: 11,
-    scaleLabels: ['Low', 'Moderate', 'High', 'Very High', 'Extreme'],
-    label: 'High',
-    recommendation: 'Use SPF 30+',
-    peakHours: '11 AM–2 PM',
-    burnTime: '~25 min',
-    advice: '☂️ Carry umbrella · 😎 Wear sunglasses · 🧴 Reapply SPF every 2h',
+    scaleLabels: ["Low", "Moderate", "High", "Very High", "Extreme"],
+    label: "High",
+    recommendation: "Use SPF 30+",
+    peakHours: "11 AM–2 PM",
+    burnTime: "~25 min",
+    advice: "☂️ Carry umbrella · 😎 Wear sunglasses · 🧴 Reapply SPF every 2h",
   },
-  running: { badge: 'FITNESS', start: '5:30', end: '7:00 AM', summary: 'Before humidity peaks' },
+  running: {
+    badge: "FITNESS",
+    start: "5:30",
+    end: "7:00 AM",
+    summary: "Before humidity peaks",
+  },
   rainfall: {
     chance: 92,
     today: 34.2,
     month: 312,
     monthlyAverage: 395,
-    unit: 'mm',
-    periodLabel: 'Today',
-    monthLabel: 'August',
+    unit: "mm",
+    periodLabel: "Today",
+    monthLabel: "August",
     history: [
-      { label: '22', value: 28 }, { label: '23', value: 12 }, { label: '24', value: 45 },
-      { label: '25', value: 18 }, { label: '26', value: 52 }, { label: '27', value: 38 },
-      { label: '28', value: 34 },
+      { label: "22", value: 28 },
+      { label: "23", value: 12 },
+      { label: "24", value: 45 },
+      { label: "25", value: 18 },
+      { label: "26", value: 52 },
+      { label: "27", value: 38 },
+      { label: "28", value: 34 },
     ],
   },
   commute: {
-    status: 'DISRUPTED',
-    location: 'Kolkata',
+    status: "DISRUPTED",
+    location: "Kolkata",
     items: [
-      { icon: '🚇', name: 'Metro Line', value: 'Modified', detail: 'Delays expected' },
-      { icon: '🚗', name: 'EM Bypass', value: 'Flooded', detail: 'Park St · Behala' },
-      { icon: '👁️', name: 'Howrah Br.', value: '1.8 km', detail: 'Visibility' },
+      {
+        icon: "🚇",
+        name: "Metro Line",
+        value: "Modified",
+        detail: "Delays expected",
+      },
+      {
+        icon: "🚗",
+        name: "EM Bypass",
+        value: "Flooded",
+        detail: "Park St · Behala",
+      },
+      { icon: "👁️", name: "Howrah Br.", value: "1.8 km", detail: "Visibility" },
     ],
   },
   swimming: {
-    badge: 'ROUGH', venue: 'Kolkata Swimming Pool', distance: '12km', depth: 2.1, depthUnit: 'm',
-    waterTemperature: 28, peakTime: '11:23 AM', advice: '🚫 Swimming not advised due to heavy rain',
+    badge: "ROUGH",
+    venue: "Kolkata Swimming Pool",
+    distance: "12km",
+    depth: 2.1,
+    depthUnit: "m",
+    waterTemperature: 28,
+    peakTime: "11:23 AM",
+    advice: "🚫 Swimming not advised due to heavy rain",
   },
   garden: {
-    badge: 'AMAN', title: 'Aman rice transplanting season', soil: 'Saturated', note: '🐟 Hilsa season active!',
+    badge: "AMAN",
+    title: "Aman rice transplanting season",
+    soil: "Saturated",
+    note: "🐟 Hilsa season active!",
   },
   pollen: {
-    overall: 'Moderate', icon: '🌿',
-    advice: '🤧 Keep windows closed 10 AM–3 PM · Antihistamine recommended if allergy-prone',
+    overall: "Moderate",
+    icon: "🌿",
+    advice:
+      "🤧 Keep windows closed 10 AM–3 PM · Antihistamine recommended if allergy-prone",
     items: [
-      { type: 'Tree', level: 'Low', percent: 20, color: '#4ade80' },
-      { type: 'Grass', level: 'Moderate', percent: 55, color: '#eab308' },
-      { type: 'Weed', level: 'High', percent: 80, color: '#f97316' },
+      { type: "Tree", level: "Low", percent: 20, color: "#4ade80" },
+      { type: "Grass", level: "Moderate", percent: 55, color: "#eab308" },
+      { type: "Weed", level: "High", percent: 80, color: "#f97316" },
     ],
   },
   astronomy: {
-    sunrise: '5:21 AM', sunset: '6:14 PM', solarNoon: '12:47 PM', moonPhase: 'Waxing Gibbous',
-    goldenHour: '5:51 PM', moonrise: '8:45 PM',
+    sunrise: "5:21 AM",
+    sunset: "6:14 PM",
+    solarNoon: "12:47 PM",
+    moonPhase: "Waxing Gibbous",
+    goldenHour: "5:51 PM",
+    moonrise: "8:45 PM",
   },
   comfort: {
     index: 38,
-    label: 'Uncomfortable',
-    icon: '🥵',
-    advice: '🎪 Event planners: Provide shade and water stations. Rain disruption probability is about 30%.',
+    label: "Uncomfortable",
+    icon: "🥵",
+    advice:
+      "🎪 Event planners: Provide shade and water stations. Rain disruption probability is about 30%.",
     factors: [
-      { label: 'Temperature', value: '31°C', percent: 60, color: '#f59e0b' },
-      { label: 'Humidity', value: '89%', percent: 89, color: '#60a5fa' },
-      { label: 'Wind', value: '22 km/h', percent: 40, color: '#a78bfa' },
+      { label: "Temperature", value: "31°C", percent: 60, color: "#f59e0b" },
+      { label: "Humidity", value: "89%", percent: 89, color: "#60a5fa" },
+      { label: "Wind", value: "22 km/h", percent: 40, color: "#a78bfa" },
     ],
   },
   alerts: [
-    { level: 'Red', dotColor: '#ef4444', background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)', title: 'Heavy Rainfall Warning', body: 'IMD red alert: 115mm+ rain expected in next 24h. Avoid underpasses, the Maidan, and low-lying Behala.', time: '2h ago', source: 'IMD' },
-    { level: 'Orange', dotColor: '#f97316', background: 'rgba(249,115,22,0.1)', borderColor: 'rgba(249,115,22,0.2)', title: 'Waterlogging — EM Bypass', body: 'Severe waterlogging on EM Bypass, Park Street, Kasba. Metro running on modified schedule. Allow extra time.', time: '3h ago', source: 'IMD' },
-    { level: 'Yellow', dotColor: '#eab308', background: 'rgba(234,179,8,0.1)', borderColor: 'rgba(234,179,8,0.2)', title: 'Ganga Ferry Suspended', body: 'Wind gusts 45 km/h. All ferry services on the Hooghly suspended until further notice.', time: '5h ago', source: 'IMD' },
+    {
+      level: "Red",
+      dotColor: "#ef4444",
+      background: "rgba(239,68,68,0.1)",
+      borderColor: "rgba(239,68,68,0.2)",
+      title: "Heavy Rainfall Warning",
+      body: "IMD red alert: 115mm+ rain expected in next 24h. Avoid underpasses, the Maidan, and low-lying Behala.",
+      time: "2h ago",
+      source: "IMD",
+    },
+    {
+      level: "Orange",
+      dotColor: "#f97316",
+      background: "rgba(249,115,22,0.1)",
+      borderColor: "rgba(249,115,22,0.2)",
+      title: "Waterlogging — EM Bypass",
+      body: "Severe waterlogging on EM Bypass, Park Street, Kasba. Metro running on modified schedule. Allow extra time.",
+      time: "3h ago",
+      source: "IMD",
+    },
+    {
+      level: "Yellow",
+      dotColor: "#eab308",
+      background: "rgba(234,179,8,0.1)",
+      borderColor: "rgba(234,179,8,0.2)",
+      title: "Ganga Ferry Suspended",
+      body: "Wind gusts 45 km/h. All ferry services on the Hooghly suspended until further notice.",
+      time: "5h ago",
+      source: "IMD",
+    },
   ],
   locations: [
-    { name: 'Darjeeling', temperature: 16, condition: 'Foggy Rain', conditionCode: 'fog', icon: '🌧️', distance: '600 km' },
-    { name: 'Digha Beach', temperature: 28, condition: 'Rough Seas', conditionCode: 'storm', icon: '⛈️', distance: '180 km' },
-    { name: 'Sundarbans', temperature: 30, condition: 'Showers', conditionCode: 'showers', icon: '🌦️', distance: '130 km' },
-    { name: 'Siliguri', temperature: 24, condition: 'Heavy Rain', conditionCode: 'heavy_rain', icon: '🌧️', distance: '570 km' },
+    {
+      name: "Darjeeling",
+      temperature: 16,
+      condition: "Foggy Rain",
+      conditionCode: "fog",
+      icon: "🌧️",
+      distance: "600 km",
+    },
+    {
+      name: "Digha Beach",
+      temperature: 28,
+      condition: "Rough Seas",
+      conditionCode: "storm",
+      icon: "⛈️",
+      distance: "180 km",
+    },
+    {
+      name: "Sundarbans",
+      temperature: 30,
+      condition: "Showers",
+      conditionCode: "showers",
+      icon: "🌦️",
+      distance: "130 km",
+    },
+    {
+      name: "Siliguri",
+      temperature: 24,
+      condition: "Heavy Rain",
+      conditionCode: "heavy_rain",
+      icon: "🌧️",
+      distance: "570 km",
+    },
   ],
   packing: {
-    title: 'For Kolkata · 28 Aug 2026',
+    title: "For Kolkata · 28 Aug 2026",
     items: [
-      { icon: '☂️', item: 'Heavy duty umbrella', reason: '92% rain chance' },
-      { icon: '👟', item: 'Waterproof footwear', reason: 'Severe waterlogging' },
-      { icon: '🧴', item: 'Sunscreen SPF 30+', reason: 'UV Index 6 (High)' },
-      { icon: '💧', item: 'Water bottle (1L+)', reason: 'Heat index 41°C' },
-      { icon: '😷', item: 'N95 mask', reason: 'AQI 78 (Satisfactory)' },
-      { icon: '📱', item: 'Power bank', reason: 'Power cuts likely' },
+      { icon: "☂️", item: "Heavy duty umbrella", reason: "92% rain chance" },
+      {
+        icon: "👟",
+        item: "Waterproof footwear",
+        reason: "Severe waterlogging",
+      },
+      { icon: "🧴", item: "Sunscreen SPF 30+", reason: "UV Index 6 (High)" },
+      { icon: "💧", item: "Water bottle (1L+)", reason: "Heat index 41°C" },
+      { icon: "😷", item: "N95 mask", reason: "AQI 78 (Satisfactory)" },
+      { icon: "📱", item: "Power bank", reason: "Power cuts likely" },
     ],
   },
   event: {
-    sectionLabel: 'Event Planner', icon: '🪔', title: 'Durga Puja 2026', dateRange: 'Oct 2–6', daysAway: 33,
-    expectedSeason: 'Post-monsoon', expectedTemperature: 28, rainLabel: 'Low Rain', rainChance: 15,
-    advice: '💡 Plan pandal visits 5–9 AM for best weather. Avoid afternoons during the first two days.',
+    sectionLabel: "Event Planner",
+    icon: "🪔",
+    title: "Durga Puja 2026",
+    dateRange: "Oct 2–6",
+    daysAway: 33,
+    expectedSeason: "Post-monsoon",
+    expectedTemperature: 28,
+    rainLabel: "Low Rain",
+    rainChance: 15,
+    advice:
+      "💡 Plan pandal visits 5–9 AM for best weather. Avoid afternoons during the first two days.",
   },
 }
 
 const CONDITION_ICONS: Record<string, string> = {
-  sunny: '☀️', clear: '☀️', fair: '☀️', partly_cloudy: '🌤️', cloudy: '☁️', overcast: '☁️',
-  drizzle: '🌦️', showers: '🌦️', rain: '🌧️', heavy_rain: '🌧️', thunderstorm: '⛈️', storm: '⛈️',
-  fog: '🌫️', mist: '🌫️', wind: '💨', snow: '🌨️',
+  sunny: "☀️",
+  clear: "☀️",
+  fair: "☀️",
+  partly_cloudy: "🌤️",
+  cloudy: "☁️",
+  overcast: "☁️",
+  drizzle: "🌦️",
+  showers: "🌦️",
+  rain: "🌧️",
+  heavy_rain: "🌧️",
+  thunderstorm: "⛈️",
+  storm: "⛈️",
+  fog: "🌫️",
+  mist: "🌫️",
+  wind: "💨",
+  snow: "🌨️",
 }
 
 // Only these conditions have a distinct nighttime look (a "clear"/"sunny"
 // sky after dark should show a moon, not a sun); everything else (rain,
 // clouds, storms, etc.) reads fine at any hour.
 const NIGHT_ICON_OVERRIDES: Record<string, string> = {
-  sunny: '🌙', clear: '🌙', fair: '🌙',
+  sunny: "🌙",
+  clear: "🌙",
+  fair: "🌙",
+  partly_cloudy: "🌙☁️",
+  cloudy: "🌙☁️",
+  overcast: "🌙☁️",
 }
 
 /**
  * `isDay` (v0.2, from Open-Meteo's own day/night flag) is optional — when
- * omitted (e.g. demo data, or a forecast entry that isn't "now"), the
+ * omitted (e.g. demo data or an older backend response), the
  * daytime icon is used, matching pre-v0.2 behavior exactly.
  */
-export function resolveWeatherIcon(conditionCode: string, override?: string, isDay?: boolean): string {
+export function resolveWeatherIcon(
+  conditionCode: string,
+  override?: string,
+  isDay?: boolean,
+): string {
   if (override) return override
-  const key = conditionCode.trim().toLowerCase().replace(/[\s-]+/g, '_')
-  if (isDay === false && NIGHT_ICON_OVERRIDES[key]) return NIGHT_ICON_OVERRIDES[key]
-  return CONDITION_ICONS[key] || '🌡️'
+  const key = conditionCode
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
+  if (isDay === false && NIGHT_ICON_OVERRIDES[key])
+    return NIGHT_ICON_OVERRIDES[key]
+  return CONDITION_ICONS[key] || "🌡️"
 }
 
-export function getWeatherHeroVariant(conditionCode: string, condition = ''): WeatherHeroVariant {
-  return /rain|storm|shower|drizzle|thunder/i.test(`${conditionCode} ${condition}`) ? 'rainy' : 'sunny'
+export function getWeatherHeroVariant(
+  conditionCode: string,
+  condition = "",
+  isDay?: boolean,
+): WeatherHeroVariant {
+  if (
+    /rain|storm|shower|drizzle|thunder/i.test(`${conditionCode} ${condition}`)
+  )
+    return "rainy"
+  return isDay === false ? "night" : "sunny"
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+  return Boolean(value && typeof value === "object" && !Array.isArray(value))
 }
 
 // v0.2 review (Requirement 2 — "remove demo data leakage"): LIVE weather
@@ -394,29 +718,44 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 // object (see fetchWeatherDashboard below) — LIVE and DEMO values are
 // never mixed within the same dashboard object.
 function isDashboardWeatherData(value: unknown): value is DashboardWeatherData {
-  if (!value || typeof value !== 'object') return false
+  if (!value || typeof value !== "object") return false
   const candidate = value as Partial<DashboardWeatherData>
   return Boolean(
-    candidate.current && typeof candidate.current.temperature === 'number'
-      && typeof candidate.current.feelsLike === 'number'
-      && typeof candidate.current.condition === 'string'
-      && typeof candidate.current.conditionCode === 'string'
-      && typeof candidate.current.humidity === 'number'
-      && typeof candidate.current.windSpeed === 'number'
-    // airQuality is intentionally NOT required here — it may be
-    // legitimately absent when the provider is unavailable (see the
-    // `airQuality` field comment above); the UI handles that explicitly.
-    && (!candidate.airQuality || typeof candidate.airQuality.index === 'number')
-    && candidate.uv && typeof candidate.uv.index === 'number'
-    && candidate.astronomy && typeof candidate.astronomy.sunrise === 'string'
-    && candidate.comfort && typeof candidate.comfort.index === 'number'
-    && candidate.running && typeof candidate.running.badge === 'string'
-    && candidate.rainfall && typeof candidate.rainfall.chance === 'number'
-    && Array.isArray(candidate.hourly) && candidate.hourly.length > 0
-    && Array.isArray(candidate.daily) && candidate.daily.length > 0
-    && Array.isArray(candidate.overview) && Array.isArray(candidate.alerts)
-    && Array.isArray(candidate.locations) && candidate.commute && candidate.swimming
-    && candidate.garden && candidate.pollen && candidate.packing && candidate.event,
+    candidate.current &&
+      typeof candidate.current.temperature === "number" &&
+      typeof candidate.current.feelsLike === "number" &&
+      typeof candidate.current.condition === "string" &&
+      typeof candidate.current.conditionCode === "string" &&
+      typeof candidate.current.humidity === "number" &&
+      typeof candidate.current.windSpeed === "number" &&
+      // airQuality is intentionally NOT required here — it may be
+      // legitimately absent when the provider is unavailable (see the
+      // `airQuality` field comment above); the UI handles that explicitly.
+      (!candidate.airQuality ||
+        typeof candidate.airQuality.index === "number") &&
+      candidate.uv &&
+      typeof candidate.uv.index === "number" &&
+      candidate.astronomy &&
+      typeof candidate.astronomy.sunrise === "string" &&
+      candidate.comfort &&
+      typeof candidate.comfort.index === "number" &&
+      candidate.running &&
+      typeof candidate.running.badge === "string" &&
+      candidate.rainfall &&
+      typeof candidate.rainfall.chance === "number" &&
+      Array.isArray(candidate.hourly) &&
+      candidate.hourly.length > 0 &&
+      Array.isArray(candidate.daily) &&
+      candidate.daily.length > 0 &&
+      Array.isArray(candidate.overview) &&
+      Array.isArray(candidate.alerts) &&
+      Array.isArray(candidate.locations) &&
+      candidate.commute &&
+      candidate.swimming &&
+      candidate.garden &&
+      candidate.pollen &&
+      candidate.packing &&
+      candidate.event,
   )
 }
 
@@ -431,7 +770,7 @@ export type WeatherLocationParam = {
   locality?: string
   region?: string
   country?: string
-  source: 'device' | 'manual' | 'default'
+  source: "device" | "manual" | "default"
 }
 
 /**
@@ -446,33 +785,40 @@ export async function fetchWeatherDashboard(
   signal?: AbortSignal,
 ): Promise<DashboardWeatherData> {
   const endpoint = import.meta.env.VITE_WEATHER_API_URL?.trim()
-  const forceDemo = import.meta.env.VITE_USE_DEMO_WEATHER === 'true'
+  const forceDemo = import.meta.env.VITE_USE_DEMO_WEATHER === "true"
   if (!endpoint || forceDemo || !location) return DEMO_WEATHER_DATA
 
   const url = new URL(endpoint)
-  url.searchParams.set('latitude', String(location.latitude))
-  url.searchParams.set('longitude', String(location.longitude))
-  if (location.locality) url.searchParams.set('locality', location.locality)
-  if (location.region) url.searchParams.set('region', location.region)
-  if (location.country) url.searchParams.set('country', location.country)
+  url.searchParams.set("latitude", String(location.latitude))
+  url.searchParams.set("longitude", String(location.longitude))
+  if (location.locality) url.searchParams.set("locality", location.locality)
+  if (location.region) url.searchParams.set("region", location.region)
+  if (location.country) url.searchParams.set("country", location.country)
   // The backend only recognizes 'device'/'manual' for an explicit-coordinate
   // request; a deliberately-chosen demo location is treated as 'manual'
   // since the user actively selected it (never silently substituted).
-  url.searchParams.set('source', location.source === 'default' ? 'manual' : location.source)
+  url.searchParams.set(
+    "source",
+    location.source === "default" ? "manual" : location.source,
+  )
 
   const response = await fetch(url.toString(), {
     signal,
-    headers: { Accept: 'application/json' },
+    headers: { Accept: "application/json" },
   })
-  if (!response.ok) throw new Error(`Weather request failed with status ${response.status}`)
+  if (!response.ok)
+    throw new Error(`Weather request failed with status ${response.status}`)
 
   const responseBody: unknown = await response.json()
-  const rawPayload = responseBody && typeof responseBody === 'object' && 'data' in responseBody
-    ? (responseBody as { data: unknown }).data
-    : responseBody
+  const rawPayload =
+    responseBody && typeof responseBody === "object" && "data" in responseBody
+      ? (responseBody as { data: unknown }).data
+      : responseBody
 
   if (!isRecord(rawPayload)) {
-    throw new Error('Weather response does not match the dashboard data contract')
+    throw new Error(
+      "Weather response does not match the dashboard data contract",
+    )
   }
 
   // LIVE MODE: the raw backend payload is returned AS-IS — never merged
@@ -482,7 +828,7 @@ export async function fetchWeatherDashboard(
   // payload, or DEMO_WEATHER_DATA on first load — see the App root), not
   // silently patched with demo values.
   if (!isDashboardWeatherData(rawPayload)) {
-    throw new Error('Weather response contains invalid dashboard values')
+    throw new Error("Weather response contains invalid dashboard values")
   }
   return rawPayload
 }

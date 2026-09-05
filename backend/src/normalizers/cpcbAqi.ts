@@ -1,5 +1,5 @@
-import type { CpcbRecord } from '../providers/cpcbClient.js'
-import type { DashboardWeatherData } from '../types/dashboard.js'
+import type { CpcbRecord } from "../providers/cpcbClient.js"
+import type { DashboardWeatherData } from "../types/dashboard.js"
 
 // CPCB National Air Quality Index sub-index breakpoints, per CPCB's
 // published methodology ("National Air Quality Index", CPCB, 2014).
@@ -8,10 +8,15 @@ import type { DashboardWeatherData } from '../types/dashboard.js'
 // linearly interpolated within the breakpoint range it falls into to
 // produce a 0-500 sub-index; the overall AQI is the MAX sub-index across
 // all pollutants actually reported by the nearest station.
-type Breakpoint = { concLow: number; concHigh: number; indexLow: number; indexHigh: number }
+type Breakpoint = {
+  concLow: number
+  concHigh: number
+  indexLow: number
+  indexHigh: number
+}
 
 const BREAKPOINTS: Record<string, Breakpoint[]> = {
-  'PM2.5': [
+  "PM2.5": [
     { concLow: 0, concHigh: 30, indexLow: 0, indexHigh: 50 },
     { concLow: 31, concHigh: 60, indexLow: 51, indexHigh: 100 },
     { concLow: 61, concHigh: 90, indexLow: 101, indexHigh: 200 },
@@ -61,23 +66,31 @@ const BREAKPOINTS: Record<string, Breakpoint[]> = {
   ],
 }
 
-const IN_NAQI_CATEGORIES: Array<{ max: number; label: string; icon: string }> = [
-  { max: 50, label: 'Good', icon: '😊' },
-  { max: 100, label: 'Satisfactory', icon: '🙂' },
-  { max: 200, label: 'Moderate', icon: '😐' },
-  { max: 300, label: 'Poor', icon: '😷' },
-  { max: 400, label: 'Very Poor', icon: '🚫' },
-  { max: Infinity, label: 'Severe', icon: '☠️' },
+const IN_NAQI_CATEGORIES: Array<{ max: number label: string icon: string }> = [
+  { max: 50, label: "Good", icon: "😊" },
+  { max: 100, label: "Satisfactory", icon: "🙂" },
+  { max: 200, label: "Moderate", icon: "😐" },
+  { max: 300, label: "Poor", icon: "😷" },
+  { max: 400, label: "Very Poor", icon: "🚫" },
+  { max: Infinity, label: "Severe", icon: "☠️" },
 ]
 
 function categorize(index: number) {
-  return IN_NAQI_CATEGORIES.find(category => index <= category.max) ?? IN_NAQI_CATEGORIES[IN_NAQI_CATEGORIES.length - 1]
+  return (
+    IN_NAQI_CATEGORIES.find((category) => index <= category.max) ??
+    IN_NAQI_CATEGORIES[IN_NAQI_CATEGORIES.length - 1]
+  )
 }
 
-function subIndex(pollutantId: string, concentration: number): number | undefined {
+function subIndex(
+  pollutantId: string,
+  concentration: number,
+): number | undefined {
   const table = BREAKPOINTS[pollutantId]
   if (!table) return undefined
-  const range = table.find(bp => concentration >= bp.concLow && concentration <= bp.concHigh)
+  const range = table.find(
+    (bp) => concentration >= bp.concLow && concentration <= bp.concHigh,
+  )
   if (!range) {
     // Above the highest published breakpoint: clamp to the top of the
     // last band rather than extrapolating indefinitely.
@@ -85,28 +98,46 @@ function subIndex(pollutantId: string, concentration: number): number | undefine
     return undefined
   }
   const { concLow, concHigh, indexLow, indexHigh } = range
-  return Math.round(((indexHigh - indexLow) / (concHigh - concLow)) * (concentration - concLow) + indexLow)
+  return Math.round(
+    ((indexHigh - indexLow) / (concHigh - concLow)) *
+      (concentration - concLow) +
+      indexLow,
+  )
 }
 
 // Haversine distance in kilometers.
-function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function distanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
   const R = 6371
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-const POLLUTANT_DISPLAY: Record<string, { label: string; unit: string; scaleMax: number; color: string }> = {
-  'PM2.5': { label: 'PM2.5', unit: 'µg/m³', scaleMax: 380, color: '#f59e0b' },
-  PM10: { label: 'PM10', unit: 'µg/m³', scaleMax: 510, color: '#f97316' },
-  OZONE: { label: 'O₃', unit: 'µg/m³', scaleMax: 400, color: '#60a5fa' },
-  NO2: { label: 'NO₂', unit: 'µg/m³', scaleMax: 500, color: '#a78bfa' },
-  SO2: { label: 'SO₂', unit: 'µg/m³', scaleMax: 800, color: '#34d399' },
-  CO: { label: 'CO', unit: 'mg/m³', scaleMax: 17, color: '#f472b6' },
+const POLLUTANT_DISPLAY: Record<string, {
+  label: string
+  unit: string
+  scaleMax: number
+  color: string
+}> = {
+  "PM2.5": { label: "PM2.5", unit: "µg/m³", scaleMax: 380, color: "#f59e0b" },
+  PM10: { label: "PM10", unit: "µg/m³", scaleMax: 510, color: "#f97316" },
+  OZONE: { label: "O₃", unit: "µg/m³", scaleMax: 400, color: "#60a5fa" },
+  NO2: { label: "NO₂", unit: "µg/m³", scaleMax: 500, color: "#a78bfa" },
+  SO2: { label: "SO₂", unit: "µg/m³", scaleMax: 800, color: "#34d399" },
+  CO: { label: "CO", unit: "mg/m³", scaleMax: 17, color: "#f472b6" },
 }
 
-export type NearestStationResult = DashboardWeatherData['airQuality'] | undefined
+export type NearestStationResult = DashboardWeatherData["airQuality"] | undefined
 
 /**
  * Groups raw CPCB records by station, finds the nearest station to the
@@ -115,14 +146,18 @@ export type NearestStationResult = DashboardWeatherData['airQuality'] | undefine
  * sub-index — CPCB's own published methodology, not an invented formula.
  * Returns undefined ("no usable station/data") when no station is within
  * range or no pollutant on the nearest station parses into a valid
- * sub-index — callers must fall back to Open-Meteo in that case.
+ * sub-index. Callers omit AQI when no genuine CPCB reading is available.
  */
 export function normalizeCpcbAirQuality(
   records: CpcbRecord[],
-  target: { latitude: number; longitude: number },
+  target: { latitude: number longitude: number },
   maxDistanceKm: number,
 ): NearestStationResult {
-  const stations = new Map<string, { latitude: number; longitude: number; records: CpcbRecord[] }>()
+  const stations = new Map<string, {
+    latitude: number
+    longitude: number
+    records: CpcbRecord[]
+  }>()
   for (const record of records) {
     const lat = Number(record.latitude)
     const lon = Number(record.longitude)
@@ -133,19 +168,38 @@ export function normalizeCpcbAirQuality(
     else stations.set(key, { latitude: lat, longitude: lon, records: [record] })
   }
 
-  let nearest: { name: string; latitude: number; longitude: number; records: CpcbRecord[]; distance: number } | undefined
+  let nearest: {
+    name: string
+    latitude: number
+    longitude: number
+    records: CpcbRecord[]
+    distance: number
+  } | undefined
   for (const [name, station] of stations) {
-    const distance = distanceKm(target.latitude, target.longitude, station.latitude, station.longitude)
+    const distance = distanceKm(
+      target.latitude,
+      target.longitude,
+      station.latitude,
+      station.longitude,
+    )
     if (distance > maxDistanceKm) continue
     if (!nearest || distance < nearest.distance) {
-      nearest = { name, latitude: station.latitude, longitude: station.longitude, records: station.records, distance }
+      nearest = {
+        name,
+        latitude: station.latitude,
+        longitude: station.longitude,
+        records: station.records,
+        distance,
+      }
     }
   }
 
   if (!nearest) return undefined
 
-  const pollutants: NonNullable<DashboardWeatherData['airQuality']>['pollutants'] = []
+  const pollutants: NonNullable<DashboardWeatherData["airQuality"]>["pollutants"] =
+    []
   let maxSubIndex = 0
+  let subIndexCount = 0
 
   for (const record of nearest.records) {
     const display = POLLUTANT_DISPLAY[record.pollutant_id]
@@ -153,7 +207,10 @@ export function normalizeCpcbAirQuality(
     if (!display || !Number.isFinite(concentration)) continue
 
     const index = subIndex(record.pollutant_id, concentration)
-    if (index !== undefined) maxSubIndex = Math.max(maxSubIndex, index)
+    if (index !== undefined) {
+      maxSubIndex = Math.max(maxSubIndex, index)
+      subIndexCount += 1
+    }
 
     pollutants.push({
       label: display.label,
@@ -164,20 +221,22 @@ export function normalizeCpcbAirQuality(
     })
   }
 
-  if (pollutants.length === 0 || maxSubIndex === 0) return undefined
+  if (pollutants.length === 0 || subIndexCount === 0) return undefined
 
   const { label, icon } = categorize(maxSubIndex)
 
   return {
     index: maxSubIndex,
     scaleMax: 500,
-    scaleLabels: IN_NAQI_CATEGORIES.map(category => category.label),
+    scaleLabels: IN_NAQI_CATEGORIES.map((category) => category.label),
     label,
-    updatedLabel: nearest.records[0]?.last_update ? `Station update: ${nearest.records[0].last_update}` : 'Updated just now',
+    updatedLabel: nearest.records[0]?.last_update
+      ? `Station update: ${nearest.records[0].last_update}`
+      : "Updated just now",
     icon,
     advice: adviceForNaqi(label),
-    standard: 'IN_NAQI',
-    source: 'CPCB',
+    standard: "IN_NAQI",
+    source: "CPCB",
     stationName: nearest.name,
     stationDistanceKm: Math.round(nearest.distance * 10) / 10,
     pollutants,
@@ -186,17 +245,17 @@ export function normalizeCpcbAirQuality(
 
 function adviceForNaqi(label: string): string {
   switch (label) {
-    case 'Good':
-      return '✅ Air quality is good — safe for outdoor activity.'
-    case 'Satisfactory':
-      return '🙂 Air quality is acceptable for most people.'
-    case 'Moderate':
-      return '💡 Sensitive groups should reduce prolonged outdoor exertion.'
-    case 'Poor':
-      return '😷 Limit prolonged outdoor exertion; consider a mask.'
-    case 'Very Poor':
-      return '🚫 Avoid outdoor exertion; keep windows closed.'
+    case "Good":
+      return "✅ Air quality is good — safe for outdoor activity."
+    case "Satisfactory":
+      return "🙂 Air quality is acceptable for most people."
+    case "Moderate":
+      return "💡 Sensitive groups should reduce prolonged outdoor exertion."
+    case "Poor":
+      return "😷 Limit prolonged outdoor exertion; consider a mask."
+    case "Very Poor":
+      return "🚫 Avoid outdoor exertion; keep windows closed."
     default:
-      return '🚨 Severe air quality — stay indoors if possible.'
+      return "🚨 Severe air quality — stay indoors if possible."
   }
 }

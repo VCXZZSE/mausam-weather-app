@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from "zod"
 
 export type OpenMeteoCoordinates = {
   latitude: number
@@ -41,6 +41,7 @@ const openMeteoResponseSchema = z.object({
     weathercode: numberArray,
     precipitation_probability: numberArray,
     uv_index: numberArray,
+    is_day: numberArray,
   }),
   daily: z.object({
     time: z.array(z.string()).min(1),
@@ -58,28 +59,29 @@ const openMeteoResponseSchema = z.object({
 export type OpenMeteoResponse = z.infer<typeof openMeteoResponseSchema>
 
 const HOURLY_VARS = [
-  'temperature_2m',
-  'apparent_temperature',
-  'relative_humidity_2m',
-  'surface_pressure',
-  'dew_point_2m',
-  'visibility',
-  'wind_gusts_10m',
-  'weathercode',
-  'precipitation_probability',
-  'uv_index',
-].join(',')
+  "temperature_2m",
+  "apparent_temperature",
+  "relative_humidity_2m",
+  "surface_pressure",
+  "dew_point_2m",
+  "visibility",
+  "wind_gusts_10m",
+  "weathercode",
+  "precipitation_probability",
+  "uv_index",
+  "is_day",
+].join(",")
 
 const DAILY_VARS = [
-  'temperature_2m_max',
-  'temperature_2m_min',
-  'weathercode',
-  'precipitation_probability_max',
-  'precipitation_sum',
-  'uv_index_max',
-  'sunrise',
-  'sunset',
-].join(',')
+  "temperature_2m_max",
+  "temperature_2m_min",
+  "weathercode",
+  "precipitation_probability_max",
+  "precipitation_sum",
+  "uv_index_max",
+  "sunrise",
+  "sunset",
+].join(",")
 
 export type FetchOpenMeteoOptions = {
   baseUrl: string
@@ -88,24 +90,30 @@ export type FetchOpenMeteoOptions = {
   fetchImpl?: typeof fetch
 }
 
-export async function fetchOpenMeteoData(options: FetchOpenMeteoOptions): Promise<OpenMeteoResponse> {
+export async function fetchOpenMeteoData(
+  options: FetchOpenMeteoOptions,
+): Promise<OpenMeteoResponse> {
   const { baseUrl, coordinates, timeoutMs = 8000, fetchImpl = fetch } = options
 
   const url = new URL(baseUrl)
-  url.searchParams.set('latitude', String(coordinates.latitude))
-  url.searchParams.set('longitude', String(coordinates.longitude))
-  url.searchParams.set('current_weather', 'true')
-  url.searchParams.set('hourly', HOURLY_VARS)
-  url.searchParams.set('daily', DAILY_VARS)
-  url.searchParams.set('timezone', 'auto')
+  url.searchParams.set("latitude", String(coordinates.latitude))
+  url.searchParams.set("longitude", String(coordinates.longitude))
+  url.searchParams.set("current_weather", "true")
+  url.searchParams.set("hourly", HOURLY_VARS)
+  url.searchParams.set("daily", DAILY_VARS)
+  url.searchParams.set("timezone", "auto")
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetchImpl(url.toString(), { signal: controller.signal })
+    const response = await fetchImpl(url.toString(), {
+      signal: controller.signal,
+    })
     if (!response.ok) {
-      throw new Error(`Open-Meteo request failed with status ${response.status}`)
+      throw new Error(
+        `Open-Meteo request failed with status ${response.status}`,
+      )
     }
     const body: unknown = await response.json()
     const result = openMeteoResponseSchema.safeParse(body)
@@ -114,7 +122,7 @@ export async function fetchOpenMeteoData(options: FetchOpenMeteoOptions): Promis
       // zod's internal issue paths to callers — this error is only ever
       // logged server-side (see routes/weather.ts) and triggers the
       // existing cache/last-good/502 fallback path.
-      throw new Error('Open-Meteo forecast response failed validation')
+      throw new Error("Open-Meteo forecast response failed validation")
     }
     return result.data
   } finally {

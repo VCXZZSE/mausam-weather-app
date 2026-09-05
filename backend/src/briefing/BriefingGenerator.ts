@@ -1,5 +1,5 @@
-import type { WeatherPayload } from '../normalizers/toDashboardWeatherData.js'
-import type { BriefingRequest, BriefingResponse } from './types.js'
+import type { WeatherPayload } from "../normalizers/toDashboardWeatherData.js"
+import type { BriefingRequest, BriefingResponse } from "./types.js"
 
 /**
  * Seam for future briefing sources. v0.1 ships only

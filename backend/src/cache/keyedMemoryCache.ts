@@ -1,4 +1,4 @@
-type CacheEntry<T> = {
+type CacheEntry<T,> = {
   value: T
   expiresAt: number
 }

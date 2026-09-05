@@ -1,11 +1,11 @@
-import Fastify, { type FastifyInstance } from 'fastify'
-import cors from '@fastify/cors'
-import type { Env } from './config/env.js'
-import { registerErrorHandler } from './middleware/errorHandler.js'
-import { healthRoute } from './routes/health.js'
-import { createWeatherCaches, weatherRoute } from './routes/weather.js'
-import { personalizedBriefingRoute } from './routes/personalizedBriefing.js'
-import { createLocationCaches, locationRoute } from './routes/location.js'
+import Fastify, { type FastifyInstance } from "fastify"
+import cors from "@fastify/cors"
+import type { Env } from "./config/env.js"
+import { registerErrorHandler } from "./middleware/errorHandler.js"
+import { healthRoute } from "./routes/health.js"
+import { createWeatherCaches, weatherRoute } from "./routes/weather.js"
+import { personalizedBriefingRoute } from "./routes/personalizedBriefing.js"
+import { createLocationCaches, locationRoute } from "./routes/location.js"
 
 export async function buildApp(env: Env): Promise<FastifyInstance> {
   const app = Fastify({ logger: true })

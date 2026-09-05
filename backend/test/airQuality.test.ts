@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
-import { normalizeAirQuality } from '../src/normalizers/airQuality.js'
-import type { OpenMeteoAirQualityResponse } from '../src/providers/openMeteoAirQualityClient.js'
+import { describe, expect, it } from "vitest"
+import { normalizeAirQuality } from "../src/normalizers/airQuality.js"
+import type { OpenMeteoAirQualityResponse } from "../src/providers/openMeteoAirQualityClient.js"
 
 function buildFixture(usAqi: number): OpenMeteoAirQualityResponse {
-  const times = ['2026-08-28T04:00', '2026-08-28T05:00', '2026-08-28T06:00']
+  const times = ["2026-08-28T04:00", "2026-08-28T05:00", "2026-08-28T06:00"]
   return {
     hourly: {
       time: times,
@@ -16,26 +16,34 @@ function buildFixture(usAqi: number): OpenMeteoAirQualityResponse {
   }
 }
 
-describe('normalizeAirQuality', () => {
-  it('finds the closest hour to the reference time and reads its values', () => {
-    const result = normalizeAirQuality(buildFixture(78), '2026-08-28T05:00')
+describe("normalizeAirQuality", () => {
+  it("finds the closest hour to the reference time and reads its values", () => {
+    const result = normalizeAirQuality(buildFixture(78), "2026-08-28T05:00")
     expect(result.index).toBe(78)
-    expect(result.pollutants.find(p => p.label === 'PM2.5')?.value).toBe(42)
+    expect(result.pollutants.find((p) => p.label === "PM2.5")?.value).toBe(42)
   })
 
-  it('categorizes US AQI into the expected label bands', () => {
-    expect(normalizeAirQuality(buildFixture(20), '2026-08-28T05:00').label).toBe('Good')
-    expect(normalizeAirQuality(buildFixture(75), '2026-08-28T05:00').label).toBe('Moderate')
-    expect(normalizeAirQuality(buildFixture(120), '2026-08-28T05:00').label).toBe('Unhealthy (Sensitive)')
-    expect(normalizeAirQuality(buildFixture(400), '2026-08-28T05:00').label).toBe('Hazardous')
+  it("categorizes US AQI into the expected label bands", () => {
+    expect(
+      normalizeAirQuality(buildFixture(20), "2026-08-28T05:00").label,
+    ).toBe("Good")
+    expect(
+      normalizeAirQuality(buildFixture(75), "2026-08-28T05:00").label,
+    ).toBe("Moderate")
+    expect(
+      normalizeAirQuality(buildFixture(120), "2026-08-28T05:00").label,
+    ).toBe("Unhealthy (Sensitive)")
+    expect(
+      normalizeAirQuality(buildFixture(400), "2026-08-28T05:00").label,
+    ).toBe("Hazardous")
   })
 
-  it('always returns exactly 4 pollutant entries with scaleMax and unit set', () => {
-    const result = normalizeAirQuality(buildFixture(50), '2026-08-28T05:00')
+  it("always returns exactly 4 pollutant entries with scaleMax and unit set", () => {
+    const result = normalizeAirQuality(buildFixture(50), "2026-08-28T05:00")
     expect(result.pollutants).toHaveLength(4)
-    result.pollutants.forEach(pollutant => {
+    result.pollutants.forEach((pollutant) => {
       expect(pollutant.scaleMax).toBeGreaterThan(0)
-      expect(pollutant.unit).toBe('µg/m³')
+      expect(pollutant.unit).toBe("µg/m³")
     })
   })
 })

@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from "zod"
 
 // CPCB (Central Pollution Control Board) real-time station air-quality
 // data, via the Government of India's open data portal (data.gov.in).
@@ -55,31 +55,44 @@ export type FetchCpcbOptions = {
  * cities — the API has no lat/lon query parameter, so nearest-station
  * matching happens client-side, see normalizers/cpcbAqi.ts). Throws on
  * any failure (missing key, HTTP error, invalid shape) — the caller
- * treats this as "CPCB unavailable" and falls back to Open-Meteo.
+ * treats this as "CPCB unavailable" and omits the AQI section.
  */
-export async function fetchCpcbRecords(options: FetchCpcbOptions): Promise<CpcbRecord[]> {
-  const { baseUrl, apiKey, limit = 2000, timeoutMs = 8000, fetchImpl = fetch } = options
+export async function fetchCpcbRecords(
+  options: FetchCpcbOptions,
+): Promise<CpcbRecord[]> {
+  const {
+    baseUrl,
+    apiKey,
+    limit = 5000,
+    timeoutMs = 5000,
+    fetchImpl = fetch,
+  } = options
   if (!apiKey) {
-    throw new Error('CPCB (data.gov.in) API key is not configured')
+    throw new Error("CPCB (data.gov.in) API key is not configured")
   }
 
   const url = new URL(baseUrl)
-  url.searchParams.set('api-key', apiKey)
-  url.searchParams.set('format', 'json')
-  url.searchParams.set('limit', String(limit))
+  url.searchParams.set("api-key", apiKey)
+  url.searchParams.set("format", "json")
+  url.searchParams.set("limit", String(limit))
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetchImpl(url.toString(), { signal: controller.signal, headers: { Accept: 'application/json' } })
+    const response = await fetchImpl(url.toString(), {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    })
     if (!response.ok) {
-      throw new Error(`CPCB (data.gov.in) request failed with status ${response.status}`)
+      throw new Error(
+        `CPCB (data.gov.in) request failed with status ${response.status}`,
+      )
     }
     const body: unknown = await response.json()
     const result = cpcbResponseSchema.safeParse(body)
     if (!result.success) {
-      throw new Error('CPCB (data.gov.in) response failed validation')
+      throw new Error("CPCB (data.gov.in) response failed validation")
     }
     return result.data.records
   } finally {

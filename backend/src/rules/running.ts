@@ -1,11 +1,19 @@
-import type { OpenMeteoResponse } from '../providers/openMeteoClient.js'
-import type { DashboardWeatherData, HourlyForecast } from '../types/dashboard.js'
-import { resolveCondition } from '../normalizers/conditionCode.js'
-import { parseLocalCalendarDate } from '../utils/locationTime.js'
-import { computeBestWindow } from '../briefing/bestWindow.js'
+import type { OpenMeteoResponse } from "../providers/openMeteoClient.js"
+import type {
+  DashboardWeatherData,
+  HourlyForecast,
+} from "../types/dashboard.js"
+import { resolveCondition } from "../normalizers/conditionCode.js"
+import { parseLocalCalendarDate } from "../utils/locationTime.js"
+import { computeBestWindow } from "../briefing/bestWindow.js"
 
 function formatHour(date: Date, timeZone: string): string {
-  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: undefined, hour12: true, timeZone })
+  return date.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: undefined,
+    hour12: true,
+    timeZone,
+  })
 }
 
 const MORNING_START_HOUR = 5
@@ -23,14 +31,22 @@ const MORNING_END_HOUR = 9
  * rather than reaching into tomorrow. Never fabricates a time not present
  * in the provider's hourly data.
  */
-export function computeRunning(data: OpenMeteoResponse): DashboardWeatherData['running'] {
+export function computeRunning(
+  data: OpenMeteoResponse,
+): DashboardWeatherData["running"] {
   const candidates: HourlyForecast[] = []
   const today = parseLocalCalendarDate(data.hourly.time[0])
-  const todayDateNumber = today.getUTCFullYear() * 10000 + (today.getUTCMonth() + 1) * 100 + today.getUTCDate()
+  const todayDateNumber =
+    today.getUTCFullYear() * 10000 +
+    (today.getUTCMonth() + 1) * 100 +
+    today.getUTCDate()
 
   for (let i = 0; i < data.hourly.time.length; i++) {
     const calendarDate = parseLocalCalendarDate(data.hourly.time[i])
-    const dateNumber = calendarDate.getUTCFullYear() * 10000 + (calendarDate.getUTCMonth() + 1) * 100 + calendarDate.getUTCDate()
+    const dateNumber =
+      calendarDate.getUTCFullYear() * 10000 +
+      (calendarDate.getUTCMonth() + 1) * 100 +
+      calendarDate.getUTCDate()
     if (dateNumber !== todayDateNumber) break // stop at the first hour that belongs to a later day
 
     const hour = calendarDate.getUTCHours()
@@ -38,7 +54,7 @@ export function computeRunning(data: OpenMeteoResponse): DashboardWeatherData['r
 
     const info = resolveCondition(data.hourly.weathercode[i])
     candidates.push({
-      time: formatHour(calendarDate, 'UTC'),
+      time: formatHour(calendarDate, "UTC"),
       temperature: Math.round(data.hourly.temperature_2m[i]),
       condition: info.condition,
       conditionCode: info.conditionCode,
@@ -47,16 +63,21 @@ export function computeRunning(data: OpenMeteoResponse): DashboardWeatherData['r
   }
 
   if (candidates.length === 0) {
-    return { badge: 'FITNESS', start: '', end: '', summary: "Today's early-morning window has already passed." }
+    return {
+      badge: "FITNESS",
+      start: "",
+      end: "",
+      summary: "Today's early-morning window has already passed.",
+    }
   }
 
   const window = computeBestWindow(candidates)
   if (!window.start) {
-    return { badge: 'FITNESS', start: '', end: '', summary: window.reason }
+    return { badge: "FITNESS", start: "", end: "", summary: window.reason }
   }
 
   return {
-    badge: 'FITNESS',
+    badge: "FITNESS",
     start: window.start,
     end: window.end,
     summary: `Good conditions ${window.start}–${window.end}`,

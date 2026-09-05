@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import type { BriefingResponse } from './types.js'
+import { z } from "zod"
+import type { BriefingResponse } from "./types.js"
 
 const briefingResponseSchema = z.object({
   title: z.string().min(1).max(120),
@@ -10,11 +10,15 @@ const briefingResponseSchema = z.object({
     end: z.string(),
     reason: z.string().min(1).max(200),
   }),
-  risks: z.array(z.object({
-    type: z.string().min(1),
-    severity: z.enum(['moderate', 'high', 'severe']),
-    message: z.string().min(1).max(240),
-  })).max(6),
+  risks: z
+    .array(
+      z.object({
+        type: z.string().min(1),
+        severity: z.enum(["moderate", "high", "severe"]),
+        message: z.string().min(1).max(240),
+      }),
+    )
+    .max(6),
   actions: z.array(z.string().min(1).max(160)).max(6),
   dataContext: z.object({
     temperature: z.number(),
@@ -34,7 +38,7 @@ const briefingResponseSchema = z.object({
 export function validateBriefingResponse(value: unknown): BriefingResponse {
   const result = briefingResponseSchema.safeParse(value)
   if (!result.success) {
-    throw new Error('Generated briefing failed validation')
+    throw new Error("Generated briefing failed validation")
   }
   return result.data
 }

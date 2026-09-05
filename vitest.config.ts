@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vitest/config"
+import react from "@vitejs/plugin-react"
 
 // Minimal frontend test infrastructure (v0.2 review, Requirement 6) — a
 // separate config from vite.config.ts so `vitest` never picks up the app's
@@ -9,9 +9,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
-    setupFiles: ['./test/setupTests.ts'],
-    include: ['test/**/*.test.{ts,tsx}'],
+    environment: "jsdom",
+    setupFiles: ["./test/setupTests.ts"],
+    include: ["test/**/*.test.{ts,tsx}"],
     css: false,
   },
 })

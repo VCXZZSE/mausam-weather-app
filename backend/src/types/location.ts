@@ -1,4 +1,4 @@
-export type LocationSource = 'device' | 'manual' | 'default'
+export type LocationSource = "device" | "manual" | "default"
 
 export type UserLocation = {
   latitude: number
@@ -16,6 +16,9 @@ export function roundCoordinate(value: number): number {
   return Math.round(value * 1000) / 1000
 }
 
-export function coordinateCacheKey(latitude: number, longitude: number): string {
+export function coordinateCacheKey(
+  latitude: number,
+  longitude: number,
+): string {
   return `${roundCoordinate(latitude).toFixed(3)},${roundCoordinate(longitude).toFixed(3)}`
 }

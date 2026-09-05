@@ -1,8 +1,16 @@
-import type { Profile, PersonalizedFactor, PersonalizedIcon, PersonalizedRecommendation, PersonalizedTile, PersonalizedTone, PersonalizedWeather } from './App'
-import type { DashboardWeatherData } from './weatherData'
+import type {
+  Profile,
+  PersonalizedFactor,
+  PersonalizedIcon,
+  PersonalizedRecommendation,
+  PersonalizedTile,
+  PersonalizedTone,
+  PersonalizedWeather,
+} from "./App"
+import type { DashboardWeatherData } from "./weatherData"
 
-export type Persona = 'commuter' | 'student' | 'outdoor' | 'health' | 'general'
-export type Sensitivity = 'low' | 'normal' | 'high'
+export type Persona = "commuter" | "student" | "outdoor" | "health" | "general"
+export type Sensitivity = "low" | "normal" | "high"
 
 export type BriefingRequest = {
   persona: Persona
@@ -17,7 +25,7 @@ export type BriefingRequest = {
 
 export type BriefingRisk = {
   type: string
-  severity: 'moderate' | 'high' | 'severe'
+  severity: "moderate" | "high" | "severe"
   message: string
 }
 
@@ -25,10 +33,15 @@ export type BriefingResponse = {
   title: string
   summary: string
   recommendation: string
-  bestWindow: { start: string; end: string; reason: string }
+  bestWindow: { start: string end: string reason: string }
   risks: BriefingRisk[]
   actions: string[]
-  dataContext: { temperature: number; rainChance: number; uvIndex: number; aqi: number | null }
+  dataContext: {
+    temperature: number
+    rainChance: number
+    uvIndex: number
+    aqi: number | null
+  }
   generatedAt: string
 }
 
@@ -40,21 +53,27 @@ export type BriefingResponse = {
  * produced here.
  */
 export function mapProfileToPersona(profile: Profile): Persona {
-  const activeConcerns = profile.concerns.filter(item => item !== 'None of these')
-  if (activeConcerns.length > 0) return 'health'
-  if (profile.goals.includes('Travel')) return 'commuter'
-  if (profile.goals.includes('Outdoor plans') || profile.goals.includes('Fitness')) return 'outdoor'
-  return 'general'
+  const activeConcerns = profile.concerns.filter(
+    (item) => item !== "None of these",
+  )
+  if (activeConcerns.length > 0) return "health"
+  if (profile.goals.includes("Travel")) return "commuter"
+  if (
+    profile.goals.includes("Outdoor plans") ||
+    profile.goals.includes("Fitness")
+  )
+    return "outdoor"
+  return "general"
 }
 
 export function mapProfileToSensitivity(profile: Profile): Sensitivity {
-  if (profile.sensitivities.length >= 3) return 'high'
-  if (profile.sensitivities.length >= 1) return 'normal'
-  return 'low'
+  if (profile.sensitivities.length >= 3) return "high"
+  if (profile.sensitivities.length >= 1) return "normal"
+  return "low"
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+  return Boolean(value && typeof value === "object" && !Array.isArray(value))
 }
 
 function isValidBriefingResponse(value: unknown): value is BriefingResponse {
@@ -62,14 +81,20 @@ function isValidBriefingResponse(value: unknown): value is BriefingResponse {
   const bestWindow = value.bestWindow
   const dataContext = value.dataContext
   return (
-    typeof value.title === 'string'
-    && typeof value.summary === 'string'
-    && typeof value.recommendation === 'string'
-    && isRecord(bestWindow) && typeof bestWindow.start === 'string' && typeof bestWindow.end === 'string' && typeof bestWindow.reason === 'string'
-    && Array.isArray(value.risks)
-    && Array.isArray(value.actions)
-    && isRecord(dataContext) && typeof dataContext.temperature === 'number' && typeof dataContext.rainChance === 'number' && typeof dataContext.uvIndex === 'number'
-    && typeof value.generatedAt === 'string'
+    typeof value.title === "string" &&
+    typeof value.summary === "string" &&
+    typeof value.recommendation === "string" &&
+    isRecord(bestWindow) &&
+    typeof bestWindow.start === "string" &&
+    typeof bestWindow.end === "string" &&
+    typeof bestWindow.reason === "string" &&
+    Array.isArray(value.risks) &&
+    Array.isArray(value.actions) &&
+    isRecord(dataContext) &&
+    typeof dataContext.temperature === "number" &&
+    typeof dataContext.rainChance === "number" &&
+    typeof dataContext.uvIndex === "number" &&
+    typeof value.generatedAt === "string"
   )
 }
 
@@ -84,27 +109,39 @@ const briefingCache = new Map<string, BriefingResponse>()
  * getPersonalizedWeather() logic, exactly as fetchWeatherDashboard's
  * callers already do for the main weather feed.
  */
-export async function fetchPersonalizedBriefing(request: BriefingRequest, signal?: AbortSignal): Promise<BriefingResponse> {
+export async function fetchPersonalizedBriefing(
+  request: BriefingRequest,
+  signal?: AbortSignal,
+): Promise<BriefingResponse> {
   const endpoint = import.meta.env.VITE_PERSONALIZED_BRIEFING_API_URL?.trim()
-  if (!endpoint) throw new Error('Personalized briefing endpoint is not configured')
+  if (!endpoint)
+    throw new Error("Personalized briefing endpoint is not configured")
 
   const cacheKey = JSON.stringify(request)
   const cached = briefingCache.get(cacheKey)
   if (cached) return cached
 
   const response = await fetch(endpoint, {
-    method: 'POST',
+    method: "POST",
     signal,
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(request),
   })
-  if (!response.ok) throw new Error(`Personalized briefing request failed with status ${response.status}`)
+  if (!response.ok)
+    throw new Error(
+      `Personalized briefing request failed with status ${response.status}`,
+    )
 
   const responseBody: unknown = await response.json()
-  const payload = isRecord(responseBody) && 'data' in responseBody ? responseBody.data : responseBody
+  const payload =
+    isRecord(responseBody) && "data" in responseBody
+      ? responseBody.data
+      : responseBody
 
   if (!isValidBriefingResponse(payload)) {
-    throw new Error('Personalized briefing response does not match the expected contract')
+    throw new Error(
+      "Personalized briefing response does not match the expected contract",
+    )
   }
 
   briefingCache.set(cacheKey, payload)
@@ -112,18 +149,18 @@ export async function fetchPersonalizedBriefing(request: BriefingRequest, signal
 }
 
 const RISK_ICONS: Record<string, PersonalizedIcon> = {
-  thunderstorm: 'rain',
-  heat: 'temperature',
-  rain: 'rain',
-  uv: 'sun',
-  aqi: 'air',
-  wind: 'wind',
+  thunderstorm: "rain",
+  heat: "temperature",
+  rain: "rain",
+  uv: "sun",
+  aqi: "air",
+  wind: "wind",
 }
 
-function toneForSeverity(severity: BriefingRisk['severity']): PersonalizedTone {
-  if (severity === 'severe') return 'rose'
-  if (severity === 'high') return 'amber'
-  return 'blue'
+function toneForSeverity(severity: BriefingRisk["severity"]): PersonalizedTone {
+  if (severity === "severe") return "rose"
+  if (severity === "high") return "amber"
+  return "blue"
 }
 
 function capitalize(value: string): string {
@@ -136,32 +173,70 @@ function capitalize(value: string): string {
 // already displaying — never from `briefing.dataContext`. Only the
 // generated prose (title/summary/recommendation/risk messages/actions)
 // comes from the briefing itself.
-function buildTiles(briefing: BriefingResponse, weather: DashboardWeatherData): PersonalizedTile[] {
-  const riskTiles: PersonalizedTile[] = briefing.risks.slice(0, 4).map(risk => ({
-    icon: RISK_ICONS[risk.type] ?? 'comfort',
-    title: capitalize(risk.type),
-    value: capitalize(risk.severity),
-    detail: risk.message,
-    tone: toneForSeverity(risk.severity),
-  }))
+function buildTiles(
+  briefing: BriefingResponse,
+  weather: DashboardWeatherData,
+): PersonalizedTile[] {
+  const riskTiles: PersonalizedTile[] = briefing.risks
+    .slice(0, 4)
+    .map((risk) => ({
+      icon: RISK_ICONS[risk.type] ?? "comfort",
+      title: capitalize(risk.type),
+      value: capitalize(risk.severity),
+      detail: risk.message,
+      tone: toneForSeverity(risk.severity),
+    }))
 
   if (riskTiles.length >= 4) return riskTiles
 
   const infoTiles: PersonalizedTile[] = [
-    { icon: 'temperature', title: 'Temperature', value: `${weather.current.temperature}°C`, detail: 'Current reading', tone: 'amber' },
-    { icon: 'sun', title: 'UV', value: `${weather.uv.index}`, detail: 'Current UV index', tone: 'violet' },
-    { icon: 'rain', title: 'Rain', value: `${weather.daily[0]?.rainChance ?? 0}%`, detail: 'Chance today', tone: 'blue' },
+    {
+      icon: "temperature",
+      title: "Temperature",
+      value: `${weather.current.temperature}°C`,
+      detail: "Current reading",
+      tone: "amber",
+    },
+    {
+      icon: "sun",
+      title: "UV",
+      value: `${weather.uv.index}`,
+      detail: "Current UV index",
+      tone: "violet",
+    },
+    {
+      icon: "rain",
+      title: "Rain",
+      value: `${weather.daily[0]?.rainChance ?? 0}%`,
+      detail: "Chance today",
+      tone: "blue",
+    },
     ...(weather.airQuality
-      ? [{ icon: 'air' as const, title: 'Air quality', value: `US AQI ${weather.airQuality.index}`, detail: 'Current reading', tone: 'green' as const }]
+      ? [
+          {
+            icon: "air" as const,
+            title: "Air quality",
+            value: `India AQI ${weather.airQuality.index}`,
+            detail: "Nearest CPCB reading",
+            tone: "green" as const,
+          },
+        ]
       : []),
   ]
 
   return [...riskTiles, ...infoTiles].slice(0, 4)
 }
 
-const ACTION_ICONS: PersonalizedIcon[] = ['outdoor', 'shield', 'comfort', 'indoor']
+const ACTION_ICONS: PersonalizedIcon[] = [
+  "outdoor",
+  "shield",
+  "comfort",
+  "indoor",
+]
 
-function buildRecommendations(briefing: BriefingResponse): PersonalizedRecommendation[] {
+function buildRecommendations(
+  briefing: BriefingResponse,
+): PersonalizedRecommendation[] {
   return briefing.actions.slice(0, 4).map((action, index) => ({
     icon: ACTION_ICONS[index % ACTION_ICONS.length],
     title: action,
@@ -171,11 +246,12 @@ function buildRecommendations(briefing: BriefingResponse): PersonalizedRecommend
 
 function buildFactors(weather: DashboardWeatherData): PersonalizedFactor[] {
   const factors: PersonalizedFactor[] = [
-    { label: 'Temperature', value: `${weather.current.temperature}°C` },
-    { label: 'Rain chance', value: `${weather.daily[0]?.rainChance ?? 0}%` },
-    { label: 'UV', value: `${weather.uv.index}` },
+    { label: "Temperature", value: `${weather.current.temperature}°C` },
+    { label: "Rain chance", value: `${weather.daily[0]?.rainChance ?? 0}%` },
+    { label: "UV", value: `${weather.uv.index}` },
   ]
-  if (weather.airQuality) factors.push({ label: 'US AQI', value: `${weather.airQuality.index}` })
+  if (weather.airQuality)
+    factors.push({ label: "India AQI", value: `${weather.airQuality.index}` })
   return factors
 }
 
@@ -192,15 +268,19 @@ export function adaptBriefingToPersonalizedWeather(
   fallback: PersonalizedWeather,
   weather: DashboardWeatherData,
 ): PersonalizedWeather {
-  const hasWindow = Boolean(briefing.bestWindow.start && briefing.bestWindow.end)
+  const hasWindow = Boolean(
+    briefing.bestWindow.start && briefing.bestWindow.end,
+  )
 
   return {
     variant: fallback.variant,
     headline: briefing.title,
     overview: `${briefing.summary} ${briefing.recommendation}`.trim(),
-    windowLabel: hasWindow ? 'Best outdoor window' : 'Outdoor outlook',
-    window: hasWindow ? `${briefing.bestWindow.start}–${briefing.bestWindow.end}` : briefing.bestWindow.reason,
-    basis: 'Backend personalized briefing',
+    windowLabel: hasWindow ? "Best outdoor window" : "Outdoor outlook",
+    window: hasWindow
+      ? `${briefing.bestWindow.start}–${briefing.bestWindow.end}`
+      : briefing.bestWindow.reason,
+    basis: "Backend personalized briefing",
     tiles: buildTiles(briefing, weather),
     recommendations: buildRecommendations(briefing),
     factors: buildFactors(weather),

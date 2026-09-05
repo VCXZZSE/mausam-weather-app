@@ -1,9 +1,9 @@
-import type { HourlyForecast } from '../types/dashboard.js'
-import type { BestWindow } from './types.js'
+import type { HourlyForecast } from "../types/dashboard.js"
+import type { BestWindow } from "./types.js"
 
-const SEVERE_CONDITIONS = new Set(['thunderstorm', 'storm'])
-const HEAVY_RAIN_CONDITIONS = new Set(['heavy_rain', 'rain'])
-const LIGHT_RAIN_CONDITIONS = new Set(['showers', 'drizzle'])
+const SEVERE_CONDITIONS = new Set(["thunderstorm", "storm"])
+const HEAVY_RAIN_CONDITIONS = new Set(["heavy_rain", "rain"])
+const LIGHT_RAIN_CONDITIONS = new Set(["showers", "drizzle"])
 
 // Only fields actually present on each hourly entry (temperature,
 // condition/conditionCode, rainChance) are used — the hourly forecast
@@ -31,17 +31,22 @@ const GOOD_THRESHOLD = 40
  * Returns a fallback reason (no start/end) when nothing qualifies.
  */
 export function computeBestWindow(hourly: HourlyForecast[]): BestWindow {
-  const scored = hourly.map(hour => ({ hour, score: scoreHour(hour) }))
+  const scored = hourly.map((hour) => ({ hour, score: scoreHour(hour) }))
 
   let bestRun: typeof scored = []
   let currentRun: typeof scored = []
 
-  const average = (run: typeof scored) => run.reduce((sum, entry) => sum + entry.score, 0) / run.length
+  const average = (run: typeof scored) =>
+    run.reduce((sum, entry) => sum + entry.score, 0) / run.length
 
   const flush = () => {
     if (currentRun.length === 0) return
-    if (bestRun.length === 0 || average(currentRun) > average(bestRun)
-      || (average(currentRun) === average(bestRun) && currentRun.length > bestRun.length)) {
+    if (
+      bestRun.length === 0 ||
+      average(currentRun) > average(bestRun) ||
+      (average(currentRun) === average(bestRun) &&
+        currentRun.length > bestRun.length)
+    ) {
       bestRun = currentRun
     }
   }
@@ -57,14 +62,20 @@ export function computeBestWindow(hourly: HourlyForecast[]): BestWindow {
   flush()
 
   if (bestRun.length === 0) {
-    return { start: '', end: '', reason: 'Conditions are unfavorable for an extended outdoor window today.' }
+    return {
+      start: "",
+      end: "",
+      reason:
+        "Conditions are unfavorable for an extended outdoor window today.",
+    }
   }
 
   const start = bestRun[0].hour.time
   const end = bestRun[bestRun.length - 1].hour.time
-  const reason = bestRun.length === 1
-    ? `${start} looks like the most favorable hour available today.`
-    : `${start}–${end} offers the most favorable stretch of conditions today.`
+  const reason =
+    bestRun.length === 1
+      ? `${start} looks like the most favorable hour available today.`
+      : `${start}–${end} offers the most favorable stretch of conditions today.`
 
   return { start, end, reason }
 }

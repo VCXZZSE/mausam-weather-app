@@ -6,8 +6,8 @@
 // instead (see data/locationsStatic.ts) so a Kolkata thunderstorm is never
 // shown 600km away in the Darjeeling hills. Temperature is always
 // adjusted using a curated, approximate regional offset.
-import type { DashboardWeatherData } from '../types/dashboard.js'
-import { STATIC_LOCATIONS } from '../data/locationsStatic.js'
+import type { DashboardWeatherData } from "../types/dashboard.js"
+import { STATIC_LOCATIONS } from "../data/locationsStatic.js"
 
 export type LocationsInput = {
   temperature: number
@@ -15,12 +15,15 @@ export type LocationsInput = {
   conditionCode: string
 }
 
-export function computeLocations(input: LocationsInput): DashboardWeatherData['locations'] {
-  return STATIC_LOCATIONS.map(location => ({
+export function computeLocations(
+  input: LocationsInput,
+): DashboardWeatherData["locations"] {
+  return STATIC_LOCATIONS.map((location) => ({
     name: location.name,
     temperature: Math.round(input.temperature + location.temperatureOffset),
     condition: location.conditionOverride?.condition ?? input.condition,
-    conditionCode: location.conditionOverride?.conditionCode ?? input.conditionCode,
+    conditionCode:
+      location.conditionOverride?.conditionCode ?? input.conditionCode,
     distance: location.distance,
   }))
 }

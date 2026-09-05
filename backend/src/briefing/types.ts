@@ -1,6 +1,6 @@
-export type Persona = 'commuter' | 'student' | 'outdoor' | 'health' | 'general'
-export type Sensitivity = 'low' | 'normal' | 'high'
-export type RiskSeverity = 'moderate' | 'high' | 'severe'
+export type Persona = "commuter" | "student" | "outdoor" | "health" | "general"
+export type Sensitivity = "low" | "normal" | "high"
+export type RiskSeverity = "moderate" | "high" | "severe"
 
 export type BriefingRequest = {
   persona: Persona

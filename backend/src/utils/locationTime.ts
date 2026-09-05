@@ -18,11 +18,11 @@
 //    conversion at all. Read it back only via getUTC*()/`timeZone:'UTC'`.
 
 function formatOffset(utcOffsetSeconds: number): string {
-  const sign = utcOffsetSeconds < 0 ? '-' : '+'
+  const sign = utcOffsetSeconds < 0 ? "-" : "+"
   const absMinutes = Math.round(Math.abs(utcOffsetSeconds) / 60)
   const hours = Math.floor(absMinutes / 60)
   const minutes = absMinutes % 60
-  return `${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  return `${sign}${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
 }
 
 /**
@@ -32,10 +32,15 @@ function formatOffset(utcOffsetSeconds: number): string {
  * (e.g. feeding an astronomical calculation) — not for calendar/weekday
  * logic (see parseLocalCalendarDate).
  */
-export function toLocationInstant(naiveIsoString: string, utcOffsetSeconds: number): Date {
+export function toLocationInstant(
+  naiveIsoString: string,
+  utcOffsetSeconds: number,
+): Date {
   const offset = formatOffset(utcOffsetSeconds)
-  const hasTime = naiveIsoString.includes('T')
-  const iso = hasTime ? `${naiveIsoString}${offset}` : `${naiveIsoString}T00:00:00${offset}`
+  const hasTime = naiveIsoString.includes("T")
+  const iso = hasTime
+    ? `${naiveIsoString}${offset}`
+    : `${naiveIsoString}T00:00:00${offset}`
   return new Date(iso)
 }
 
@@ -53,10 +58,20 @@ const NAIVE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/
 export function parseLocalCalendarDate(naiveIsoString: string): Date {
   const match = NAIVE_PATTERN.exec(naiveIsoString)
   if (!match) {
-    throw new Error(`Unrecognized Open-Meteo date/time format: ${naiveIsoString}`)
+    throw new Error(
+      `Unrecognized Open-Meteo date/time format: ${naiveIsoString}`,
+    )
   }
-  const [, year, month, day, hour = '0', minute = '0'] = match
-  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute)))
+  const [, year, month, day, hour = "0", minute = "0"] = match
+  return new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+    ),
+  )
 }
 
 /**
@@ -69,6 +84,6 @@ export function formatInLocationTimeZone(
   timeZone: string,
   options: Intl.DateTimeFormatOptions,
 ): string {
-  if (!date || Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleTimeString('en-IN', { ...options, timeZone })
+  if (!date || Number.isNaN(date.getTime())) return "—"
+  return date.toLocaleTimeString("en-IN", { ...options, timeZone })
 }

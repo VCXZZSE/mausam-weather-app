@@ -1,4 +1,7 @@
-export function findClosestTimeIndex(times: string[], targetTime: string): number {
+export function findClosestTimeIndex(
+  times: string[],
+  targetTime: string,
+): number {
   const exact = times.indexOf(targetTime)
   if (exact !== -1) return exact
 

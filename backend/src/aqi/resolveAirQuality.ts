@@ -1,30 +1,22 @@
-import type { Env } from '../config/env.js'
-import { MemoryCache } from '../cache/memoryCache.js'
-import { KeyedMemoryCache } from '../cache/keyedMemoryCache.js'
-import { fetchCpcbRecords, type CpcbRecord } from '../providers/cpcbClient.js'
-import { normalizeCpcbAirQuality } from '../normalizers/cpcbAqi.js'
-import { fetchOpenMeteoAirQuality, type OpenMeteoAirQualityResponse } from '../providers/openMeteoAirQualityClient.js'
-import { normalizeAirQuality } from '../normalizers/airQuality.js'
-import type { DashboardWeatherData } from '../types/dashboard.js'
-import { coordinateCacheKey } from '../types/location.js'
+import type { Env } from "../config/env.js"
+import { MemoryCache } from "../cache/memoryCache.js"
+import { fetchCpcbRecords, type CpcbRecord } from "../providers/cpcbClient.js"
+import { normalizeCpcbAirQuality } from "../normalizers/cpcbAqi.js"
+import type { DashboardWeatherData } from "../types/dashboard.js"
 
-// Single orchestration point for "which AQI source do we actually use" —
+// Single orchestration point for India's CPCB National AQI —
 // reused by both GET /api/weather and POST /api/personalized-briefing so
-// the logic (and its caches) exist in exactly one place (backend-v0.2
-// handoff: "reuse the existing AQI architecture rather than duplicating
-// it"). CPCB is tried first (only if a key is configured); any failure —
-// missing key, network error, no station within range, unparseable data —
-// falls back to the existing Open-Meteo path, which is left completely
-// unmodified.
+// the logic and cache exist in exactly one place. US AQI is deliberately
+// not used as a fallback: mixing two national standards would make the
+// category, bar and health advice misleading. Missing CPCB data is shown
+// honestly as unavailable by the frontend.
 export type AirQualityCaches = {
   cpcbBulk: MemoryCache<CpcbRecord[]>
-  openMeteo: KeyedMemoryCache<OpenMeteoAirQualityResponse>
 }
 
 export function createAirQualityCaches(env: Env): AirQualityCaches {
   return {
     cpcbBulk: new MemoryCache<CpcbRecord[]>(env.CPCB_CACHE_TTL_MS),
-    openMeteo: new KeyedMemoryCache<OpenMeteoAirQualityResponse>(env.AIR_QUALITY_CACHE_TTL_MS),
   }
 }
 
@@ -35,31 +27,34 @@ export type MinimalLogger = {
 export async function resolveAirQuality(
   env: Env,
   caches: AirQualityCaches,
-  coordinates: { latitude: number; longitude: number },
-  referenceTime: string,
+  coordinates: { latitude: number longitude: number },
   log: MinimalLogger,
-): Promise<DashboardWeatherData['airQuality'] | undefined> {
-  if (env.DATA_GOV_IN_API_KEY) {
-    try {
-      const records = await caches.cpcbBulk.getOrFetch(() =>
-        fetchCpcbRecords({ baseUrl: env.DATA_GOV_IN_BASE_URL, apiKey: env.DATA_GOV_IN_API_KEY }),
-      )
-      const cpcbResult = normalizeCpcbAirQuality(records, coordinates, env.CPCB_MAX_STATION_DISTANCE_KM)
-      if (cpcbResult) return cpcbResult
-      log.warn({ coordinates }, 'No CPCB station within range for these coordinates; falling back to Open-Meteo AQI')
-    } catch (error) {
-      log.warn({ err: error }, 'CPCB (data.gov.in) AQI unavailable; falling back to Open-Meteo AQI')
-    }
-  }
+): Promise<DashboardWeatherData["airQuality"] | undefined> {
+  if (!env.DATA_GOV_IN_API_KEY) return undefined
 
   try {
-    const cacheKey = coordinateCacheKey(coordinates.latitude, coordinates.longitude)
-    const raw = await caches.openMeteo.getOrFetch(cacheKey, () =>
-      fetchOpenMeteoAirQuality({ baseUrl: env.OPEN_METEO_AIR_QUALITY_URL, coordinates }),
+    const records = await caches.cpcbBulk.getOrFetch(() =>
+      fetchCpcbRecords({
+        baseUrl: env.DATA_GOV_IN_BASE_URL,
+        apiKey: env.DATA_GOV_IN_API_KEY,
+      }),
     )
-    return normalizeAirQuality(raw, referenceTime)
+    const result = normalizeCpcbAirQuality(
+      records,
+      coordinates,
+      env.CPCB_MAX_STATION_DISTANCE_KM,
+    )
+    if (!result)
+      log.warn(
+        { coordinates },
+        "No usable CPCB station reading is available near these coordinates",
+      )
+    return result
   } catch (error) {
-    log.warn({ err: error }, 'Air quality data unavailable from all sources; omitting airQuality section')
+    log.warn(
+      { err: error },
+      "CPCB National AQI is unavailable; omitting airQuality rather than substituting US AQI",
+    )
     return undefined
   }
 }

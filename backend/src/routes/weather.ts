@@ -1,11 +1,18 @@
-import type { FastifyInstance } from 'fastify'
-import { z } from 'zod'
-import type { Env } from '../config/env.js'
-import { fetchOpenMeteoData, type OpenMeteoResponse } from '../providers/openMeteoClient.js'
-import { toDashboardWeatherData } from '../normalizers/toDashboardWeatherData.js'
-import { KeyedMemoryCache } from '../cache/keyedMemoryCache.js'
-import { coordinateCacheKey, type LocationSource } from '../types/location.js'
-import { createAirQualityCaches, resolveAirQuality, type AirQualityCaches } from '../aqi/resolveAirQuality.js'
+import type { FastifyInstance } from "fastify"
+import { z } from "zod"
+import type { Env } from "../config/env.js"
+import {
+  fetchOpenMeteoData,
+  type OpenMeteoResponse,
+} from "../providers/openMeteoClient.js"
+import { toDashboardWeatherData } from "../normalizers/toDashboardWeatherData.js"
+import { KeyedMemoryCache } from "../cache/keyedMemoryCache.js"
+import { coordinateCacheKey, type LocationSource } from "../types/location.js"
+import {
+  createAirQualityCaches,
+  resolveAirQuality,
+  type AirQualityCaches,
+} from "../aqi/resolveAirQuality.js"
 
 export type WeatherCaches = {
   forecast: KeyedMemoryCache<OpenMeteoResponse>
@@ -31,52 +38,77 @@ const weatherQuerySchema = z.object({
   locality: z.string().trim().max(120).optional(),
   region: z.string().trim().max(120).optional(),
   country: z.string().trim().max(120).optional(),
-  source: z.enum(['device', 'manual']).optional(),
+  source: z.enum(["device", "manual"]).optional(),
 })
 
 export async function weatherRoute(
   app: FastifyInstance,
-  options: { env: Env; caches: WeatherCaches },
+  options: { env: Env caches: WeatherCaches },
 ): Promise<void> {
   const { env, caches } = options
 
-  app.get('/api/weather', async (request, reply) => {
+  app.get("/api/weather", async (request, reply) => {
     const parsedQuery = weatherQuerySchema.safeParse(request.query)
     if (!parsedQuery.success) {
-      return reply.status(400).send({ error: 'Invalid latitude/longitude' })
+      return reply.status(400).send({ error: "Invalid latitude/longitude" })
     }
     const query = parsedQuery.data
 
-    const hasExplicitCoordinates = query.latitude !== undefined && query.longitude !== undefined
+    const hasExplicitCoordinates =
+      query.latitude !== undefined && query.longitude !== undefined
     if (!hasExplicitCoordinates && !env.ALLOW_DEFAULT_LOCATION) {
-      return reply.status(400).send({ error: 'latitude and longitude are required' })
+      return reply
+        .status(400)
+        .send({ error: "latitude and longitude are required" })
     }
 
     const coordinates = hasExplicitCoordinates
       ? { latitude: query.latitude!, longitude: query.longitude! }
       : { latitude: env.DEFAULT_LATITUDE, longitude: env.DEFAULT_LONGITUDE }
-    const locationSource: LocationSource = hasExplicitCoordinates ? (query.source ?? 'manual') : 'default'
-    const cacheKey = coordinateCacheKey(coordinates.latitude, coordinates.longitude)
+    const locationSource: LocationSource = hasExplicitCoordinates
+      ? (query.source ?? "manual")
+      : "default"
+    const cacheKey = coordinateCacheKey(
+      coordinates.latitude,
+      coordinates.longitude,
+    )
+
+    // The forecast and CPCB station feed are independent providers. Start
+    // both together so AQI latency is not added after weather latency.
+    const forecastPromise = caches.forecast.getOrFetch(cacheKey, () =>
+      fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates }),
+    )
+    const airQualityPromise = resolveAirQuality(
+      env,
+      caches.airQuality,
+      coordinates,
+      request.log,
+    )
 
     let forecast: OpenMeteoResponse
     try {
-      forecast = await caches.forecast.getOrFetch(cacheKey, () =>
-        fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates }),
-      )
+      forecast = await forecastPromise
     } catch (error) {
-      request.log.error({ err: error }, 'Failed to load core weather data and no cached value is available')
-      return reply.status(502).send({ error: 'Weather data is temporarily unavailable' })
+      request.log.error(
+        { err: error },
+        "Failed to load core weather data and no cached value is available",
+      )
+      return reply
+        .status(502)
+        .send({ error: "Weather data is temporarily unavailable" })
     }
 
-    // AQI resolution (CPCB first if configured, else Open-Meteo) is
-    // treated as non-critical: any failure degrades gracefully by
-    // omitting the airQuality section entirely — see aqi/resolveAirQuality.ts.
-    const airQuality = await resolveAirQuality(env, caches.airQuality, coordinates, forecast.current_weather.time, request.log)
+    // AQI is non-critical: any CPCB failure degrades gracefully by omitting
+    // the section—never by changing standards behind the user's back.
+    const airQuality = await airQualityPromise
 
     const payload = toDashboardWeatherData(forecast, airQuality, {
-      city: query.locality ?? (hasExplicitCoordinates ? 'Selected location' : env.DEFAULT_CITY),
-      region: query.region ?? (hasExplicitCoordinates ? '' : env.DEFAULT_REGION),
-      country: query.country ?? '',
+      city:
+        query.locality ??
+        (hasExplicitCoordinates ? "Selected location" : env.DEFAULT_CITY),
+      region:
+        query.region ?? (hasExplicitCoordinates ? "" : env.DEFAULT_REGION),
+      country: query.country ?? "",
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       source: locationSource,

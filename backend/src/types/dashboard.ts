@@ -1,7 +1,7 @@
 // Mirrors DashboardWeatherData from ../../../src/weatherData.ts exactly.
 // Keep in sync manually — the frontend contract is the source of truth.
 
-export type WeatherHeroVariant = 'rainy' | 'sunny'
+export type WeatherHeroVariant = "rainy" | "sunny" | "night"
 
 export type HourlyForecast = {
   time: string
@@ -10,6 +10,7 @@ export type HourlyForecast = {
   conditionCode: string
   icon?: string
   rainChance: number
+  isDay?: boolean
 }
 
 export type DailyForecast = {
@@ -32,7 +33,7 @@ export type ResolvedLocation = {
   region: string
   country: string
   timezone: string
-  source: 'device' | 'manual' | 'default'
+  source: "device" | "manual" | "default"
 }
 
 export type DashboardWeatherData = {
@@ -69,7 +70,7 @@ export type DashboardWeatherData = {
   }
   hourly: HourlyForecast[]
   daily: DailyForecast[]
-  overview: Array<{ icon: string; label: string; value: string; tone: string }>
+  overview: Array<{ icon: string label: string value: string tone: string }>
   airQuality: {
     index: number
     scaleMax: number
@@ -78,14 +79,16 @@ export type DashboardWeatherData = {
     updatedLabel: string
     icon: string
     advice: string
-    pollutants: Array<{ label: string; value: number; scaleMax: number; unit: string; color: string }>
-    // Added in v0.2 for AQI-source honesty (see backend-v0.2 handoff §8):
-    // which national standard this index uses, and whether it came from a
-    // real government monitoring station or a modeled global estimate.
-    // Optional so older/partial responses (and the frontend's own demo
-    // fallback) remain valid without these fields.
-    standard?: 'IN_NAQI' | 'US_AQI'
-    source?: 'CPCB' | 'OPEN_METEO'
+    pollutants: Array<{
+      label: string
+      value: number
+      scaleMax: number
+      unit: string
+      color: string
+    }>
+    // India National AQI from the nearest usable CPCB station.
+    standard: "IN_NAQI"
+    source: "CPCB"
     stationName?: string | null
     stationDistanceKm?: number | null
   }
@@ -113,12 +116,12 @@ export type DashboardWeatherData = {
     unit: string
     periodLabel: string
     monthLabel: string
-    history: Array<{ label: string; value: number }>
+    history: Array<{ label: string value: number }>
   }
   commute: {
     status: string
     location: string
-    items: Array<{ icon: string; name: string; value: string; detail: string }>
+    items: Array<{ icon: string name: string value: string detail: string }>
   }
   swimming: {
     badge: string
@@ -140,7 +143,7 @@ export type DashboardWeatherData = {
     overall: string
     icon: string
     advice: string
-    items: Array<{ type: string; level: string; percent: number; color: string }>
+    items: Array<{ type: string level: string percent: number color: string }>
   }
   astronomy: {
     sunrise: string
@@ -155,7 +158,12 @@ export type DashboardWeatherData = {
     label: string
     icon: string
     advice: string
-    factors: Array<{ label: string; value: string; percent: number; color: string }>
+    factors: Array<{
+      label: string
+      value: string
+      percent: number
+      color: string
+    }>
   }
   alerts: Array<{
     level: string
@@ -177,7 +185,7 @@ export type DashboardWeatherData = {
   }>
   packing: {
     title: string
-    items: Array<{ icon: string; item: string; reason: string }>
+    items: Array<{ icon: string item: string reason: string }>
   }
   event: {
     sectionLabel: string

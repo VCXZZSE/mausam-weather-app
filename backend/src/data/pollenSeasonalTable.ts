@@ -6,9 +6,9 @@
 // Bengal pollen behavior (tree bloom in late winter/summer, monsoon rain
 // suppressing airborne pollen, post-monsoon weed pollen). It must never be
 // presented to users as a live/measured reading.
-import type { DashboardWeatherData } from '../types/dashboard.js'
+import type { DashboardWeatherData } from "../types/dashboard.js"
 
-type PollenLevels = { tree: number; grass: number; weed: number }
+type PollenLevels = { tree: number grass: number weed: number }
 
 // Percent (0-100) values per month index (0 = January).
 const POLLEN_BY_MONTH: PollenLevels[] = [
@@ -27,39 +27,60 @@ const POLLEN_BY_MONTH: PollenLevels[] = [
 ]
 
 function levelFor(percent: number): string {
-  if (percent < 34) return 'Low'
-  if (percent < 67) return 'Moderate'
-  return 'High'
+  if (percent < 34) return "Low"
+  if (percent < 67) return "Moderate"
+  return "High"
 }
 
 function colorFor(level: string): string {
   switch (level) {
-    case 'Low': return '#4ade80'
-    case 'Moderate': return '#eab308'
-    default: return '#f97316'
+    case "Low":
+      return "#4ade80"
+    case "Moderate":
+      return "#eab308"
+    default:
+      return "#f97316"
   }
 }
 
 /** Deterministic: same month always produces the same output. */
-export function computePollen(month: number): DashboardWeatherData['pollen'] {
+export function computePollen(month: number): DashboardWeatherData["pollen"] {
   const levels = POLLEN_BY_MONTH[((month % 12) + 12) % 12]
   const items = [
-    { type: 'Tree', level: levelFor(levels.tree), percent: levels.tree, color: colorFor(levelFor(levels.tree)) },
-    { type: 'Grass', level: levelFor(levels.grass), percent: levels.grass, color: colorFor(levelFor(levels.grass)) },
-    { type: 'Weed', level: levelFor(levels.weed), percent: levels.weed, color: colorFor(levelFor(levels.weed)) },
+    {
+      type: "Tree",
+      level: levelFor(levels.tree),
+      percent: levels.tree,
+      color: colorFor(levelFor(levels.tree)),
+    },
+    {
+      type: "Grass",
+      level: levelFor(levels.grass),
+      percent: levels.grass,
+      color: colorFor(levelFor(levels.grass)),
+    },
+    {
+      type: "Weed",
+      level: levelFor(levels.weed),
+      percent: levels.weed,
+      color: colorFor(levelFor(levels.weed)),
+    },
   ]
 
-  const overallPercent = Math.round((levels.tree + levels.grass + levels.weed) / 3)
+  const overallPercent = Math.round(
+    (levels.tree + levels.grass + levels.weed) / 3,
+  )
   const overall = levelFor(overallPercent)
 
   return {
     overall,
-    icon: '🌿',
-    advice: overall === 'High'
-      ? '🤧 Keep windows closed during peak hours · Antihistamine recommended if allergy-prone'
-      : overall === 'Moderate'
-        ? '🌿 Sensitive individuals should monitor symptoms outdoors'
-        : '🌿 Pollen levels are low — minimal precaution needed',
+    icon: "🌿",
+    advice:
+      overall === "High"
+        ? "🤧 Keep windows closed during peak hours · Antihistamine recommended if allergy-prone"
+        : overall === "Moderate"
+          ? "🌿 Sensitive individuals should monitor symptoms outdoors"
+          : "🌿 Pollen levels are low — minimal precaution needed",
     items,
   }
 }

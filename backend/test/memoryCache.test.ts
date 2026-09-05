@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
-import { MemoryCache } from '../src/cache/memoryCache.js'
+import { describe, expect, it, vi } from "vitest"
+import { MemoryCache } from "../src/cache/memoryCache.js"
 
-describe('MemoryCache', () => {
-  it('calls the fetcher on first access and caches the result', async () => {
+describe("MemoryCache", () => {
+  it("calls the fetcher on first access and caches the result", async () => {
     const cache = new MemoryCache<number>(10_000)
     const fetcher = vi.fn().mockResolvedValue(42)
 
@@ -14,7 +14,7 @@ describe('MemoryCache', () => {
     expect(fetcher).toHaveBeenCalledTimes(1)
   })
 
-  it('re-fetches once the TTL has expired', async () => {
+  it("re-fetches once the TTL has expired", async () => {
     vi.useFakeTimers()
     try {
       const cache = new MemoryCache<number>(1000)
@@ -32,11 +32,14 @@ describe('MemoryCache', () => {
     }
   })
 
-  it('falls back to the last known-good value when the fetcher fails', async () => {
+  it("falls back to the last known-good value when the fetcher fails", async () => {
     vi.useFakeTimers()
     try {
       const cache = new MemoryCache<number>(1000)
-      const fetcher = vi.fn().mockResolvedValueOnce(7).mockRejectedValueOnce(new Error('provider down'))
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce(7)
+        .mockRejectedValueOnce(new Error("provider down"))
 
       const first = await cache.getOrFetch(fetcher)
       vi.advanceTimersByTime(1001)
@@ -49,10 +52,10 @@ describe('MemoryCache', () => {
     }
   })
 
-  it('propagates the error when the fetcher fails and there is no cached value', async () => {
+  it("propagates the error when the fetcher fails and there is no cached value", async () => {
     const cache = new MemoryCache<number>(1000)
-    const fetcher = vi.fn().mockRejectedValue(new Error('provider down'))
+    const fetcher = vi.fn().mockRejectedValue(new Error("provider down"))
 
-    await expect(cache.getOrFetch(fetcher)).rejects.toThrow('provider down')
+    await expect(cache.getOrFetch(fetcher)).rejects.toThrow("provider down")
   })
 })

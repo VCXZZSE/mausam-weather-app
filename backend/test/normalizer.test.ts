@@ -1,17 +1,29 @@
-import { describe, expect, it } from 'vitest'
-import { toDashboardWeatherData } from '../src/normalizers/toDashboardWeatherData.js'
-import type { OpenMeteoResponse } from '../src/providers/openMeteoClient.js'
-import { normalizeAirQuality } from '../src/normalizers/airQuality.js'
-import type { DashboardWeatherData } from '../src/types/dashboard.js'
+import { describe, expect, it } from "vitest"
+import { toDashboardWeatherData } from "../src/normalizers/toDashboardWeatherData.js"
+import type { OpenMeteoResponse } from "../src/providers/openMeteoClient.js"
+import { normalizeAirQuality } from "../src/normalizers/airQuality.js"
+import type { DashboardWeatherData } from "../src/types/dashboard.js"
 
-const CONTEXT = { city: 'Kolkata', region: 'West Bengal', country: 'India', latitude: 22.5726, longitude: 88.3639, source: 'default' as const }
+const CONTEXT = {
+  city: "Kolkata",
+  region: "West Bengal",
+  country: "India",
+  latitude: 22.5726,
+  longitude: 88.3639,
+  source: "default" as const,
+}
 
-function buildFixture(overrides: Partial<OpenMeteoResponse> = {}): OpenMeteoResponse {
+function buildFixture(
+  overrides: Partial<OpenMeteoResponse> = {},
+): OpenMeteoResponse {
   const hourlyLength = 24
-  const times = Array.from({ length: hourlyLength }, (_, i) => `2026-08-28T${String(i).padStart(2, '0')}:00`)
+  const times = Array.from(
+    { length: hourlyLength },
+    (_, i) => `2026-08-28T${String(i).padStart(2, "0")}:00`,
+  )
 
   return {
-    timezone: 'Asia/Kolkata',
+    timezone: "Asia/Kolkata",
     utc_offset_seconds: 19800,
     current_weather: {
       time: times[5],
@@ -33,17 +45,18 @@ function buildFixture(overrides: Partial<OpenMeteoResponse> = {}): OpenMeteoResp
       weathercode: times.map(() => 95),
       precipitation_probability: times.map(() => 92),
       uv_index: times.map((_, i) => (i >= 5 && i <= 16 ? 7 : 0)),
+      is_day: times.map((_, i) => (i >= 6 && i < 18 ? 1 : 0)),
     },
     daily: {
-      time: ['2026-08-28', '2026-08-29', '2026-08-30'],
+      time: ["2026-08-28", "2026-08-29", "2026-08-30"],
       temperature_2m_max: [31, 30, 32],
       temperature_2m_min: [25, 25, 26],
       weathercode: [95, 65, 80],
       precipitation_probability_max: [92, 85, 60],
       precipitation_sum: [34.2, 20.1, 5.4],
       uv_index_max: [8, 7, 6],
-      sunrise: ['2026-08-28T05:21', '2026-08-29T05:21', '2026-08-30T05:22'],
-      sunset: ['2026-08-28T18:14', '2026-08-29T18:13', '2026-08-30T18:13'],
+      sunrise: ["2026-08-28T05:21", "2026-08-29T05:21", "2026-08-30T05:22"],
+      sunset: ["2026-08-28T18:14", "2026-08-29T18:13", "2026-08-30T18:13"],
     },
     ...overrides,
   }
@@ -54,126 +67,193 @@ function buildFixture(overrides: Partial<OpenMeteoResponse> = {}): OpenMeteoResp
 // Open-Meteo before the normalizer ever runs) — so this fixture builds
 // that final normalized shape directly, via the same normalizeAirQuality
 // function the real Open-Meteo path uses, rather than raw provider JSON.
-function buildAirQualityFixture(): DashboardWeatherData['airQuality'] {
-  const times = Array.from({ length: 24 }, (_, i) => `2026-08-28T${String(i).padStart(2, '0')}:00`)
-  return normalizeAirQuality({
-    hourly: {
-      time: times,
-      pm2_5: times.map(() => 42),
-      pm10: times.map(() => 68),
-      ozone: times.map(() => 38),
-      nitrogen_dioxide: times.map(() => 22),
-      us_aqi: times.map(() => 78),
+function buildAirQualityFixture(): DashboardWeatherData["airQuality"] {
+  const times = Array.from(
+    { length: 24 },
+    (_, i) => `2026-08-28T${String(i).padStart(2, "0")}:00`,
+  )
+  return normalizeAirQuality(
+    {
+      hourly: {
+        time: times,
+        pm2_5: times.map(() => 42),
+        pm10: times.map(() => 68),
+        ozone: times.map(() => 38),
+        nitrogen_dioxide: times.map(() => 22),
+        us_aqi: times.map(() => 78),
+      },
     },
-  }, times[5])
+    times[5],
+  )
 }
 
-describe('toDashboardWeatherData', () => {
-  it('maps current weather fields including derived hero variant', () => {
+describe("toDashboardWeatherData", () => {
+  it("maps current weather fields including derived hero variant", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
 
-    expect(result.current.city).toBe('Kolkata')
-    expect(result.current.region).toBe('West Bengal')
+    expect(result.current.city).toBe("Kolkata")
+    expect(result.current.region).toBe("West Bengal")
     expect(result.current.temperature).toBe(31)
-    expect(result.current.conditionCode).toBe('thunderstorm')
-    expect(result.current.heroVariant).toBe('rainy')
-    expect(result.current.windDirection).toBe('SW')
+    expect(result.current.conditionCode).toBe("thunderstorm")
+    expect(result.current.heroVariant).toBe("rainy")
+    expect(result.current.windDirection).toBe("SW")
     expect(result.current.humidity).toBe(89)
     expect(result.current.high).toBe(31)
     expect(result.current.low).toBe(25)
   })
 
-  it('computes hydrationAdvice server-side (v0.2: closes the old demo-data-leak gap)', () => {
+  it("computes hydrationAdvice server-side (v0.2: closes the old demo-data-leak gap)", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
-    expect(typeof result.current.hydrationAdvice).toBe('string')
+    expect(typeof result.current.hydrationAdvice).toBe("string")
     expect(result.current.hydrationAdvice!.length).toBeGreaterThan(0)
   })
 
-  it('produces exactly 7 daily entries with day labels starting at Today', () => {
+  it("produces exactly 7 daily entries with day labels starting at Today", () => {
     const fixture = buildFixture({
       daily: {
-        time: ['2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31', '2026-09-01', '2026-09-02', '2026-09-03'],
+        time: [
+          "2026-08-28",
+          "2026-08-29",
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03",
+        ],
         temperature_2m_max: [31, 30, 32, 33, 34, 31, 30],
         temperature_2m_min: [25, 25, 26, 27, 27, 25, 24],
         weathercode: [95, 65, 80, 2, 3, 61, 96],
         precipitation_probability_max: [92, 85, 60, 30, 40, 80, 90],
         precipitation_sum: [34.2, 20.1, 5.4, 0, 0, 12.3, 40.1],
         uv_index_max: [8, 7, 6, 5, 4, 6, 7],
-        sunrise: Array(7).fill('2026-08-28T05:21'),
-        sunset: Array(7).fill('2026-08-28T18:14'),
+        sunrise: Array(7).fill("2026-08-28T05:21"),
+        sunset: Array(7).fill("2026-08-28T18:14"),
       },
     })
     const result = toDashboardWeatherData(fixture, undefined, CONTEXT)
 
     expect(result.daily).toHaveLength(7)
-    expect(result.daily[0].day).toBe('Today')
-    expect(result.daily[1].conditionCode).toBe('heavy_rain')
+    expect(result.daily[0].day).toBe("Today")
+    expect(result.daily[1].conditionCode).toBe("heavy_rain")
   })
 
-  it('produces up to 10 hourly entries starting from the current hour, labeled Now', () => {
+  it("produces up to 10 hourly entries starting from the current hour, labeled Now", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
 
     expect(result.hourly.length).toBeGreaterThan(0)
     expect(result.hourly.length).toBeLessThanOrEqual(10)
-    expect(result.hourly[0].time).toBe('Now')
+    expect(result.hourly[0].time).toBe("Now")
     expect(result.hourly[0].rainChance).toBe(92)
+    expect(result.hourly[0].isDay).toBe(false)
+    expect(result.hourly[1].isDay).toBe(true)
   })
 
-  it('falls back to a default condition for unknown weather codes', () => {
+  it("falls back to a default condition for unknown weather codes", () => {
     const fixture = buildFixture({
-      current_weather: { time: '2026-08-28T05:00', temperature: 25, windspeed: 5, winddirection: 10, weathercode: 9999, is_day: 1 },
+      current_weather: {
+        time: "2026-08-28T05:00",
+        temperature: 25,
+        windspeed: 5,
+        winddirection: 10,
+        weathercode: 9999,
+        is_day: 1,
+      },
     })
     const result = toDashboardWeatherData(fixture, undefined, CONTEXT)
-    expect(result.current.conditionCode).toBe('cloudy')
+    expect(result.current.conditionCode).toBe("cloudy")
   })
 
-  it('omits airQuality when no air quality data is supplied', () => {
+  it("selects the night hero for dry nighttime weather and keeps rain authoritative", () => {
+    const clearNight = buildFixture({
+      current_weather: {
+        time: "2026-08-28T22:00",
+        temperature: 27,
+        windspeed: 5,
+        winddirection: 90,
+        weathercode: 0,
+        is_day: 0,
+      },
+    })
+    expect(
+      toDashboardWeatherData(clearNight, undefined, CONTEXT).current
+        .heroVariant,
+    ).toBe("night")
+
+    const rainyNight = buildFixture({
+      current_weather: {
+        time: "2026-08-28T22:00",
+        temperature: 27,
+        windspeed: 5,
+        winddirection: 90,
+        weathercode: 61,
+        is_day: 0,
+      },
+    })
+    expect(
+      toDashboardWeatherData(rainyNight, undefined, CONTEXT).current
+        .heroVariant,
+    ).toBe("rainy")
+  })
+
+  it("omits airQuality when no air quality data is supplied", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
     expect(result.airQuality).toBeUndefined()
   })
 
-  it('includes a normalized airQuality section when air quality data is supplied', () => {
-    const result = toDashboardWeatherData(buildFixture(), buildAirQualityFixture(), CONTEXT)
+  it("includes a normalized airQuality section when air quality data is supplied", () => {
+    const result = toDashboardWeatherData(
+      buildFixture(),
+      buildAirQualityFixture(),
+      CONTEXT,
+    )
     expect(result.airQuality).toBeDefined()
     expect(result.airQuality?.index).toBe(78)
     expect(result.airQuality?.pollutants).toHaveLength(4)
   })
 
-  it('normalizes uv from the current hour uv_index', () => {
+  it("normalizes uv from the current hour uv_index", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
     expect(result.uv.index).toBe(7)
-    expect(result.uv.label).toBe('High')
+    expect(result.uv.label).toBe("High")
   })
 
-  it('computes astronomy fields as non-placeholder times', () => {
+  it("computes astronomy fields as non-placeholder times", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
-    expect(result.astronomy.sunrise).not.toBe('—')
-    expect(result.astronomy.sunset).not.toBe('—')
+    expect(result.astronomy.sunrise).not.toBe("—")
+    expect(result.astronomy.sunset).not.toBe("—")
     expect(result.astronomy.moonPhase).toEqual(expect.any(String))
   })
 
-  it('computes comfort from temperature/humidity/wind', () => {
+  it("computes comfort from temperature/humidity/wind", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
     expect(result.comfort.index).toBeGreaterThanOrEqual(0)
     expect(result.comfort.index).toBeLessThanOrEqual(100)
     expect(result.comfort.factors).toHaveLength(3)
   })
 
-  it('computes rainfall today from daily precipitation_sum', () => {
+  it("computes rainfall today from daily precipitation_sum", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
     expect(result.rainfall.today).toBe(34.2)
     expect(result.rainfall.chance).toBe(92)
-    expect(result.rainfall.unit).toBe('mm')
+    expect(result.rainfall.unit).toBe("mm")
   })
 
-  it('produces 4 overview entries derived from available data', () => {
-    const result = toDashboardWeatherData(buildFixture(), buildAirQualityFixture(), CONTEXT)
+  it("produces 4 overview entries derived from available data", () => {
+    const result = toDashboardWeatherData(
+      buildFixture(),
+      buildAirQualityFixture(),
+      CONTEXT,
+    )
     expect(result.overview).toHaveLength(4)
-    expect(result.overview[0].value).toContain('AQI 78')
+    expect(result.overview[0].value).toContain("AQI 78")
   })
 
-  it('includes all Phase 3 curated/derived sections in the payload', () => {
-    const result = toDashboardWeatherData(buildFixture(), buildAirQualityFixture(), CONTEXT)
+  it("includes all Phase 3 curated/derived sections in the payload", () => {
+    const result = toDashboardWeatherData(
+      buildFixture(),
+      buildAirQualityFixture(),
+      CONTEXT,
+    )
     expect(result.pollen).toBeDefined()
     expect(result.alerts).toBeInstanceOf(Array)
     expect(result.commute).toBeDefined()
@@ -184,8 +264,10 @@ describe('toDashboardWeatherData', () => {
     expect(result.event).toBeDefined()
   })
 
-  it('raises a thunderstorm alert consistent with the thunderstorm current condition', () => {
+  it("raises a thunderstorm alert consistent with the thunderstorm current condition", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
-    expect(result.alerts.some(a => a.title.includes('Thunderstorm'))).toBe(true)
+    expect(result.alerts.some((a) => a.title.includes("Thunderstorm"))).toBe(
+      true,
+    )
   })
 })
