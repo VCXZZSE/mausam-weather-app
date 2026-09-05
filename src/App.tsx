@@ -6,6 +6,12 @@ import {
   resolveWeatherIcon,
   type DashboardWeatherData,
 } from './weatherData'
+import {
+  adaptBriefingToPersonalizedWeather,
+  fetchPersonalizedBriefing,
+  mapProfileToPersona,
+  mapProfileToSensitivity,
+} from './personalizedBriefing'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = 'home' | 'health' | 'forecast' | 'alerts'
@@ -817,11 +823,11 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
 type SetupStep = 'welcome' | 'location' | 'body' | 'sensitivities' | 'routine' | 'ready'
 export type Profile = { name: string; location: string; sensitivities: string[]; concerns: string[]; goals: string[]; age: number; height: number; weight: number; activity: string }
 type PersonalizationVariant = 'skin-sun' | 'uv-heat' | 'uv-sun' | 'air-quality' | 'cold' | 'general'
-type PersonalizedIcon = 'sun' | 'outdoor' | 'comfort' | 'shield' | 'cold' | 'temperature' | 'evening' | 'air' | 'indoor' | 'rain' | 'wind'
-type PersonalizedTone = 'blue' | 'amber' | 'green' | 'violet' | 'rose'
-type PersonalizedTile = { icon: PersonalizedIcon; title: string; value: string; detail: string; tone: PersonalizedTone }
-type PersonalizedRecommendation = { icon: PersonalizedIcon; title: string; reason: string }
-type PersonalizedFactor = { label: string; value: string }
+export type PersonalizedIcon = 'sun' | 'outdoor' | 'comfort' | 'shield' | 'cold' | 'temperature' | 'evening' | 'air' | 'indoor' | 'rain' | 'wind'
+export type PersonalizedTone = 'blue' | 'amber' | 'green' | 'violet' | 'rose'
+export type PersonalizedTile = { icon: PersonalizedIcon; title: string; value: string; detail: string; tone: PersonalizedTone }
+export type PersonalizedRecommendation = { icon: PersonalizedIcon; title: string; reason: string }
+export type PersonalizedFactor = { label: string; value: string }
 export type PersonalizedWeather = {
   variant: PersonalizationVariant
   headline: string
@@ -1242,8 +1248,27 @@ function PersonalizedIconGraphic({ name }: { name: PersonalizedIcon }) {
 }
 
 function PersonalizedWeatherPage({ profile, weather, onBack }: { profile: Profile; weather: DashboardWeatherData; onBack: () => void }) {
-  const personalized = useMemo(() => getPersonalizedWeather(profile, weather), [profile, weather])
+  const localFallback = useMemo(() => getPersonalizedWeather(profile, weather), [profile, weather])
+  const [personalized, setPersonalized] = useState<PersonalizedWeather>(localFallback)
   const [whyOpen, setWhyOpen] = useState(false)
+
+  useEffect(() => {
+    // Show the local, deterministic briefing immediately (no loading
+    // state needed), then silently upgrade to the backend briefing if it
+    // arrives in time. Any failure — unconfigured endpoint, network error,
+    // invalid response — leaves the local fallback in place, exactly as
+    // the existing weather-fetch fallback behaves.
+    setPersonalized(localFallback)
+    const controller = new AbortController()
+    fetchPersonalizedBriefing({
+      persona: mapProfileToPersona(profile),
+      sensitivity: mapProfileToSensitivity(profile),
+      location: weather.current.city,
+    }, controller.signal)
+      .then(briefing => setPersonalized(adaptBriefingToPersonalizedWeather(briefing, localFallback)))
+      .catch(() => { /* keep the local fallback already set */ })
+    return () => controller.abort()
+  }, [profile, weather, localFallback])
 
   return (
     <main className="personalized-page" data-variant={personalized.variant}>
