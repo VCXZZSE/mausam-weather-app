@@ -4,7 +4,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   ALLOWED_ORIGINS: z
     .string()
-    .default('http://localhost:5173')
+    // 8443 is the frontend's actual Vite dev-server default (see
+    // vite.config.ts); 5173 is Vite's own generic default, kept as a
+    // fallback for anyone overriding PORT locally.
+    .default('http://localhost:8443,http://localhost:5173')
     .transform(value => value.split(',').map(origin => origin.trim()).filter(Boolean)),
   WEATHER_CACHE_TTL_MS: z.coerce.number().int().min(10_000).default(300_000),
   OPEN_METEO_BASE_URL: z.string().url().default('https://api.open-meteo.com/v1/forecast'),

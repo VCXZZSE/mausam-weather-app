@@ -392,7 +392,7 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { pr
             </div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 5 }}>Pool depth</div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>
-              💧 {weather.swimming.waterTemperature}°C · Peak {weather.swimming.peakTime}
+              💧 ~{weather.swimming.waterTemperature}°C (est.) · Peak {weather.swimming.peakTime}
             </div>
             <div style={{ fontSize: 9, color: '#f87171', marginTop: 5 }}>{weather.swimming.advice}</div>
           </Card>
@@ -521,7 +521,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
 
       {/* Pollen */}
       <Card grad="linear-gradient(140deg,#14532d 0%,#071a10 100%)" border="rgba(74,222,128,0.08)" pad={20}>
-        <CardLabel>Pollen Count</CardLabel>
+        <CardLabel>Pollen Outlook (Seasonal Estimate)</CardLabel>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: 24, fontWeight: 800, color: 'white' }}>{weather.pollen.overall}</div>
           <div style={{ fontSize: 28 }}>{weather.pollen.icon}</div>
@@ -548,7 +548,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
             <div style={{ fontSize: 32, fontWeight: 800, color: '#f87171', lineHeight: 1 }}>{weather.current.heatIndex}°</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>Heat Index</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>Heat Index (Approx.)</div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
             <div style={{ fontSize: 32, fontWeight: 800, color: '#60a5fa', lineHeight: 1 }}>{weather.current.humidity}%</div>
@@ -686,9 +686,9 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
       <Card grad="linear-gradient(140deg,#2e1065 0%,#100522 100%)" border="rgba(167,139,250,0.08)" pad={20}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 46, fontWeight: 800, color: '#f87171', lineHeight: 1 }}>{weather.comfort.index}°</div>
+            <div style={{ fontSize: 46, fontWeight: 800, color: '#f87171', lineHeight: 1 }}>{weather.comfort.index}</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#f87171', marginTop: 5 }}>{weather.comfort.label}</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>Comfort Index</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>Comfort Index (Estimate)</div>
           </div>
           <div style={{ fontSize: 36 }}>{weather.comfort.icon}</div>
         </div>
