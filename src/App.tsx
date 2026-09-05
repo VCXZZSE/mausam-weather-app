@@ -219,7 +219,7 @@ function dailyTemperaturePercent(
 
 // ── Nav Icons ──────────────────────────────────────────────────────────────────
 
-function NavIcon({ id, active }: { id: Tab active: boolean }) {
+function NavIcon({ id, active }: { id: Tab; active: boolean }) {
   const c = active ? "#fff" : "#4a4a5a"
   const sw = 1.8
   if (id === "home")
@@ -289,14 +289,14 @@ function NavIcon({ id, active }: { id: Tab active: boolean }) {
 
 // ── Bottom Nav ─────────────────────────────────────────────────────────────────
 
-const NAV_TABS: { id: Tab label: string }[] = [
+const NAV_TABS: { id: Tab; label: string }[] = [
   { id: "home", label: "Home" },
   { id: "health", label: "Health" },
   { id: "forecast", label: "Forecast" },
   { id: "alerts", label: "Alerts" },
 ]
 
-function BottomNav({ tab, setTab }: { tab: Tab setTab: (t: Tab) => void }) {
+function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
   return (
     <nav
       style={{
@@ -2724,7 +2724,7 @@ export type PersonalizedRecommendation = {
   title: string
   reason: string
 }
-export type PersonalizedFactor = { label: string value: string }
+export type PersonalizedFactor = { label: string; value: string }
 export type PersonalizedWeather = {
   variant: PersonalizationVariant
   headline: string

@@ -64,7 +64,7 @@ export type DashboardWeatherData = {
   }
   hourly: HourlyForecast[]
   daily: DailyForecast[]
-  overview: Array<{ icon: string label: string value: string tone: string }>
+  overview: Array<{ icon: string; label: string; value: string; tone: string }>
   // Optional (backend-v0.2 handoff §9): when the AQI provider is genuinely
   // unavailable, this is left undefined rather than silently filled with a
   // demo value — the UI must render an explicit "Unavailable" state.
@@ -118,12 +118,12 @@ export type DashboardWeatherData = {
     unit: string
     periodLabel: string
     monthLabel: string
-    history?: Array<{ label: string value: number }>
+    history?: Array<{ label: string; value: number }>
   }
   commute: {
     status: string
     location: string
-    items: Array<{ icon: string name: string value: string detail: string }>
+    items: Array<{ icon: string; name: string; value: string; detail: string }>
   }
   swimming: {
     badge: string
@@ -145,7 +145,7 @@ export type DashboardWeatherData = {
     overall: string
     icon: string
     advice: string
-    items: Array<{ type: string level: string percent: number color: string }>
+    items: Array<{ type: string; level: string; percent: number; color: string }>
   }
   astronomy: {
     sunrise: string
@@ -187,7 +187,7 @@ export type DashboardWeatherData = {
   }>
   packing: {
     title: string
-    items: Array<{ icon: string item: string reason: string }>
+    items: Array<{ icon: string; item: string; reason: string }>
   }
   event: {
     sectionLabel: string

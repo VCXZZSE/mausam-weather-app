@@ -33,7 +33,7 @@ export type BriefingResponse = {
   title: string
   summary: string
   recommendation: string
-  bestWindow: { start: string end: string reason: string }
+  bestWindow: { start: string; end: string; reason: string }
   risks: BriefingRisk[]
   actions: string[]
   dataContext: {

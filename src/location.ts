@@ -173,7 +173,7 @@ async function browserGeolocationPermissionState(): Promise<PermissionState | un
 function mapNativeLocationError(error: unknown): GeolocationError {
   const details =
     error && typeof error === "object"
-      ? error as { code?: unknown message?: unknown }
+      ? error as { code?: unknown; message?: unknown }
       : {}
   const code = typeof details.code === "string" ? details.code : ""
   const message =
