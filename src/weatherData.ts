@@ -56,6 +56,10 @@ export type DashboardWeatherData = {
     dewPoint: number
     heatIndex: number
     hydrationAdvice: string
+    // v0.2: Open-Meteo's own day/night flag for the current instant —
+    // lets the UI avoid showing a daytime icon (e.g. sun) after dark for
+    // a "clear" condition. Optional so demo/older payloads stay valid.
+    isDay?: boolean
   }
   hourly: HourlyForecast[]
   daily: DailyForecast[]
@@ -352,8 +356,23 @@ const CONDITION_ICONS: Record<string, string> = {
   fog: '🌫️', mist: '🌫️', wind: '💨', snow: '🌨️',
 }
 
-export function resolveWeatherIcon(conditionCode: string, override?: string): string {
-  return override || CONDITION_ICONS[conditionCode.trim().toLowerCase().replace(/[\s-]+/g, '_')] || '🌡️'
+// Only these conditions have a distinct nighttime look (a "clear"/"sunny"
+// sky after dark should show a moon, not a sun); everything else (rain,
+// clouds, storms, etc.) reads fine at any hour.
+const NIGHT_ICON_OVERRIDES: Record<string, string> = {
+  sunny: '🌙', clear: '🌙', fair: '🌙',
+}
+
+/**
+ * `isDay` (v0.2, from Open-Meteo's own day/night flag) is optional — when
+ * omitted (e.g. demo data, or a forecast entry that isn't "now"), the
+ * daytime icon is used, matching pre-v0.2 behavior exactly.
+ */
+export function resolveWeatherIcon(conditionCode: string, override?: string, isDay?: boolean): string {
+  if (override) return override
+  const key = conditionCode.trim().toLowerCase().replace(/[\s-]+/g, '_')
+  if (isDay === false && NIGHT_ICON_OVERRIDES[key]) return NIGHT_ICON_OVERRIDES[key]
+  return CONDITION_ICONS[key] || '🌡️'
 }
 
 export function getWeatherHeroVariant(conditionCode: string, condition = ''): WeatherHeroVariant {
@@ -364,31 +383,40 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }
 
-function mergeWeatherPayload(base: unknown, update: unknown): unknown {
-  if (update === undefined) return base
-  if (Array.isArray(update)) return update
-  if (!isRecord(base) || !isRecord(update)) return update
-
-  const merged: Record<string, unknown> = { ...base }
-  for (const [key, value] of Object.entries(update)) {
-    merged[key] = mergeWeatherPayload(merged[key], value)
-  }
-  return merged
-}
-
+// v0.2 review (Requirement 2 — "remove demo data leakage"): LIVE weather
+// responses are no longer deep-merged with DEMO_WEATHER_DATA. The backend
+// now sends a genuinely complete payload for every field except
+// rainfall.month/monthlyAverage/history (which stay legitimately optional
+// — see the `rainfall` type comment) and airQuality (optional when the
+// provider is unavailable). This validator checks the payload is
+// structurally usable on its own; it does NOT fill in any missing field
+// from demo data. DEMO_WEATHER_DATA is used only as a whole, standalone
+// object (see fetchWeatherDashboard below) — LIVE and DEMO values are
+// never mixed within the same dashboard object.
 function isDashboardWeatherData(value: unknown): value is DashboardWeatherData {
   if (!value || typeof value !== 'object') return false
   const candidate = value as Partial<DashboardWeatherData>
   return Boolean(
     candidate.current && typeof candidate.current.temperature === 'number'
+      && typeof candidate.current.feelsLike === 'number'
+      && typeof candidate.current.condition === 'string'
+      && typeof candidate.current.conditionCode === 'string'
+      && typeof candidate.current.humidity === 'number'
+      && typeof candidate.current.windSpeed === 'number'
     // airQuality is intentionally NOT required here — it may be
     // legitimately absent when the provider is unavailable (see the
     // `airQuality` field comment above); the UI handles that explicitly.
     && (!candidate.airQuality || typeof candidate.airQuality.index === 'number')
     && candidate.uv && typeof candidate.uv.index === 'number'
-    && candidate.rainfall
-    && Array.isArray(candidate.hourly) && Array.isArray(candidate.daily)
-    && Array.isArray(candidate.overview) && Array.isArray(candidate.alerts),
+    && candidate.astronomy && typeof candidate.astronomy.sunrise === 'string'
+    && candidate.comfort && typeof candidate.comfort.index === 'number'
+    && candidate.running && typeof candidate.running.badge === 'string'
+    && candidate.rainfall && typeof candidate.rainfall.chance === 'number'
+    && Array.isArray(candidate.hourly) && candidate.hourly.length > 0
+    && Array.isArray(candidate.daily) && candidate.daily.length > 0
+    && Array.isArray(candidate.overview) && Array.isArray(candidate.alerts)
+    && Array.isArray(candidate.locations) && candidate.commute && candidate.swimming
+    && candidate.garden && candidate.pollen && candidate.packing && candidate.event,
   )
 }
 
@@ -447,22 +475,14 @@ export async function fetchWeatherDashboard(
     throw new Error('Weather response does not match the dashboard data contract')
   }
 
-  const mergedPayload = mergeWeatherPayload(DEMO_WEATHER_DATA, rawPayload) as DashboardWeatherData
-
-  // Never let a genuinely-unavailable live section silently become a
-  // convincing-looking demo number (backend-v0.2 handoff §9): these
-  // specific fields are excluded from the merge and left absent so the UI
-  // renders an explicit "Unavailable" state instead of stale/fake data.
-  if (!isRecord(rawPayload.airQuality)) {
-    mergedPayload.airQuality = undefined
-  }
-  const rawRainfall = isRecord(rawPayload.rainfall) ? rawPayload.rainfall : undefined
-  if (!rawRainfall || rawRainfall.month === undefined) mergedPayload.rainfall.month = undefined
-  if (!rawRainfall || rawRainfall.monthlyAverage === undefined) mergedPayload.rainfall.monthlyAverage = undefined
-  if (!rawRainfall || rawRainfall.history === undefined) mergedPayload.rainfall.history = undefined
-
-  if (!isDashboardWeatherData(mergedPayload)) {
+  // LIVE MODE: the raw backend payload is returned AS-IS — never merged
+  // with DEMO_WEATHER_DATA (v0.2 review, Requirement 2). If the backend
+  // ever omits a field this validator requires, that is treated as a
+  // failed live fetch (caller falls back to the last known-good live
+  // payload, or DEMO_WEATHER_DATA on first load — see the App root), not
+  // silently patched with demo values.
+  if (!isDashboardWeatherData(rawPayload)) {
     throw new Error('Weather response contains invalid dashboard values')
   }
-  return mergedPayload
+  return rawPayload
 }

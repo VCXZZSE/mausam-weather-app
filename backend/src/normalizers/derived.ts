@@ -62,6 +62,17 @@ export function computeRainfall(input: RainfallInput): Pick<DashboardWeatherData
   }
 }
 
+// Closes the last remaining demo-data-leak gap (v0.2 review item 2):
+// hydrationAdvice was previously never sent by the backend at all, so the
+// frontend's old deep-merge silently filled it from DEMO_WEATHER_DATA
+// even in live mode. Deterministic and heat-index-driven, same spirit as
+// computeComfort above — not a measured value, just rule-based guidance.
+export function computeHydrationAdvice(heatIndex: number): string {
+  if (heatIndex >= 41) return '💧 Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated'
+  if (heatIndex >= 35) return '💧 Drink 2–3L water today · Limit strenuous activity during peak heat'
+  return '💧 Stay hydrated — drink water regularly through the day'
+}
+
 export type OverviewInput = {
   // undefined when the AQI provider is unavailable — the health card falls
   // back to UV-only rather than showing a misleading "AQI 0".

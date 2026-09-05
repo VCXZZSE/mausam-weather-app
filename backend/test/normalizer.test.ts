@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { toDashboardWeatherData } from '../src/normalizers/toDashboardWeatherData.js'
 import type { OpenMeteoResponse } from '../src/providers/openMeteoClient.js'
-import type { OpenMeteoAirQualityResponse } from '../src/providers/openMeteoAirQualityClient.js'
+import { normalizeAirQuality } from '../src/normalizers/airQuality.js'
+import type { DashboardWeatherData } from '../src/types/dashboard.js'
 
 const CONTEXT = { city: 'Kolkata', region: 'West Bengal', country: 'India', latitude: 22.5726, longitude: 88.3639, source: 'default' as const }
 
@@ -18,6 +19,7 @@ function buildFixture(overrides: Partial<OpenMeteoResponse> = {}): OpenMeteoResp
       windspeed: 22,
       winddirection: 225,
       weathercode: 95,
+      is_day: 1,
     },
     hourly: {
       time: times,
@@ -47,9 +49,14 @@ function buildFixture(overrides: Partial<OpenMeteoResponse> = {}): OpenMeteoResp
   }
 }
 
-function buildAirQualityFixture(): OpenMeteoAirQualityResponse {
+// toDashboardWeatherData's second parameter is the ALREADY-RESOLVED
+// airQuality section (see aqi/resolveAirQuality.ts, which picks CPCB or
+// Open-Meteo before the normalizer ever runs) — so this fixture builds
+// that final normalized shape directly, via the same normalizeAirQuality
+// function the real Open-Meteo path uses, rather than raw provider JSON.
+function buildAirQualityFixture(): DashboardWeatherData['airQuality'] {
   const times = Array.from({ length: 24 }, (_, i) => `2026-08-28T${String(i).padStart(2, '0')}:00`)
-  return {
+  return normalizeAirQuality({
     hourly: {
       time: times,
       pm2_5: times.map(() => 42),
@@ -58,7 +65,7 @@ function buildAirQualityFixture(): OpenMeteoAirQualityResponse {
       nitrogen_dioxide: times.map(() => 22),
       us_aqi: times.map(() => 78),
     },
-  }
+  }, times[5])
 }
 
 describe('toDashboardWeatherData', () => {
@@ -76,9 +83,10 @@ describe('toDashboardWeatherData', () => {
     expect(result.current.low).toBe(25)
   })
 
-  it('does not include fields not sourced from Open-Meteo (e.g. hydrationAdvice)', () => {
+  it('computes hydrationAdvice server-side (v0.2: closes the old demo-data-leak gap)', () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
-    expect(result.current.hydrationAdvice).toBeUndefined()
+    expect(typeof result.current.hydrationAdvice).toBe('string')
+    expect(result.current.hydrationAdvice!.length).toBeGreaterThan(0)
   })
 
   it('produces exactly 7 daily entries with day labels starting at Today', () => {
@@ -113,7 +121,7 @@ describe('toDashboardWeatherData', () => {
 
   it('falls back to a default condition for unknown weather codes', () => {
     const fixture = buildFixture({
-      current_weather: { time: '2026-08-28T05:00', temperature: 25, windspeed: 5, winddirection: 10, weathercode: 9999 },
+      current_weather: { time: '2026-08-28T05:00', temperature: 25, windspeed: 5, winddirection: 10, weathercode: 9999, is_day: 1 },
     })
     const result = toDashboardWeatherData(fixture, undefined, CONTEXT)
     expect(result.current.conditionCode).toBe('cloudy')

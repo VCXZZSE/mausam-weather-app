@@ -24,6 +24,10 @@ const openMeteoResponseSchema = z.object({
     windspeed: z.number(),
     winddirection: z.number(),
     weathercode: z.number(),
+    // Open-Meteo always includes this alongside current_weather=true — 1
+    // during daylight, 0 at night — used so a "clear" condition doesn't
+    // render a sun icon after dark (see conditionCode.ts / dashboard.ts).
+    is_day: z.number(),
   }),
   hourly: z.object({
     time: z.array(z.string()).min(1),

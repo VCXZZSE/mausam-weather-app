@@ -2,20 +2,20 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import type { Env } from '../config/env.js'
 import { fetchOpenMeteoData, type OpenMeteoResponse } from '../providers/openMeteoClient.js'
-import { fetchOpenMeteoAirQuality, type OpenMeteoAirQualityResponse } from '../providers/openMeteoAirQualityClient.js'
 import { toDashboardWeatherData } from '../normalizers/toDashboardWeatherData.js'
 import { KeyedMemoryCache } from '../cache/keyedMemoryCache.js'
 import { coordinateCacheKey, type LocationSource } from '../types/location.js'
+import { createAirQualityCaches, resolveAirQuality, type AirQualityCaches } from '../aqi/resolveAirQuality.js'
 
 export type WeatherCaches = {
   forecast: KeyedMemoryCache<OpenMeteoResponse>
-  airQuality: KeyedMemoryCache<OpenMeteoAirQualityResponse>
+  airQuality: AirQualityCaches
 }
 
 export function createWeatherCaches(env: Env): WeatherCaches {
   return {
     forecast: new KeyedMemoryCache<OpenMeteoResponse>(env.WEATHER_CACHE_TTL_MS),
-    airQuality: new KeyedMemoryCache<OpenMeteoAirQualityResponse>(env.AIR_QUALITY_CACHE_TTL_MS),
+    airQuality: createAirQualityCaches(env),
   }
 }
 
@@ -68,18 +68,10 @@ export async function weatherRoute(
       return reply.status(502).send({ error: 'Weather data is temporarily unavailable' })
     }
 
-    // Air quality is treated as non-critical: any failure (including no
-    // cached last-good value for this specific location) degrades
-    // gracefully by omitting the airQuality section.
-    let airQuality: OpenMeteoAirQualityResponse | undefined
-    try {
-      airQuality = await caches.airQuality.getOrFetch(cacheKey, () =>
-        fetchOpenMeteoAirQuality({ baseUrl: env.OPEN_METEO_AIR_QUALITY_URL, coordinates }),
-      )
-    } catch (error) {
-      request.log.warn({ err: error }, 'Air quality data unavailable; omitting airQuality section')
-      airQuality = undefined
-    }
+    // AQI resolution (CPCB first if configured, else Open-Meteo) is
+    // treated as non-critical: any failure degrades gracefully by
+    // omitting the airQuality section entirely — see aqi/resolveAirQuality.ts.
+    const airQuality = await resolveAirQuality(env, caches.airQuality, coordinates, forecast.current_weather.time, request.log)
 
     const payload = toDashboardWeatherData(forecast, airQuality, {
       city: query.locality ?? (hasExplicitCoordinates ? 'Selected location' : env.DEFAULT_CITY),

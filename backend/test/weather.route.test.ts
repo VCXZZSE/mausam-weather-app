@@ -7,7 +7,7 @@ function openMeteoForecastFixture() {
   return {
     timezone: 'Asia/Kolkata',
     utc_offset_seconds: 19800,
-    current_weather: { time: times[0], temperature: 31, windspeed: 22, winddirection: 225, weathercode: 95 },
+    current_weather: { time: times[0], temperature: 31, windspeed: 22, winddirection: 225, weathercode: 95, is_day: 1 },
     hourly: {
       time: times,
       temperature_2m: times.map(() => 30),

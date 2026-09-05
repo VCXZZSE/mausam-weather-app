@@ -62,6 +62,10 @@ export type DashboardWeatherData = {
     dewPoint: number
     heatIndex: number
     hydrationAdvice: string
+    // v0.2: Open-Meteo's own day/night flag for the current instant —
+    // lets the UI avoid showing a daytime icon (e.g. sun) after dark for
+    // a "clear" condition. Optional so demo/older payloads stay valid.
+    isDay?: boolean
   }
   hourly: HourlyForecast[]
   daily: DailyForecast[]

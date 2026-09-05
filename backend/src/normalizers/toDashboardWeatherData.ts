@@ -1,12 +1,10 @@
 import type { OpenMeteoResponse } from '../providers/openMeteoClient.js'
-import type { OpenMeteoAirQualityResponse } from '../providers/openMeteoAirQualityClient.js'
 import type { DailyForecast, DashboardWeatherData, HourlyForecast, ResolvedLocation } from '../types/dashboard.js'
 import { degreesToCompass, resolveCondition, resolveHeroVariant } from './conditionCode.js'
 import { findClosestTimeIndex } from './timeIndex.js'
-import { normalizeAirQuality } from './airQuality.js'
 import { normalizeUv } from './uv.js'
 import { calculateAstronomy } from '../astronomy/astronomyCalculator.js'
-import { computeComfort, computeOverview, computeRainfall } from './derived.js'
+import { computeComfort, computeHydrationAdvice, computeOverview, computeRainfall } from './derived.js'
 import { computePollen } from '../data/pollenSeasonalTable.js'
 import { computeCuratedAlerts } from '../data/curatedAlerts.js'
 import { computeCommute } from '../rules/commute.js'
@@ -18,16 +16,22 @@ import { computeEvent } from '../rules/event.js'
 import { computeRunning } from '../rules/running.js'
 import { parseLocalCalendarDate, toLocationInstant } from '../utils/locationTime.js'
 
-// Sections intentionally NOT produced here (rainfall.month/monthlyAverage/
-// history) require data this app doesn't fetch (Open-Meteo's separate
-// historical archive API) and are left out rather than fabricated — see
-// backend-v0.2 handoff §9 ("never replace a missing live field with a
-// hardcoded demo value"). The frontend now surfaces these as an explicit
-// "Unavailable" state instead of silently merging in demo numbers.
+// `current` is typed as Partial below for historical reasons, but as of
+// v0.2 this normalizer populates every field of it, including
+// hydrationAdvice (see computeHydrationAdvice) — the ONLY remaining
+// intentionally-omitted fields anywhere in this payload are
+// rainfall.month/monthlyAverage/history, which require data this app
+// doesn't fetch (Open-Meteo's separate historical archive API) and are
+// left out rather than fabricated — see the v0.2 review ("never replace a
+// missing live field with a hardcoded demo value"). The frontend surfaces
+// those specific three as an explicit "Unavailable" state and, as of the
+// v0.2 review, no longer deep-merges ANY other field with demo data in
+// live mode — this payload is meant to be authoritative as-is.
 //
 // Data provenance:
-//  LIVE:    current/hourly/daily (Open-Meteo forecast), airQuality (Open-Meteo AQI)
-//  LOCAL COMPUTATION: uv, astronomy, comfort, rainfall, overview, running
+//  LIVE:    current/hourly/daily (Open-Meteo forecast), airQuality (CPCB when
+//           configured and a station is in range, else Open-Meteo modeled US AQI)
+//  LOCAL COMPUTATION: uv, astronomy, comfort, rainfall, overview, running, hydrationAdvice
 //  CURATED/RULE-BASED: pollen, alerts, commute, swimming, garden, locations,
 //                       packing, event — deterministic content, not live
 //                       measurements. See each module's header comment.
@@ -78,7 +82,11 @@ function formatDayLabel(isoDate: string, index: number): string {
 
 export function toDashboardWeatherData(
   data: OpenMeteoResponse,
-  airQualityData: OpenMeteoAirQualityResponse | undefined,
+  // Pre-resolved by the caller (see aqi/resolveAirQuality.ts), which tries
+  // CPCB first (if configured) and falls back to Open-Meteo — this
+  // normalizer no longer picks the AQI source itself, it just embeds
+  // whatever it's given.
+  airQuality: DashboardWeatherData['airQuality'] | undefined,
   context: NormalizeContext,
 ): WeatherPayload {
   const currentHourIndex = findClosestTimeIndex(data.hourly.time, data.current_weather.time)
@@ -140,9 +148,7 @@ export function toDashboardWeatherData(
     solarNoon: astronomy.solarNoon,
   })
 
-  const airQuality = airQualityData
-    ? normalizeAirQuality(airQualityData, data.current_weather.time)
-    : undefined
+  const isDay = data.current_weather.is_day === 1
 
   const comfort = computeComfort({ temperature, humidity, windSpeed })
 
@@ -261,6 +267,8 @@ export function toDashboardWeatherData(
       // Open-Meteo has no direct heat-index field; apparent temperature
       // already accounts for humidity/wind, so it is used as the proxy.
       heatIndex: feelsLike,
+      hydrationAdvice: computeHydrationAdvice(feelsLike),
+      isDay,
     },
     hourly,
     daily,

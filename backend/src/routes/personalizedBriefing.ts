@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { Env } from '../config/env.js'
 import { fetchOpenMeteoData, type OpenMeteoResponse } from '../providers/openMeteoClient.js'
-import { fetchOpenMeteoAirQuality, type OpenMeteoAirQualityResponse } from '../providers/openMeteoAirQualityClient.js'
 import { toDashboardWeatherData } from '../normalizers/toDashboardWeatherData.js'
 import type { WeatherCaches } from './weather.js'
 import { validateBriefingRequest } from '../briefing/validateBriefingRequest.js'
@@ -9,6 +8,7 @@ import { validateBriefingResponse } from '../briefing/validateBriefingResponse.j
 import { DeterministicBriefingGenerator } from '../briefing/DeterministicBriefingGenerator.js'
 import type { BriefingGenerator } from '../briefing/BriefingGenerator.js'
 import { coordinateCacheKey } from '../types/location.js'
+import { resolveAirQuality } from '../aqi/resolveAirQuality.js'
 
 const generator: BriefingGenerator = new DeterministicBriefingGenerator()
 
@@ -52,15 +52,7 @@ export async function personalizedBriefingRoute(
       return reply.status(502).send({ error: 'Weather data is temporarily unavailable' })
     }
 
-    let airQuality: OpenMeteoAirQualityResponse | undefined
-    try {
-      airQuality = await caches.airQuality.getOrFetch(cacheKey, () =>
-        fetchOpenMeteoAirQuality({ baseUrl: env.OPEN_METEO_AIR_QUALITY_URL, coordinates }),
-      )
-    } catch (error) {
-      request.log.warn({ err: error }, 'Air quality unavailable for personalized briefing')
-      airQuality = undefined
-    }
+    const airQuality = await resolveAirQuality(env, caches.airQuality, coordinates, forecast.current_weather.time, request.log)
 
     const weather = toDashboardWeatherData(forecast, airQuality, {
       city: briefingRequest.location ?? (hasExplicitCoordinates ? 'Selected location' : env.DEFAULT_CITY),

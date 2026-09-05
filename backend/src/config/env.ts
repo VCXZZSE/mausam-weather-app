@@ -37,6 +37,19 @@ const envSchema = z.object({
   NOMINATIM_USER_AGENT: z.string().default('MausamWeatherApp/1.0 (SIH demo; contact: local-dev)'),
   REVERSE_GEOCODE_CACHE_TTL_MS: z.coerce.number().int().min(60_000).default(86_400_000),
   REVERSE_GEOCODE_MIN_INTERVAL_MS: z.coerce.number().int().min(200).default(1_000),
+  // CPCB (Central Pollution Control Board) real-time station AQI, via the
+  // Government of India's open data portal. Free registration required —
+  // see backend/.env.example for how to obtain a key. Left empty, CPCB is
+  // skipped entirely (no network call attempted) and Open-Meteo's modeled
+  // US AQI is used instead, clearly labeled as such — never silently
+  // presented as CPCB/India NAQI data.
+  DATA_GOV_IN_API_KEY: z.string().default(''),
+  DATA_GOV_IN_BASE_URL: z.string().url().default('https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69'),
+  CPCB_CACHE_TTL_MS: z.coerce.number().int().min(60_000).default(1_800_000),
+  // A CPCB station further than this from the requested coordinates is
+  // treated as "no usable station" and triggers the Open-Meteo fallback
+  // rather than misattributing a distant reading to the user's location.
+  CPCB_MAX_STATION_DISTANCE_KM: z.coerce.number().positive().default(50),
 })
 
 export type Env = z.infer<typeof envSchema>

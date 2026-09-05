@@ -13,6 +13,7 @@ import {
   mapProfileToSensitivity,
 } from './personalizedBriefing'
 import {
+  clearStoredLocation,
   defaultDemoLocation,
   fromSearchResult,
   GeolocationError,
@@ -82,8 +83,8 @@ function Bar({ pct, fill, height = 4 }: { pct: number; fill: string; height?: nu
   )
 }
 
-function WeatherIcon({ conditionCode, icon, label }: { conditionCode: string; icon?: string; label: string }) {
-  const resolvedIcon = resolveWeatherIcon(conditionCode, icon)
+function WeatherIcon({ conditionCode, icon, label, isDay }: { conditionCode: string; icon?: string; label: string; isDay?: boolean }) {
+  const resolvedIcon = resolveWeatherIcon(conditionCode, icon, isDay)
   if (/^(https?:\/\/|\/)/.test(resolvedIcon)) {
     return <img src={resolvedIcon} alt={label} loading="lazy" decoding="async" style={{ width: '1.35em', height: '1.35em', objectFit: 'contain' }} />
   }
@@ -185,7 +186,7 @@ function AudienceFocus({ items }: { items: DashboardWeatherData['overview'] }) {
 
 // ── Home Tab ───────────────────────────────────────────────────────────────────
 
-function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void; onOpenPersonalized: () => void; weather: DashboardWeatherData }) {
+function HomeTab({ profile, theme, setTheme, onOpenPersonalized, onChangeLocation, weather }: { profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void; onOpenPersonalized: () => void; onChangeLocation: () => void; weather: DashboardWeatherData }) {
   const { current } = weather
   const weatherHeroVariant = current.heroVariant ?? getWeatherHeroVariant(current.conditionCode, current.condition)
   const isRainy = weatherHeroVariant === 'rainy'
@@ -238,6 +239,14 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { pr
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" /></svg>
             </span>
             <span className="hero-location-name">{current.city}, {current.region}</span>
+            <button
+              type="button"
+              onClick={onChangeLocation}
+              aria-label="Change location"
+              style={{ background: 'none', border: 0, padding: 0, marginLeft: 8, color: 'inherit', opacity: 0.65, fontSize: 11, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Change
+            </button>
           </div>
 
           <div className="weather-hero-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -318,7 +327,7 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { pr
               textAlign: 'center',
             }}>
               <div style={{ fontSize: 10, color: i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 6 }}>{hour.time}</div>
-              <div style={{ display: 'grid', placeItems: 'center', fontSize: 20 }}><WeatherIcon conditionCode={hour.conditionCode} icon={hour.icon} label={hour.condition} /></div>
+              <div data-testid={i === 0 ? 'hourly-now-icon' : undefined} style={{ display: 'grid', placeItems: 'center', fontSize: 20 }}><WeatherIcon conditionCode={hour.conditionCode} icon={hour.icon} label={hour.condition} isDay={i === 0 ? weather.current.isDay : undefined} /></div>
               <div style={{ fontSize: 14, fontWeight: 800, color: 'white', marginTop: 4 }}>{hour.temperature}°</div>
               <div style={{ fontSize: 9, color: '#60a5fa', marginTop: 2, fontWeight: 700 }}>{hour.rainChance}%</div>
             </div>
@@ -1416,7 +1425,7 @@ function PersonalizedWeatherPage({ profile, weather, onBack }: { profile: Profil
 // handoff §1/§2). navigator.geolocation is only ever called from this
 // button's click handler, never automatically on mount.
 
-function LocationSetup({ onResolved }: { onResolved: (location: UserLocation) => void }) {
+export function LocationSetup({ onResolved }: { onResolved: (location: UserLocation) => void }) {
   const [locating, setLocating] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [manualOpen, setManualOpen] = useState(false)
@@ -1616,7 +1625,7 @@ export default function App() {
           {showPersonalized ? (
             <PersonalizedWeatherPage profile={profile} weather={weather} onBack={() => setShowPersonalized(false)} />
           ) : <>
-            {tab === 'home' && <HomeTab profile={profile} theme={theme} setTheme={setTheme} onOpenPersonalized={() => setShowPersonalized(true)} weather={weather} />}
+            {tab === 'home' && <HomeTab profile={profile} theme={theme} setTheme={setTheme} onOpenPersonalized={() => setShowPersonalized(true)} onChangeLocation={() => { clearStoredLocation(); setUserLocation(null) }} weather={weather} />}
             {tab === 'health' && <HealthTab weather={weather} />}
             {tab === 'forecast' && <ForecastTab weather={weather} />}
             {tab === 'alerts' && <AlertsTab weather={weather} />}
