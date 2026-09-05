@@ -3,7 +3,7 @@ import cors from '@fastify/cors'
 import type { Env } from './config/env.js'
 import { registerErrorHandler } from './middleware/errorHandler.js'
 import { healthRoute } from './routes/health.js'
-import { createWeatherCache, weatherRoute } from './routes/weather.js'
+import { createWeatherCaches, weatherRoute } from './routes/weather.js'
 
 export async function buildApp(env: Env): Promise<FastifyInstance> {
   const app = Fastify({ logger: true })
@@ -15,7 +15,7 @@ export async function buildApp(env: Env): Promise<FastifyInstance> {
   registerErrorHandler(app)
 
   await app.register(healthRoute)
-  await app.register(weatherRoute, { env, cache: createWeatherCache(env) })
+  await app.register(weatherRoute, { env, caches: createWeatherCaches(env) })
 
   return app
 }

@@ -22,6 +22,7 @@ export type OpenMeteoResponse = {
     wind_gusts_10m: number[]
     weathercode: number[]
     precipitation_probability: number[]
+    uv_index: number[]
   }
   daily: {
     time: string[]
@@ -29,6 +30,8 @@ export type OpenMeteoResponse = {
     temperature_2m_min: number[]
     weathercode: number[]
     precipitation_probability_max: number[]
+    precipitation_sum: number[]
+    uv_index_max: number[]
   }
 }
 
@@ -42,6 +45,7 @@ const HOURLY_VARS = [
   'wind_gusts_10m',
   'weathercode',
   'precipitation_probability',
+  'uv_index',
 ].join(',')
 
 const DAILY_VARS = [
@@ -49,6 +53,8 @@ const DAILY_VARS = [
   'temperature_2m_min',
   'weathercode',
   'precipitation_probability_max',
+  'precipitation_sum',
+  'uv_index_max',
 ].join(',')
 
 export type FetchOpenMeteoOptions = {

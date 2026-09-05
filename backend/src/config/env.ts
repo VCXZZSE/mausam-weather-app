@@ -8,6 +8,8 @@ const envSchema = z.object({
     .transform(value => value.split(',').map(origin => origin.trim()).filter(Boolean)),
   WEATHER_CACHE_TTL_MS: z.coerce.number().int().min(10_000).default(300_000),
   OPEN_METEO_BASE_URL: z.string().url().default('https://api.open-meteo.com/v1/forecast'),
+  OPEN_METEO_AIR_QUALITY_URL: z.string().url().default('https://air-quality-api.open-meteo.com/v1/air-quality'),
+  AIR_QUALITY_CACHE_TTL_MS: z.coerce.number().int().min(10_000).default(600_000),
   DEFAULT_LATITUDE: z.coerce.number().default(22.5726),
   DEFAULT_LONGITUDE: z.coerce.number().default(88.3639),
   DEFAULT_CITY: z.string().default('Kolkata'),

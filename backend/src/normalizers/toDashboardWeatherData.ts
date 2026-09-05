@@ -1,36 +1,38 @@
 import type { OpenMeteoResponse } from '../providers/openMeteoClient.js'
+import type { OpenMeteoAirQualityResponse } from '../providers/openMeteoAirQualityClient.js'
 import type { DailyForecast, DashboardWeatherData, HourlyForecast } from '../types/dashboard.js'
 import { degreesToCompass, resolveCondition, resolveHeroVariant } from './conditionCode.js'
+import { findClosestTimeIndex } from './timeIndex.js'
+import { normalizeAirQuality } from './airQuality.js'
+import { normalizeUv } from './uv.js'
+import { calculateAstronomy } from '../astronomy/astronomyCalculator.js'
+import { computeComfort, computeOverview, computeRainfall } from './derived.js'
 
-// Phase 1 only ever sources current/hourly/daily from Open-Meteo. Fields
-// like hydrationAdvice are intentionally omitted so the frontend's deep
-// merge preserves the fallback dataset's value for them.
-export type Phase1WeatherPayload = {
+// Sections intentionally NOT produced here (pollen, alerts, commute,
+// swimming, garden, locations, packing, event, running, rainfall.month/
+// monthlyAverage/history) are left out of the returned object so the
+// frontend's deep merge preserves DEMO_WEATHER_DATA's fallback values.
+export type WeatherPayload = {
   updatedAt: string
   current: Partial<DashboardWeatherData['current']>
   hourly: HourlyForecast[]
   daily: DailyForecast[]
+  airQuality?: DashboardWeatherData['airQuality']
+  uv: DashboardWeatherData['uv']
+  astronomy: DashboardWeatherData['astronomy']
+  comfort: DashboardWeatherData['comfort']
+  rainfall: Pick<DashboardWeatherData['rainfall'], 'chance' | 'today' | 'unit' | 'periodLabel' | 'monthLabel'>
+  overview: DashboardWeatherData['overview']
 }
+
+/** @deprecated kept for backward compatibility with earlier Phase 1 imports */
+export type Phase1WeatherPayload = WeatherPayload
 
 export type NormalizeContext = {
   city: string
   region: string
-}
-
-function findHourIndex(hourlyTimes: string[], targetTime: string): number {
-  const exact = hourlyTimes.indexOf(targetTime)
-  if (exact !== -1) return exact
-  const now = new Date(targetTime).getTime()
-  let closestIndex = 0
-  let closestDiff = Infinity
-  hourlyTimes.forEach((time, index) => {
-    const diff = Math.abs(new Date(time).getTime() - now)
-    if (diff < closestDiff) {
-      closestDiff = diff
-      closestIndex = index
-    }
-  })
-  return closestIndex
+  latitude: number
+  longitude: number
 }
 
 function formatHourLabel(isoTime: string, index: number): string {
@@ -47,19 +49,22 @@ function formatDayLabel(isoDate: string, index: number): string {
 
 export function toDashboardWeatherData(
   data: OpenMeteoResponse,
+  airQualityData: OpenMeteoAirQualityResponse | undefined,
   context: NormalizeContext,
-): Phase1WeatherPayload {
-  const currentHourIndex = findHourIndex(data.hourly.time, data.current_weather.time)
+): WeatherPayload {
+  const currentHourIndex = findClosestTimeIndex(data.hourly.time, data.current_weather.time)
 
   const { conditionCode, condition } = resolveCondition(data.current_weather.weathercode)
   const heroVariant = resolveHeroVariant(conditionCode, condition)
 
+  const temperature = data.current_weather.temperature
   const feelsLike = Math.round(data.hourly.apparent_temperature[currentHourIndex])
   const humidity = Math.round(data.hourly.relative_humidity_2m[currentHourIndex])
   const pressure = Math.round(data.hourly.surface_pressure[currentHourIndex])
   const dewPoint = Math.round(data.hourly.dew_point_2m[currentHourIndex])
   const visibilityMeters = data.hourly.visibility[currentHourIndex]
   const windGust = Math.round(data.hourly.wind_gusts_10m[currentHourIndex])
+  const windSpeed = data.current_weather.windspeed
 
   const hourly: HourlyForecast[] = data.hourly.time.slice(currentHourIndex, currentHourIndex + 10).map((time, offset) => {
     const index = currentHourIndex + offset
@@ -85,12 +90,47 @@ export function toDashboardWeatherData(
     }
   })
 
+  const astronomy = calculateAstronomy(new Date(data.current_weather.time), {
+    latitude: context.latitude,
+    longitude: context.longitude,
+  })
+
+  const uv = normalizeUv({
+    currentUvIndex: data.hourly.uv_index[currentHourIndex] ?? 0,
+    dailyUvIndexMax: data.daily.uv_index_max[0] ?? 0,
+    solarNoon: astronomy.solarNoon,
+  })
+
+  const airQuality = airQualityData
+    ? normalizeAirQuality(airQualityData, data.current_weather.time)
+    : undefined
+
+  const comfort = computeComfort({ temperature, humidity, windSpeed })
+
+  const rainfall = computeRainfall({
+    chance: data.daily.precipitation_probability_max[0] ?? 0,
+    todayTotal: data.daily.precipitation_sum[0] ?? 0,
+    monthLabel: new Date(data.current_weather.time).toLocaleDateString('en-IN', { month: 'long' }),
+  })
+
+  const bestWindowLabel = uv.index >= 6 ? `before ${astronomy.sunrise !== '—' ? astronomy.sunrise : '9 AM'}` : 'most of the day'
+
+  const overview = computeOverview({
+    aqiIndex: airQuality?.index,
+    aqiLabel: airQuality?.label ?? 'Unavailable',
+    uvIndex: uv.index,
+    uvLabel: uv.label,
+    rainChanceToday: daily[0]?.rainChance ?? 0,
+    windSpeed,
+    bestWindowLabel,
+  })
+
   return {
     updatedAt: 'Updated just now',
     current: {
       city: context.city,
       region: context.region,
-      temperature: Math.round(data.current_weather.temperature),
+      temperature: Math.round(temperature),
       feelsLike,
       condition,
       conditionCode,
@@ -98,7 +138,7 @@ export function toDashboardWeatherData(
       high: Math.round(data.daily.temperature_2m_max[0]),
       low: Math.round(data.daily.temperature_2m_min[0]),
       humidity,
-      windSpeed: Math.round(data.current_weather.windspeed),
+      windSpeed: Math.round(windSpeed),
       windDirection: degreesToCompass(data.current_weather.winddirection),
       windGust,
       visibility: Math.round((visibilityMeters / 1000) * 10) / 10,
@@ -110,5 +150,11 @@ export function toDashboardWeatherData(
     },
     hourly,
     daily,
+    airQuality,
+    uv,
+    astronomy,
+    comfort,
+    rainfall,
+    overview,
   }
 }
