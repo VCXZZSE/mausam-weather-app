@@ -316,7 +316,7 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { pr
 
           {/* AQI */}
           <Card className="metric-primary-card aqi-tile" grad="linear-gradient(140deg,#431407 0%,#1c0803 100%)" border="rgba(245,158,11,0.12)">
-            <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">AQI {weather.airQuality.index}</Badge>
+            <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">US AQI {weather.airQuality.index}</Badge>
             <CardLabel>Air Quality</CardLabel>
             <div className="aqi-status">{weather.airQuality.label}</div>
             <div className="aqi-meter">
@@ -444,7 +444,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
 
       {/* AQI Detailed */}
       <Card grad="linear-gradient(140deg,#431407 0%,#1a0803 100%)" border="rgba(245,158,11,0.12)" pad={20}>
-        <CardLabel>Air Quality Index · {weather.current.city}</CardLabel>
+        <CardLabel>Air Quality Index (US AQI) · {weather.current.city}</CardLabel>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
           <div>
             <div style={{ fontSize: 52, fontWeight: 800, color: 'white', lineHeight: 1 }}>{weather.airQuality.index}</div>

@@ -38,7 +38,7 @@ export function computePacking(input: PackingInput): DashboardWeatherData['packi
     items.push({ icon: '🧣', item: 'Windproof outer layer', reason: `Strong wind (${Math.round(input.windSpeed)} km/h)` })
   }
   if (input.aqiIndex !== undefined && input.aqiIndex >= 100) {
-    items.push({ icon: '😷', item: 'N95 mask', reason: `AQI ${input.aqiIndex}` })
+    items.push({ icon: '😷', item: 'N95 mask', reason: `US AQI ${input.aqiIndex}` })
   }
 
   return {

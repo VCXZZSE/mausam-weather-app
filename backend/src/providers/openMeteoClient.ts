@@ -1,39 +1,50 @@
+import { z } from 'zod'
+
 export type OpenMeteoCoordinates = {
   latitude: number
   longitude: number
 }
 
-export type OpenMeteoResponse = {
-  current_weather: {
-    time: string
-    temperature: number
-    windspeed: number
-    winddirection: number
-    weathercode: number
-  }
-  hourly: {
-    time: string[]
-    temperature_2m: number[]
-    apparent_temperature: number[]
-    relative_humidity_2m: number[]
-    surface_pressure: number[]
-    dew_point_2m: number[]
-    visibility: number[]
-    wind_gusts_10m: number[]
-    weathercode: number[]
-    precipitation_probability: number[]
-    uv_index: number[]
-  }
-  daily: {
-    time: string[]
-    temperature_2m_max: number[]
-    temperature_2m_min: number[]
-    weathercode: number[]
-    precipitation_probability_max: number[]
-    precipitation_sum: number[]
-    uv_index_max: number[]
-  }
-}
+// Runtime validation of the actual fields the normalizer reads (see
+// normalizers/toDashboardWeatherData.ts). Rejects malformed/incomplete
+// responses (missing fields, wrong types, empty arrays) rather than
+// letting `undefined`/`NaN` silently propagate into DashboardWeatherData —
+// mirrors the shape-check already used by openMeteoAirQualityClient.ts.
+const numberArray = z.array(z.number())
+
+const openMeteoResponseSchema = z.object({
+  current_weather: z.object({
+    time: z.string().min(1),
+    temperature: z.number(),
+    windspeed: z.number(),
+    winddirection: z.number(),
+    weathercode: z.number(),
+  }),
+  hourly: z.object({
+    time: z.array(z.string()).min(1),
+    temperature_2m: numberArray,
+    apparent_temperature: numberArray,
+    relative_humidity_2m: numberArray,
+    surface_pressure: numberArray,
+    dew_point_2m: numberArray,
+    visibility: numberArray,
+    wind_gusts_10m: numberArray,
+    weathercode: numberArray,
+    precipitation_probability: numberArray,
+    uv_index: numberArray,
+  }),
+  daily: z.object({
+    time: z.array(z.string()).min(1),
+    temperature_2m_max: numberArray,
+    temperature_2m_min: numberArray,
+    weathercode: numberArray,
+    precipitation_probability_max: numberArray,
+    precipitation_sum: numberArray,
+    uv_index_max: numberArray,
+  }),
+})
+
+export type OpenMeteoResponse = z.infer<typeof openMeteoResponseSchema>
 
 const HOURLY_VARS = [
   'temperature_2m',
@@ -83,7 +94,16 @@ export async function fetchOpenMeteoData(options: FetchOpenMeteoOptions): Promis
     if (!response.ok) {
       throw new Error(`Open-Meteo request failed with status ${response.status}`)
     }
-    return (await response.json()) as OpenMeteoResponse
+    const body: unknown = await response.json()
+    const result = openMeteoResponseSchema.safeParse(body)
+    if (!result.success) {
+      // Deliberately generic: never forward the raw provider payload or
+      // zod's internal issue paths to callers — this error is only ever
+      // logged server-side (see routes/weather.ts) and triggers the
+      // existing cache/last-good/502 fallback path.
+      throw new Error('Open-Meteo forecast response failed validation')
+    }
+    return result.data
   } finally {
     clearTimeout(timeout)
   }

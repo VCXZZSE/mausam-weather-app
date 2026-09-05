@@ -6,26 +6,30 @@ import { getIndiaSeason } from '../data/season.js'
 
 export type EventInput = {
   daily: DailyForecast[]
+  // Must be a Kolkata CALENDAR date (see backend/src/utils/kolkataTime.ts
+  // parseKolkataCalendarDate) — its UTC getters/setters are read as the
+  // Kolkata wall-clock date, independent of the server's local timezone.
+  // Do not pass a real instant (e.g. from toKolkataInstant) here.
   currentDate: Date
   month: number
 }
 
 function nextSaturday(from: Date): { date: Date; daysAway: number } {
-  const day = from.getDay() // 0 = Sunday, 6 = Saturday
+  const day = from.getUTCDay() // 0 = Sunday, 6 = Saturday
   const daysAway = (6 - day + 7) % 7
   const date = new Date(from)
-  date.setDate(date.getDate() + daysAway)
+  date.setUTCDate(date.getUTCDate() + daysAway)
   return { date, daysAway }
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 }
 
 export function computeEvent(input: EventInput): DashboardWeatherData['event'] {
   const { date: saturday, daysAway } = nextSaturday(input.currentDate)
   const sunday = new Date(saturday)
-  sunday.setDate(sunday.getDate() + 1)
+  sunday.setUTCDate(sunday.getUTCDate() + 1)
 
   // Use whichever forecasted days fall within the weekend window (bounded
   // by the 7-day forecast horizon); fall back to the full week's average

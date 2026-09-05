@@ -79,7 +79,7 @@ export type OverviewInput = {
 // scope for this phase.
 export function computeOverview(input: OverviewInput): DashboardWeatherData['overview'] {
   const healthValue = input.aqiIndex !== undefined
-    ? `AQI ${input.aqiIndex} · UV ${input.uvIndex}`
+    ? `US AQI ${input.aqiIndex} · UV ${input.uvIndex}`
     : `UV ${input.uvIndex} · ${input.uvLabel}`
 
   return [

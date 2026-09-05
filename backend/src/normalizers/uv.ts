@@ -14,12 +14,13 @@ function categorize(index: number) {
 
 export type UvSourceData = {
   currentUvIndex: number
-  dailyUvIndexMax: number
   solarNoon?: string
 }
 
-// Peak UV window is approximated as +/- 1.5h around solar noon, and burn
-// time is a rough heuristic (not medical/dermatological guidance).
+// Peak UV hour is reported as solar noon itself (not a ± window — UV
+// typically peaks close to solar noon, but this is a simple approximation,
+// not a modeled UV-vs-time curve). Burn time is a rough heuristic, not
+// medical/dermatological guidance.
 export function normalizeUv(source: UvSourceData): DashboardWeatherData['uv'] {
   const index = Math.max(0, Math.round(source.currentUvIndex))
   const { label, recommendation } = categorize(index)

@@ -15,6 +15,7 @@ import { computeGarden } from '../rules/garden.js'
 import { computeLocations } from '../rules/locations.js'
 import { computePacking } from '../rules/packing.js'
 import { computeEvent } from '../rules/event.js'
+import { parseKolkataCalendarDate, toKolkataInstant } from '../utils/kolkataTime.js'
 
 // Sections intentionally NOT produced here (running, rainfall.month/
 // monthlyAverage/history) are left out of the returned object so the
@@ -59,14 +60,16 @@ export type NormalizeContext = {
 
 function formatHourLabel(isoTime: string, index: number): string {
   if (index === 0) return 'Now'
-  const date = new Date(isoTime)
-  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: undefined, hour12: true })
+  // Kolkata wall-clock hour — parsed and formatted independent of the
+  // server's local timezone (see utils/kolkataTime.ts).
+  const date = parseKolkataCalendarDate(isoTime)
+  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: undefined, hour12: true, timeZone: 'UTC' })
 }
 
 function formatDayLabel(isoDate: string, index: number): string {
   if (index === 0) return 'Today'
-  const date = new Date(isoDate)
-  return date.toLocaleDateString('en-IN', { weekday: 'short' })
+  const date = parseKolkataCalendarDate(isoDate)
+  return date.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' })
 }
 
 export function toDashboardWeatherData(
@@ -112,14 +115,14 @@ export function toDashboardWeatherData(
     }
   })
 
-  const astronomy = calculateAstronomy(new Date(data.current_weather.time), {
+  // Astronomy needs the real absolute instant (see kolkataTime.ts).
+  const astronomy = calculateAstronomy(toKolkataInstant(data.current_weather.time), {
     latitude: context.latitude,
     longitude: context.longitude,
   })
 
   const uv = normalizeUv({
     currentUvIndex: data.hourly.uv_index[currentHourIndex] ?? 0,
-    dailyUvIndexMax: data.daily.uv_index_max[0] ?? 0,
     solarNoon: astronomy.solarNoon,
   })
 
@@ -132,7 +135,7 @@ export function toDashboardWeatherData(
   const rainfall = computeRainfall({
     chance: data.daily.precipitation_probability_max[0] ?? 0,
     todayTotal: data.daily.precipitation_sum[0] ?? 0,
-    monthLabel: new Date(data.current_weather.time).toLocaleDateString('en-IN', { month: 'long' }),
+    monthLabel: parseKolkataCalendarDate(data.current_weather.time).toLocaleDateString('en-IN', { month: 'long', timeZone: 'UTC' }),
   })
 
   const bestWindowLabel = uv.index >= 6 ? `before ${astronomy.sunrise !== '—' ? astronomy.sunrise : '9 AM'}` : 'most of the day'
@@ -147,8 +150,10 @@ export function toDashboardWeatherData(
     bestWindowLabel,
   })
 
-  const currentDate = new Date(data.current_weather.time)
-  const month = currentDate.getMonth()
+  // Kolkata CALENDAR date — read only with UTC getters/timeZone:'UTC'
+  // formatting (see utils/kolkataTime.ts). Do not use for real instant math.
+  const currentDate = parseKolkataCalendarDate(data.current_weather.time)
+  const month = currentDate.getUTCMonth()
   const rainChanceToday = daily[0]?.rainChance ?? 0
   const visibilityKm = Math.round((visibilityMeters / 1000) * 10) / 10
 
@@ -198,7 +203,7 @@ export function toDashboardWeatherData(
     conditionCode,
     aqiIndex: airQuality?.index,
     city: context.city,
-    dateLabel: currentDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+    dateLabel: currentDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }),
   })
 
   const event = computeEvent({ daily, currentDate, month })
