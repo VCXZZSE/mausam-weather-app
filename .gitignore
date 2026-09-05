@@ -19,3 +19,6 @@ logs/
 /.plugins/
 /.opencode-skills/
 .vercel
+
+# Local-only backend handoff doc — never commit
+BACKEND_HANDOFF_LOCAL.md
