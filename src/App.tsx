@@ -1,82 +1,14 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import {
+  DEMO_WEATHER_DATA,
+  fetchWeatherDashboard,
+  getWeatherHeroVariant,
+  resolveWeatherIcon,
+  type DashboardWeatherData,
+} from './weatherData'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = 'home' | 'health' | 'forecast' | 'alerts'
-
-// ── Kolkata Data · Monsoon Season · 28 August 2026 ────────────────────────────
-const HOME_LOCATION = 'Kolkata'
-
-const W = {
-  city: HOME_LOCATION, region: 'West Bengal',
-  temp: 31, feelsLike: 37, condition: 'Heavy Monsoon Rain',
-  high: 32, low: 25,
-  humidity: 89, wind: 22, windDir: 'SW', windGust: 38,
-  visibility: 3.2, pressure: 1008, dewPoint: 28,
-  aqi: 78, pm25: 42, pm10: 68, o3: 38, no2: 22, aqiLabel: 'Satisfactory',
-  uvIndex: 6, uvLabel: 'High',
-  pollenTree: 'Low', pollenGrass: 'Moderate', pollenWeed: 'High',
-  sunrise: '5:21 AM', sunset: '6:14 PM',
-  rainChance: 92, rainfall24h: 34.2, rainfallMonth: 312,
-  bestRunStart: '5:30', bestRunEnd: '7:00 AM',
-  waveHeight: 2.1, waterTemp: 28, tideHigh: '11:23 AM', tideLow: '5:42 AM',
-  comfortIndex: 38, heatIndex: 41,
-  soilMoisture: 'Saturated', cropAdvice: 'Aman rice transplanting season',
-  festivalDays: 33,
-}
-
-const HOURLY = [
-  { t: 'Now', temp: 31, icon: '⛈️', rain: 92 },
-  { t: '1 PM', temp: 30, icon: '⛈️', rain: 95 },
-  { t: '2 PM', temp: 29, icon: '⛈️', rain: 88 },
-  { t: '3 PM', temp: 30, icon: '🌦️', rain: 72 },
-  { t: '4 PM', temp: 31, icon: '🌦️', rain: 65 },
-  { t: '5 PM', temp: 30, icon: '🌧️', rain: 80 },
-  { t: '6 PM', temp: 29, icon: '🌧️', rain: 85 },
-  { t: '7 PM', temp: 28, icon: '🌦️', rain: 68 },
-  { t: '8 PM', temp: 27, icon: '🌧️', rain: 58 },
-  { t: '9 PM', temp: 27, icon: '🌧️', rain: 45 },
-]
-
-const WEEKLY = [
-  { day: 'Today', hi: 31, lo: 25, icon: '⛈️', rain: 92, desc: 'Thunderstorms' },
-  { day: 'Fri', hi: 30, lo: 25, icon: '🌧️', rain: 85, desc: 'Heavy Rain' },
-  { day: 'Sat', hi: 32, lo: 26, icon: '🌦️', rain: 60, desc: 'Showers' },
-  { day: 'Sun', hi: 33, lo: 27, icon: '🌤️', rain: 30, desc: 'Partly Cloudy' },
-  { day: 'Mon', hi: 34, lo: 27, icon: '⛅', rain: 40, desc: 'Cloudy' },
-  { day: 'Tue', hi: 31, lo: 25, icon: '🌧️', rain: 80, desc: 'Rain' },
-  { day: 'Wed', hi: 30, lo: 24, icon: '⛈️', rain: 90, desc: 'Storms' },
-]
-
-const ALERTS = [
-  {
-    level: 'Red', dot: '#ef4444',
-    bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)',
-    title: 'Heavy Rainfall Warning',
-    body: 'IMD red alert: 115mm+ rain expected in next 24h. Avoid underpasses, the Maidan, and low-lying Behala.',
-    time: '2h ago',
-  },
-  {
-    level: 'Orange', dot: '#f97316',
-    bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.2)',
-    title: 'Waterlogging — EM Bypass',
-    body: 'Severe waterlogging on EM Bypass, Park Street, Kasba. Metro running on modified schedule. Allow extra time.',
-    time: '3h ago',
-  },
-  {
-    level: 'Yellow', dot: '#eab308',
-    bg: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.2)',
-    title: 'Ganga Ferry Suspended',
-    body: 'Wind gusts 45 km/h. All ferry services on the Hooghly (Howrah–Chandpal Ghat) suspended until further notice.',
-    time: '5h ago',
-  },
-]
-
-const LOCATIONS = [
-  { name: 'Darjeeling', temp: 16, icon: '🌧️', cond: 'Foggy Rain', dist: '600 km' },
-  { name: 'Digha Beach', temp: 28, icon: '⛈️', cond: 'Rough Seas', dist: '180 km' },
-  { name: 'Sundarbans', temp: 30, icon: '🌦️', cond: 'Showers', dist: '130 km' },
-  { name: 'Siliguri', temp: 24, icon: '🌧️', cond: 'Heavy Rain', dist: '570 km' },
-]
 
 // ── Shared UI ──────────────────────────────────────────────────────────────────
 
@@ -128,9 +60,24 @@ function Badge({ children, color, bg }: { children: ReactNode; color: string; bg
 function Bar({ pct, fill, height = 4 }: { pct: number; fill: string; height?: number }) {
   return (
     <div style={{ height, background: 'rgba(255,255,255,0.08)', borderRadius: height / 2, overflow: 'hidden' }}>
-      <div style={{ width: `${Math.min(100, pct)}%`, height: '100%', background: fill, borderRadius: height / 2 }} />
+      <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: '100%', background: fill, borderRadius: height / 2 }} />
     </div>
   )
+}
+
+function WeatherIcon({ conditionCode, icon, label }: { conditionCode: string; icon?: string; label: string }) {
+  const resolvedIcon = resolveWeatherIcon(conditionCode, icon)
+  if (/^(https?:\/\/|\/)/.test(resolvedIcon)) {
+    return <img src={resolvedIcon} alt={label} loading="lazy" decoding="async" style={{ width: '1.35em', height: '1.35em', objectFit: 'contain' }} />
+  }
+  return <span role="img" aria-label={label}>{resolvedIcon}</span>
+}
+
+function dailyTemperaturePercent(day: DashboardWeatherData['daily'][number], days: DashboardWeatherData['daily']): number {
+  if (!days.length) return 0
+  const minimum = Math.min(...days.map(item => item.low))
+  const maximum = Math.max(...days.map(item => item.high))
+  return maximum === minimum ? 50 : ((day.high - minimum) / (maximum - minimum)) * 100
 }
 
 // ── Nav Icons ──────────────────────────────────────────────────────────────────
@@ -203,13 +150,7 @@ function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
   )
 }
 
-function AudienceFocus() {
-  const items = [
-    { icon: '♥', label: 'Health', value: 'AQI 78 · UV 6', tone: 'focus-health' },
-    { icon: '↗', label: 'Move', value: 'Run 5:30–7 AM', tone: 'focus-move' },
-    { icon: '⌁', label: 'Commute', value: 'Flooding nearby', tone: 'focus-commute' },
-    { icon: '⌂', label: 'Outdoors', value: 'Rough seas · 2.1m', tone: 'focus-outdoors' },
-  ]
+function AudienceFocus({ items }: { items: DashboardWeatherData['overview'] }) {
   return (
     <div className="audience-focus">
       <div className="audience-focus-heading">Today, at a glance</div>
@@ -227,8 +168,10 @@ function AudienceFocus() {
 
 // ── Home Tab ───────────────────────────────────────────────────────────────────
 
-function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void; onOpenPersonalized: () => void }) {
-  const isRainy = /rain|storm|shower|drizzle/i.test(W.condition)
+function HomeTab({ profile, theme, setTheme, onOpenPersonalized, weather }: { profile: Profile; theme: 'dark' | 'light'; setTheme: (theme: 'dark' | 'light') => void; onOpenPersonalized: () => void; weather: DashboardWeatherData }) {
+  const { current } = weather
+  const weatherHeroVariant = current.heroVariant ?? getWeatherHeroVariant(current.conditionCode, current.condition)
+  const isRainy = weatherHeroVariant === 'rainy'
 
   return (
     <div className="home-screen app-page" style={{ padding: '52px 16px 24px' }}>
@@ -258,40 +201,40 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
 
       <button className="personal-insight home-insight" type="button" onClick={onOpenPersonalized} aria-label="Open your personalised weather briefing">
         <div className="insight-spark">✦</div>
-        <div><strong>{profile.name ? `Good morning, ${profile.name}` : 'Your Mausam briefing'}</strong><span>Personalised for {HOME_LOCATION}{profile.sensitivities.length ? ` · Watching ${profile.sensitivities.slice(0, 2).join(' + ')}` : ''}</span></div>
+        <div><strong>{profile.name ? `Good morning, ${profile.name}` : 'Your Mausam briefing'}</strong><span>Personalised for {current.city}{profile.sensitivities.length ? ` · Watching ${profile.sensitivities.slice(0, 2).join(' + ')}` : ''}</span></div>
         <div className="insight-arrow">›</div>
       </button>
       {/* Hero Card */}
-      <div className={`weather-hero-card${isRainy ? ' is-rainy' : ''}`} style={{
+      <div className={`weather-hero-card is-${weatherHeroVariant}`} data-weather-variant={weatherHeroVariant} style={{
         background: 'linear-gradient(150deg, #192f52 0%, #0e1c38 40%, #070d1e 100%)',
         borderRadius: 24, padding: '26px 22px 22px', marginBottom: 14,
         position: 'relative', overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.07)',
       }}>
         {/* Ambient glows */}
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 65%)', borderRadius: '50%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -50, left: -30, width: 180, height: 180, background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 65%)', borderRadius: '50%', pointerEvents: 'none' }} />
+        <div className="hero-ambient hero-ambient-top" style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 65%)', borderRadius: '50%', pointerEvents: 'none' }} />
+        <div className="hero-ambient hero-ambient-bottom" style={{ position: 'absolute', bottom: -50, left: -30, width: 180, height: 180, background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 65%)', borderRadius: '50%', pointerEvents: 'none' }} />
 
         <div className="weather-hero-content" style={{ position: 'relative', zIndex: 1 }}>
           <div className="hero-location hero-location-inline">
             <span className="hero-location-pin" aria-hidden="true">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" /></svg>
             </span>
-            <span className="hero-location-name">{W.city}, {W.region}</span>
+            <span className="hero-location-name">{current.city}, {current.region}</span>
           </div>
 
           <div className="weather-hero-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div className="weather-temp-value" style={{ fontSize: 82, fontWeight: 800, color: 'white', lineHeight: 1, letterSpacing: '-0.05em', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                <span>{W.temp}</span>
+                <span>{current.temperature}</span>
                 <span style={{ fontSize: 38, fontWeight: 300, color: 'rgba(255,255,255,0.4)', transform: 'translateY(8px)' }}>°</span>
               </div>
-              <div className="weather-condition" style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', fontWeight: 500, marginTop: 6 }}>{W.condition}</div>
+              <div className="weather-condition" style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', fontWeight: 500, marginTop: 6 }}>{current.condition}</div>
               <div className="weather-meta" style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>
-                Feels {W.feelsLike}° &nbsp;·&nbsp; H:{W.high}° L:{W.low}°
+                Feels {current.feelsLike}° &nbsp;·&nbsp; H:{current.high}° L:{current.low}°
               </div>
             </div>
-            <div className={`weather-companion ${isRainy ? 'weather-companion-rain' : 'weather-companion-sun'}`} aria-label={isRainy ? 'Animated rain cloud' : 'Animated sunny companion'}>
+            <div className={`weather-companion weather-companion-${weatherHeroVariant}`} aria-label={isRainy ? 'Animated rain cloud' : 'Animated smiling sun'}>
               <svg className="companion-illustration" viewBox="0 0 140 140" aria-hidden="true">
                 {isRainy ? <>
                   <g className="illustration-rain" stroke="#c8f2fa" strokeWidth="2" strokeLinecap="round" opacity=".65">
@@ -318,26 +261,7 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
                     <path d="M67 64q4-3 8 0" fill="none" stroke="#28253f" strokeWidth="1.8" strokeLinecap="round" />
                     <path d="M69 72l-7 22h10l-5 20 20-28H77l7-14Z" fill="#ffe767" stroke="#d7ad36" strokeWidth="1.2" />
                   </g>
-                </> : <circle cx="106" cy="28" r="20" fill="#f7d36b" opacity=".9" />}
-                <g className="illustration-person">
-                  {isRainy ? <>
-                    <path d="M58 51q19-18 39 0l-5 42H63Z" fill="#f4cf57" />
-                    <path d="M57 51q-1-22 20-25 22 3 20 25-20 14-40 0Z" fill="#f8d95e" />
-                    <path d="M66 45q11-13 22 0v12H66Z" fill="#fff3db" />
-                    <circle cx="73" cy="49" r="2.4" fill="#303846" /><circle cx="82" cy="49" r="2.4" fill="#303846" />
-                    <path d="M76 55q3 2 6 0" fill="none" stroke="#d38f86" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M67 68v15M87 68v15" stroke="#d19e2e" strokeWidth="2" strokeLinecap="round" />
-                    <path d="M65 91l-2 28M89 91l2 28" stroke="#f4cf57" strokeWidth="9" strokeLinecap="round" />
-                    <path d="M58 119q7-4 14 0M84 119q7-4 14 0" fill="none" stroke="#d49d32" strokeWidth="5" strokeLinecap="round" />
-                  </> : <>
-                    <circle cx="81" cy="55" r="8" fill="#efc4ac" />
-                    <path d="M74 53q3-10 13-3l-2 6Z" fill="#283746" />
-                    <path d="M75 64q10-5 18 3l-4 29H72Z" fill="#58a9b4" />
-                    <path d="M77 70l-12 15M89 71l-8 14" fill="none" stroke="#efc4ac" strokeWidth="5" strokeLinecap="round" />
-                    <path d="M75 94l-2 28M87 94l7 28" fill="none" stroke="#344555" strokeWidth="7" strokeLinecap="round" />
-                  </>}
-                </g>
-                {!isRainy && <path d="M71 48q10-13 24-3l-13 4Z" fill="#d8ed75" />}
+                </> : <image className="sun-buddy-image" href="/sunny-weather-buddy.png" x="0" y="0" width="140" height="140" preserveAspectRatio="xMidYMid slice" />}
               </svg>
             </div>
           </div>
@@ -348,9 +272,9 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
             borderTop: '1px solid rgba(255,255,255,0.07)',
           }}>
             {[
-              { v: `${W.wind}`, u: 'km/h', l: `Wind · ${W.windDir}` },
-              { v: `${W.humidity}`, u: '%', l: 'Humidity' },
-              { v: `${W.visibility}`, u: 'km', l: 'Visibility' },
+              { v: `${current.windSpeed}`, u: 'km/h', l: `Wind · ${current.windDirection}` },
+              { v: `${current.humidity}`, u: '%', l: 'Humidity' },
+              { v: `${current.visibility}`, u: 'km', l: 'Visibility' },
             ].map((s, i) => (
               <div className="weather-stat" key={i} style={{ textAlign: 'center' }}>
                 <div className="weather-stat-label">{s.l}</div>
@@ -363,23 +287,23 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
         </div>
       </div>
 
-      <AudienceFocus />
+      <AudienceFocus items={weather.overview} />
 
       {/* Hourly Forecast */}
       <div style={{ marginBottom: 22 }}>
         <SectionLabel>Hourly · Rain Chance</SectionLabel>
         <div className="no-scrollbar horizontal-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-          {HOURLY.map((h, i) => (
-            <div key={i} style={{
+          {weather.hourly.map((hour, i) => (
+            <div key={`${hour.time}-${i}`} style={{
               flexShrink: 0, width: 62, borderRadius: 16, padding: '11px 6px',
               background: i === 0 ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)',
               border: `1px solid ${i === 0 ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)'}`,
               textAlign: 'center',
             }}>
-              <div style={{ fontSize: 10, color: i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 6 }}>{h.t}</div>
-              <div style={{ fontSize: 20 }}>{h.icon}</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: 'white', marginTop: 4 }}>{h.temp}°</div>
-              <div style={{ fontSize: 9, color: '#60a5fa', marginTop: 2, fontWeight: 700 }}>{h.rain}%</div>
+              <div style={{ fontSize: 10, color: i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 6 }}>{hour.time}</div>
+              <div style={{ display: 'grid', placeItems: 'center', fontSize: 20 }}><WeatherIcon conditionCode={hour.conditionCode} icon={hour.icon} label={hour.condition} /></div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'white', marginTop: 4 }}>{hour.temperature}°</div>
+              <div style={{ fontSize: 9, color: '#60a5fa', marginTop: 2, fontWeight: 700 }}>{hour.rainChance}%</div>
             </div>
           ))}
         </div>
@@ -392,17 +316,17 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
 
           {/* AQI */}
           <Card className="metric-primary-card aqi-tile" grad="linear-gradient(140deg,#431407 0%,#1c0803 100%)" border="rgba(245,158,11,0.12)">
-            <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">AQI 78</Badge>
+            <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">AQI {weather.airQuality.index}</Badge>
             <CardLabel>Air Quality</CardLabel>
-            <div className="aqi-status">Satisfactory</div>
+            <div className="aqi-status">{weather.airQuality.label}</div>
             <div className="aqi-meter">
-              <Bar pct={(78 / 300) * 100} fill="linear-gradient(90deg,#22c55e,#f59e0b 50%,#ef4444)" height={5} />
+              <Bar pct={(weather.airQuality.index / weather.airQuality.scaleMax) * 100} fill="linear-gradient(90deg,#22c55e,#f59e0b 50%,#ef4444)" height={5} />
             </div>
             <div className="aqi-pollutants">
-              {[['PM2.5','42','#f59e0b'],['PM10','68','#f97316']].map(([l,v,c]) => (
-                <div className="aqi-pollutant" key={l}>
-                  <div className="aqi-pollutant-label">{l}</div>
-                  <div className="aqi-pollutant-value" style={{ color: c }}>{v}</div>
+              {weather.airQuality.pollutants.slice(0, 2).map(pollutant => (
+                <div className="aqi-pollutant" key={pollutant.label}>
+                  <div className="aqi-pollutant-label">{pollutant.label}</div>
+                  <div className="aqi-pollutant-value" style={{ color: pollutant.color }}>{pollutant.value}</div>
                 </div>
               ))}
             </div>
@@ -410,48 +334,44 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
 
           {/* UV */}
           <Card className="metric-primary-card uv-tile" grad="linear-gradient(140deg,#7c2d12 0%,#2c0e07 100%)" border="rgba(251,146,60,0.1)">
-            <Badge color="#fb923c" bg="rgba(251,146,60,0.14)">HIGH</Badge>
+            <Badge color="#fb923c" bg="rgba(251,146,60,0.14)">{weather.uv.label.toUpperCase()}</Badge>
             <CardLabel>UV Index</CardLabel>
-            <div className="metric-card-number metric-index">{W.uvIndex}</div>
-            <div className="metric-card-emphasis">Use SPF 30+</div>
-            <div className="metric-card-note">Peak · 11 AM–2 PM</div>
+            <div className="metric-card-number metric-index">{weather.uv.index}</div>
+            <div className="metric-card-emphasis">{weather.uv.recommendation}</div>
+            <div className="metric-card-note">Peak · {weather.uv.peakHours}</div>
           </Card>
 
           {/* Best Run */}
           <Card className="metric-primary-card run-tile" grad="linear-gradient(140deg,#064e3b 0%,#022c22 100%)" border="rgba(52,211,153,0.1)">
-            <Badge color="#34d399" bg="rgba(52,211,153,0.14)">FITNESS</Badge>
+            <Badge color="#34d399" bg="rgba(52,211,153,0.14)">{weather.running.badge}</Badge>
             <CardLabel>Best Run Time</CardLabel>
-            <div className="metric-card-number metric-run-time">{W.bestRunStart}–{W.bestRunEnd}</div>
-            <div className="metric-card-emphasis">Before humidity peaks</div>
-            <div className="metric-card-note metric-card-accent">Sunrise · {W.sunrise}</div>
+            <div className="metric-card-number metric-run-time">{weather.running.start}–{weather.running.end}</div>
+            <div className="metric-card-emphasis">{weather.running.summary}</div>
+            <div className="metric-card-note metric-card-accent">Sunrise · {weather.astronomy.sunrise}</div>
           </Card>
 
           {/* Rain Today */}
           <Card className="metric-primary-card rainfall-tile" grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)" border="rgba(96,165,250,0.1)">
-            <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">{W.rainChance}%</Badge>
+            <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">{weather.rainfall.chance}%</Badge>
             <CardLabel>Rainfall Today</CardLabel>
             <div className="metric-card-number metric-rainfall">
-              {W.rainfall24h}<span> mm</span>
+              {weather.rainfall.today}<span> {weather.rainfall.unit}</span>
             </div>
-            <div className="metric-card-emphasis">Today</div>
-            <div className="metric-card-note">Month · {W.rainfallMonth} mm</div>
+            <div className="metric-card-emphasis">{weather.rainfall.periodLabel}</div>
+            <div className="metric-card-note">Month · {weather.rainfall.month} {weather.rainfall.unit}</div>
           </Card>
 
           {/* Commute — full width */}
           <Card grad="linear-gradient(140deg,#2e1065 0%,#100522 100%)" border="rgba(167,139,250,0.1)" span2>
-            <Badge color="#f87171" bg="rgba(239,68,68,0.14)">DISRUPTED</Badge>
-            <CardLabel>Commute Status · Kolkata</CardLabel>
+            <Badge color="#f87171" bg="rgba(239,68,68,0.14)">{weather.commute.status}</Badge>
+            <CardLabel>Commute Status · {weather.commute.location}</CardLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 4 }}>
-              {[
-                { icon: '🚇', name: 'Metro Line', val: 'Modified', sub: 'Delays expected' },
-                { icon: '🚗', name: 'EM Bypass', val: 'Flooded', sub: 'Park St · Behala' },
-                { icon: '👁️', name: 'Howrah Br.', val: '1.8 km', sub: 'Visibility' },
-              ].map(c => (
+              {weather.commute.items.map(c => (
                 <div key={c.name} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
                   <div style={{ fontSize: 18 }}>{c.icon}</div>
                   <div style={{ fontSize: 8, color: '#a78bfa', fontWeight: 800, marginTop: 5, letterSpacing: '0.04em' }}>{c.name}</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: 'white', marginTop: 2 }}>{c.val}</div>
-                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', marginTop: 1 }}>{c.sub}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'white', marginTop: 2 }}>{c.value}</div>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', marginTop: 1 }}>{c.detail}</div>
                 </div>
               ))}
             </div>
@@ -459,25 +379,25 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
 
           {/* Local swimming conditions for Kolkata. */}
           <Card className="secondary-pair-card swimming-tile" grad="linear-gradient(140deg,#083344 0%,#031520 100%)" border="rgba(34,211,238,0.08)">
-            <Badge color="#f87171" bg="rgba(239,68,68,0.14)">ROUGH</Badge>
-            <CardLabel>Kolkata Swimming Pool · 12km</CardLabel>
+            <Badge color="#f87171" bg="rgba(239,68,68,0.14)">{weather.swimming.badge}</Badge>
+            <CardLabel>{weather.swimming.venue} · {weather.swimming.distance}</CardLabel>
             <div style={{ fontSize: 28, fontWeight: 800, color: 'white', lineHeight: 1 }}>
-              {W.waveHeight}<span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>m</span>
+              {weather.swimming.depth}<span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>{weather.swimming.depthUnit}</span>
             </div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 5 }}>Pool depth</div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>
-              💧 {W.waterTemp}°C · Peak 11:23 AM
+              💧 {weather.swimming.waterTemperature}°C · Peak {weather.swimming.peakTime}
             </div>
-            <div style={{ fontSize: 9, color: '#f87171', marginTop: 5 }}>🚫 Swimming not advised due to heavy rain</div>
+            <div style={{ fontSize: 9, color: '#f87171', marginTop: 5 }}>{weather.swimming.advice}</div>
           </Card>
 
           {/* Garden */}
           <Card className="secondary-pair-card garden-tile" grad="linear-gradient(140deg,#14532d 0%,#071a10 100%)" border="rgba(74,222,128,0.08)">
-            <Badge color="#4ade80" bg="rgba(74,222,128,0.14)">AMAN</Badge>
+            <Badge color="#4ade80" bg="rgba(74,222,128,0.14)">{weather.garden.badge}</Badge>
             <CardLabel>Garden & Crops</CardLabel>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.45 }}>{W.cropAdvice}</div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 7 }}>🌱 Soil: {W.soilMoisture}</div>
-            <div style={{ fontSize: 9, color: '#4ade80', marginTop: 5 }}>🐟 Hilsa season active!</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.45 }}>{weather.garden.title}</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 7 }}>🌱 Soil: {weather.garden.soil}</div>
+            <div style={{ fontSize: 9, color: '#4ade80', marginTop: 5 }}>{weather.garden.note}</div>
           </Card>
         </div>
       </div>
@@ -489,86 +409,68 @@ function HomeTab({ profile, theme, setTheme, onOpenPersonalized }: { profile: Pr
           background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
           borderRadius: 20, overflow: 'hidden',
         }}>
-          {WEEKLY.map((w, i) => (
-            <div key={w.day} style={{
+          {weather.daily.map((day, i) => (
+            <div key={day.day} style={{
               display: 'flex', alignItems: 'center', padding: '13px 16px',
-              borderBottom: i < WEEKLY.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+              borderBottom: i < weather.daily.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
               background: i === 0 ? 'rgba(59,130,246,0.05)' : 'transparent',
             }}>
-              <div style={{ width: 44, fontSize: 12, fontWeight: 700, color: i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.6)' }}>{w.day}</div>
-              <div style={{ fontSize: 20, marginRight: 8 }}>{w.icon}</div>
-              <div style={{ flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.32)' }}>{w.desc}</div>
+              <div style={{ width: 44, fontSize: 12, fontWeight: 700, color: i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.6)' }}>{day.day}</div>
+              <div style={{ display: 'grid', placeItems: 'center', fontSize: 20, marginRight: 8 }}><WeatherIcon conditionCode={day.conditionCode} icon={day.icon} label={day.condition} /></div>
+              <div style={{ flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.32)' }}>{day.condition}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontSize: 8, fontWeight: 800, color: '#60a5fa', background: 'rgba(96,165,250,0.1)', borderRadius: 8, padding: '2px 5px' }}>{w.rain}%</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', minWidth: 22 }}>{w.lo}°</span>
+                <span style={{ fontSize: 8, fontWeight: 800, color: '#60a5fa', background: 'rgba(96,165,250,0.1)', borderRadius: 8, padding: '2px 5px' }}>{day.rainChance}%</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', minWidth: 22 }}>{day.low}°</span>
                 <div style={{ width: 34, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(100, ((w.hi - 24) / 10) * 100)}%`, height: '100%', background: 'linear-gradient(90deg,#60a5fa,#f59e0b)', borderRadius: 2 }} />
+                  <div style={{ width: `${dailyTemperaturePercent(day, weather.daily)}%`, height: '100%', background: 'linear-gradient(90deg,#60a5fa,#f59e0b)', borderRadius: 2 }} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'white', minWidth: 22 }}>{w.hi}°</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'white', minWidth: 22 }}>{day.high}°</span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Durga Puja Countdown */}
-      <div style={{
-        background: 'linear-gradient(135deg,rgba(251,191,36,0.07) 0%,rgba(239,68,68,0.04) 100%)',
-        border: '1px solid rgba(251,191,36,0.14)', borderRadius: 16, padding: '14px 16px',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <div style={{ fontSize: 26 }}>🪔</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: '#fbbf24' }}>Durga Puja in {W.festivalDays} days</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>Oct 2–6 · Expect pleasant post-monsoon weather!</div>
-        </div>
-        <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.18)' }}>›</div>
-      </div>
     </div>
   )
 }
 
 // ── Health Tab ─────────────────────────────────────────────────────────────────
 
-function HealthTab() {
+function HealthTab({ weather }: { weather: DashboardWeatherData }) {
   return (
     <div className="app-page health-screen" style={{ padding: '52px 16px 24px' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', marginBottom: 18 }}>Health Metrics</div>
 
       {/* AQI Detailed */}
       <Card grad="linear-gradient(140deg,#431407 0%,#1a0803 100%)" border="rgba(245,158,11,0.12)" pad={20}>
-        <CardLabel>Air Quality Index · Kolkata</CardLabel>
+        <CardLabel>Air Quality Index · {weather.current.city}</CardLabel>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 52, fontWeight: 800, color: 'white', lineHeight: 1 }}>78</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fbbf24', marginTop: 5 }}>Satisfactory</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>Updated just now</div>
+            <div style={{ fontSize: 52, fontWeight: 800, color: 'white', lineHeight: 1 }}>{weather.airQuality.index}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fbbf24', marginTop: 5 }}>{weather.airQuality.label}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{weather.airQuality.updatedLabel}</div>
           </div>
-          <div style={{ fontSize: 40 }}>😷</div>
+          <div style={{ fontSize: 40 }}>{weather.airQuality.icon}</div>
         </div>
-        <Bar pct={(78 / 300) * 100} fill="linear-gradient(90deg,#22c55e 0%,#f59e0b 35%,#ef4444 70%,#dc2626 100%)" height={6} />
+        <Bar pct={(weather.airQuality.index / weather.airQuality.scaleMax) * 100} fill="linear-gradient(90deg,#22c55e 0%,#f59e0b 35%,#ef4444 70%,#dc2626 100%)" height={6} />
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, color: 'rgba(255,255,255,0.22)', marginTop: 5, marginBottom: 16 }}>
-          {['Good','Moderate','Sensitive','Poor','Very Poor'].map(l => <span key={l}>{l}</span>)}
+          {weather.airQuality.scaleLabels.map(label => <span key={label}>{label}</span>)}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {[
-            { n: 'PM2.5', v: 42, max: 100, fill: '#f59e0b', u: 'µg/m³' },
-            { n: 'PM10', v: 68, max: 150, fill: '#f97316', u: 'µg/m³' },
-            { n: 'O₃', v: 38, max: 120, fill: '#60a5fa', u: 'µg/m³' },
-            { n: 'NO₂', v: 22, max: 80, fill: '#a78bfa', u: 'µg/m³' },
-          ].map(p => (
-            <div key={p.n} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px' }}>
+          {weather.airQuality.pollutants.map(p => (
+            <div key={p.label} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>{p.n}</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: p.fill }}>{p.v}</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>{p.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: p.color }}>{p.value}</span>
               </div>
-              <Bar pct={(p.v / p.max) * 100} fill={p.fill} height={3} />
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', marginTop: 3 }}>{p.u}</div>
+              <Bar pct={(p.value / p.scaleMax) * 100} fill={p.color} height={3} />
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', marginTop: 3 }}>{p.unit}</div>
             </div>
           ))}
         </div>
         <div style={{ marginTop: 12, background: 'rgba(245,158,11,0.08)', borderRadius: 10, padding: '10px 12px', fontSize: 11, color: '#fbbf24', lineHeight: 1.55 }}>
-          💡 Asthma / COPD sufferers: limit outdoor time. Mask recommended near high-traffic zones.
+          {weather.airQuality.advice}
         </div>
       </Card>
 
@@ -578,10 +480,10 @@ function HealthTab() {
       <Card grad="linear-gradient(140deg,#7c2d12 0%,#2c0e07 100%)" border="rgba(251,146,60,0.1)" pad={20}>
         <CardLabel>UV Index</CardLabel>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 16 }}>
-          <div style={{ fontSize: 56, fontWeight: 800, color: 'white', lineHeight: 1 }}>6</div>
+          <div style={{ fontSize: 56, fontWeight: 800, color: 'white', lineHeight: 1 }}>{weather.uv.index}</div>
           <div style={{ marginBottom: 4 }}>
-            <div style={{ fontSize: 19, fontWeight: 800, color: '#fb923c' }}>High</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>SPF 30+ needed</div>
+            <div style={{ fontSize: 19, fontWeight: 800, color: '#fb923c' }}>{weather.uv.label}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{weather.uv.recommendation}</div>
           </div>
         </div>
         <div style={{
@@ -589,23 +491,23 @@ function HealthTab() {
           background: 'linear-gradient(90deg,#22c55e,#eab308 30%,#f97316 60%,#ef4444 80%,#dc2626)',
           marginBottom: 8, overflow: 'hidden', position: 'relative',
         }}>
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: `${((11 - W.uvIndex) / 11) * 100}%`, background: 'rgba(0,0,0,0.5)' }} />
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: `${Math.max(0, (1 - weather.uv.index / weather.uv.scaleMax) * 100)}%`, background: 'rgba(0,0,0,0.5)' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, color: 'rgba(255,255,255,0.22)', marginBottom: 14 }}>
-          {['Low','Moderate','High','Very High','Extreme'].map(l => <span key={l}>{l}</span>)}
+          {weather.uv.scaleLabels.map(label => <span key={label}>{label}</span>)}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Peak Hours</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: 'white', marginTop: 4 }}>11AM – 2PM</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'white', marginTop: 4 }}>{weather.uv.peakHours}</div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Burn Time</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#fb923c', marginTop: 4 }}>~25 min</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#fb923c', marginTop: 4 }}>{weather.uv.burnTime}</div>
           </div>
         </div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>
-          ☂️ Carry umbrella &nbsp;·&nbsp; 😎 Wear sunglasses &nbsp;·&nbsp; 🧴 Reapply SPF every 2h
+          {weather.uv.advice}
         </div>
       </Card>
 
@@ -615,24 +517,20 @@ function HealthTab() {
       <Card grad="linear-gradient(140deg,#14532d 0%,#071a10 100%)" border="rgba(74,222,128,0.08)" pad={20}>
         <CardLabel>Pollen Count</CardLabel>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'white' }}>Moderate</div>
-          <div style={{ fontSize: 28 }}>🌿</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'white' }}>{weather.pollen.overall}</div>
+          <div style={{ fontSize: 28 }}>{weather.pollen.icon}</div>
         </div>
-        {[
-          { type: 'Tree', level: 'Low', pct: 20, fill: '#4ade80' },
-          { type: 'Grass', level: 'Moderate', pct: 55, fill: '#eab308' },
-          { type: 'Weed', level: 'High', pct: 80, fill: '#f97316' },
-        ].map(p => (
+        {weather.pollen.items.map(p => (
           <div key={p.type} style={{ marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>{p.type}</span>
-              <span style={{ fontSize: 11, fontWeight: 800, color: p.fill }}>{p.level}</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: p.color }}>{p.level}</span>
             </div>
-            <Bar pct={p.pct} fill={p.fill} height={3} />
+            <Bar pct={p.percent} fill={p.color} height={3} />
           </div>
         ))}
         <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(255,255,255,0.38)', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '9px 12px', lineHeight: 1.55 }}>
-          🤧 Keep windows closed 10AM–3PM · Antihistamine recommended if allergy-prone
+          {weather.pollen.advice}
         </div>
       </Card>
 
@@ -643,16 +541,16 @@ function HealthTab() {
         <CardLabel>Heat & Hydration</CardLabel>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
-            <div style={{ fontSize: 32, fontWeight: 800, color: '#f87171', lineHeight: 1 }}>{W.heatIndex}°</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: '#f87171', lineHeight: 1 }}>{weather.current.heatIndex}°</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>Heat Index</div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
-            <div style={{ fontSize: 32, fontWeight: 800, color: '#60a5fa', lineHeight: 1 }}>{W.humidity}%</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: '#60a5fa', lineHeight: 1 }}>{weather.current.humidity}%</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>Humidity</div>
           </div>
         </div>
         <div style={{ background: 'rgba(96,165,250,0.08)', borderRadius: 10, padding: '10px 12px', fontSize: 11, color: '#60a5fa', lineHeight: 1.6 }}>
-          💧 Drink 3–4L water today &nbsp;·&nbsp; Avoid exertion 11AM–4PM &nbsp;·&nbsp; ORS if feeling dehydrated
+          {weather.current.hydrationAdvice}
         </div>
       </Card>
     </div>
@@ -661,7 +559,12 @@ function HealthTab() {
 
 // ── Forecast Tab ───────────────────────────────────────────────────────────────
 
-function ForecastTab() {
+function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
+  const maxRainfall = Math.max(1, ...weather.rainfall.history.map(item => item.value))
+  const monthlyRainfallPercent = weather.rainfall.monthlyAverage > 0
+    ? (weather.rainfall.month / weather.rainfall.monthlyAverage) * 100
+    : 0
+
   return (
     <div className="app-page forecast-screen" style={{ padding: '52px 16px 24px' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', marginBottom: 18 }}>Extended Forecast</div>
@@ -670,27 +573,27 @@ function ForecastTab() {
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>Next 7 Days</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {WEEKLY.map((w, i) => (
-            <div key={w.day} style={{
+          {weather.daily.map((day, i) => (
+            <div key={day.day} style={{
               background: i === 0 ? 'rgba(59,130,246,0.08)' : 'rgba(255,255,255,0.03)',
               border: `1px solid ${i === 0 ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.06)'}`,
               borderRadius: 16, padding: '14px 16px',
               display: 'flex', alignItems: 'center', gap: 10,
             }}>
-              <div style={{ width: 44, fontSize: 12, fontWeight: 700, color: i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.65)' }}>{w.day}</div>
-              <div style={{ fontSize: 22 }}>{w.icon}</div>
+              <div style={{ width: 44, fontSize: 12, fontWeight: 700, color: i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.65)' }}>{day.day}</div>
+              <div style={{ display: 'grid', placeItems: 'center', fontSize: 22 }}><WeatherIcon conditionCode={day.conditionCode} icon={day.icon} label={day.condition} /></div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{w.desc}</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{day.condition}</div>
                 <span style={{ fontSize: 8, fontWeight: 800, color: '#60a5fa', background: 'rgba(96,165,250,0.1)', borderRadius: 8, padding: '1px 5px', marginTop: 4, display: 'inline-block' }}>
-                  🌧️ {w.rain}%
+                  {day.rainChance}% rain
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{w.lo}°</span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>{day.low}°</span>
                 <div style={{ width: 36, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(100, ((w.hi - 24) / 10) * 100)}%`, height: '100%', background: 'linear-gradient(90deg,#60a5fa,#f59e0b)', borderRadius: 2 }} />
+                  <div style={{ width: `${dailyTemperaturePercent(day, weather.daily)}%`, height: '100%', background: 'linear-gradient(90deg,#60a5fa,#f59e0b)', borderRadius: 2 }} />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>{w.hi}°</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>{day.high}°</span>
               </div>
             </div>
           ))}
@@ -704,12 +607,12 @@ function ForecastTab() {
           <div className="sun-times-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div className="sun-time-tile">
               <div className="sun-time-icon sunrise-icon">☼</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fbbf24', marginTop: 6 }}>{W.sunrise}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#fbbf24', marginTop: 6 }}>{weather.astronomy.sunrise}</div>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)' }}>Sunrise</div>
             </div>
             <div className="sun-time-tile">
               <div className="sun-time-icon sunset-icon">◒</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#f97316', marginTop: 6 }}>{W.sunset}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#f97316', marginTop: 6 }}>{weather.astronomy.sunset}</div>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)' }}>Sunset</div>
             </div>
           </div>
@@ -720,15 +623,15 @@ function ForecastTab() {
             <line x1="0" y1="61" x2="280" y2="61" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
           </svg>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(255,255,255,0.22)', marginBottom: 16 }}>
-            <span>{W.sunrise}</span>
-            <span style={{ color: '#fbbf24', fontWeight: 700 }}>Solar noon · 12:47 PM</span>
-            <span>{W.sunset}</span>
+            <span>{weather.astronomy.sunrise}</span>
+            <span style={{ color: '#fbbf24', fontWeight: 700 }}>Solar noon · {weather.astronomy.solarNoon}</span>
+            <span>{weather.astronomy.sunset}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             {[
-              { icon: '◐', label: 'Moon Phase', val: 'Waxing Gibbous', className: 'moon-detail-tile' },
-              { icon: '☼', label: 'Golden Hour', val: '5:51 PM', className: 'golden-hour-tile' },
-              { icon: '◔', label: 'Moonrise', val: '8:45 PM', className: 'moon-detail-tile' },
+              { icon: '◐', label: 'Moon Phase', val: weather.astronomy.moonPhase, className: 'moon-detail-tile' },
+              { icon: '☼', label: 'Golden Hour', val: weather.astronomy.goldenHour, className: 'golden-hour-tile' },
+              { icon: '◔', label: 'Moonrise', val: weather.astronomy.moonrise, className: 'moon-detail-tile' },
             ].map(m => (
               <div key={m.label} className={`sun-detail-tile ${m.className}`} style={{ textAlign: 'center' }}>
                 <div className="sun-detail-icon">{m.icon}</div>
@@ -743,28 +646,28 @@ function ForecastTab() {
 
       {/* Monthly Rainfall */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>August Rainfall</SectionLabel>
+        <SectionLabel>{weather.rainfall.monthLabel} Rainfall</SectionLabel>
         <Card grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)" border="rgba(96,165,250,0.08)" pad={20}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
             <div>
               <div style={{ fontSize: 34, fontWeight: 800, color: 'white', lineHeight: 1 }}>
-                {W.rainfallMonth} <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>mm</span>
+                {weather.rainfall.month} <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.35)' }}>{weather.rainfall.unit}</span>
               </div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>of ~395mm August avg</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 4 }}>of ~{weather.rainfall.monthlyAverage}{weather.rainfall.unit} {weather.rainfall.monthLabel} avg</div>
             </div>
-            <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 800 }}>79%</div>
+            <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 800 }}>{Math.round(monthlyRainfallPercent)}%</div>
           </div>
-          <Bar pct={(W.rainfallMonth / 395) * 100} fill="linear-gradient(90deg,#60a5fa,#818cf8)" height={5} />
+          <Bar pct={monthlyRainfallPercent} fill="linear-gradient(90deg,#60a5fa,#818cf8)" height={5} />
           <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 60, marginTop: 16 }}>
-            {[28, 12, 45, 18, 52, 38, 34].map((v, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            {weather.rainfall.history.map((item, i) => (
+              <div key={`${item.label}-${i}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                 <div style={{
                   width: '100%', borderRadius: '3px 3px 0 0',
-                  height: `${(v / 55) * 46}px`,
-                  background: i === 6 ? '#60a5fa' : 'rgba(96,165,250,0.22)',
+                  height: `${(item.value / maxRainfall) * 46}px`,
+                  background: i === weather.rainfall.history.length - 1 ? '#60a5fa' : 'rgba(96,165,250,0.22)',
                 }} />
                 <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.22)' }}>
-                  {['22','23','24','25','26','27','28'][i]}
+                  {item.label}
                 </div>
               </div>
             ))}
@@ -777,27 +680,23 @@ function ForecastTab() {
       <Card grad="linear-gradient(140deg,#2e1065 0%,#100522 100%)" border="rgba(167,139,250,0.08)" pad={20}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 46, fontWeight: 800, color: '#f87171', lineHeight: 1 }}>{W.comfortIndex}°</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#f87171', marginTop: 5 }}>Uncomfortable</div>
+            <div style={{ fontSize: 46, fontWeight: 800, color: '#f87171', lineHeight: 1 }}>{weather.comfort.index}°</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#f87171', marginTop: 5 }}>{weather.comfort.label}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>Comfort Index</div>
           </div>
-          <div style={{ fontSize: 36 }}>🥵</div>
+          <div style={{ fontSize: 36 }}>{weather.comfort.icon}</div>
         </div>
-        {[
-          { l: 'Temperature', v: `${W.temp}°C`, pct: 60, fill: '#f59e0b' },
-          { l: 'Humidity', v: `${W.humidity}%`, pct: 89, fill: '#60a5fa' },
-          { l: 'Wind', v: `${W.wind} km/h`, pct: 40, fill: '#a78bfa' },
-        ].map(c => (
-          <div key={c.l} style={{ marginBottom: 10 }}>
+        {weather.comfort.factors.map(factor => (
+          <div key={factor.label} style={{ marginBottom: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{c.l}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>{c.v}</span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{factor.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>{factor.value}</span>
             </div>
-            <Bar pct={c.pct} fill={c.fill} height={3} />
+            <Bar pct={factor.percent} fill={factor.color} height={3} />
           </div>
         ))}
         <div style={{ marginTop: 12, background: 'rgba(167,139,250,0.06)', borderRadius: 10, padding: '10px 12px', fontSize: 11, color: 'rgba(255,255,255,0.38)', lineHeight: 1.55 }}>
-          🎪 Event planners: Provide shade & water stations. Rain disruption probability ~30%.
+          {weather.comfort.advice}
         </div>
       </Card>
     </div>
@@ -806,21 +705,21 @@ function ForecastTab() {
 
 // ── Alerts Tab ─────────────────────────────────────────────────────────────────
 
-function AlertsTab() {
+function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
   return (
     <div className="app-page alerts-screen" style={{ padding: '52px 16px 24px' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.03em', marginBottom: 18 }}>Alerts & Travel</div>
 
       {/* Active Alerts */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>Active Alerts · 3</SectionLabel>
+        <SectionLabel>Active Alerts · {weather.alerts.length}</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {ALERTS.map(a => (
+          {weather.alerts.map(a => (
             <div key={a.title} style={{
-              background: a.bg, border: `1px solid ${a.border}`, borderRadius: 16, padding: 16,
+              background: a.background, border: `1px solid ${a.borderColor}`, borderRadius: 16, padding: 16,
             }}>
               <div style={{ display: 'flex', gap: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: a.dot, flexShrink: 0, marginTop: 4 }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: a.dotColor, flexShrink: 0, marginTop: 4 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>{a.title}</div>
@@ -829,9 +728,9 @@ function AlertsTab() {
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.52)', lineHeight: 1.55 }}>{a.body}</div>
                   <div style={{
                     display: 'inline-block', marginTop: 8,
-                    background: a.border, borderRadius: 8, padding: '2px 8px',
-                    fontSize: 8, fontWeight: 900, color: a.dot, letterSpacing: '0.06em',
-                  }}>{a.level.toUpperCase()} ALERT · IMD</div>
+                    background: a.borderColor, borderRadius: 8, padding: '2px 8px',
+                    fontSize: 8, fontWeight: 900, color: a.dotColor, letterSpacing: '0.06em',
+                  }}>{a.level.toUpperCase()} ALERT · {a.source}</div>
                 </div>
               </div>
             </div>
@@ -843,18 +742,18 @@ function AlertsTab() {
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>Saved Locations</SectionLabel>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {LOCATIONS.map(l => (
-            <div key={l.name} style={{
+          {weather.locations.map(location => (
+            <div key={location.name} style={{
               background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
               borderRadius: 16, padding: 14,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ fontSize: 22 }}>{l.icon}</div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontWeight: 600 }}>{l.dist}</div>
+                <div style={{ display: 'grid', placeItems: 'center', fontSize: 22 }}><WeatherIcon conditionCode={location.conditionCode} icon={location.icon} label={location.condition} /></div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontWeight: 600 }}>{location.distance}</div>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'white', marginBottom: 2 }}>{l.name}</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>{l.cond}</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: 'white' }}>{l.temp}°</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'white', marginBottom: 2 }}>{location.name}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>{location.condition}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: 'white' }}>{location.temperature}°</div>
             </div>
           ))}
         </div>
@@ -864,15 +763,8 @@ function AlertsTab() {
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>Today's Packing List</SectionLabel>
         <Card grad="linear-gradient(140deg,#1a3256 0%,#0d1a2e 100%)" border="rgba(96,165,250,0.08)" pad={16}>
-          <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 800, marginBottom: 14 }}>For Kolkata · 28 Aug 2026</div>
-          {[
-            { icon: '☂️', item: 'Heavy duty umbrella', why: '92% rain chance' },
-            { icon: '👟', item: 'Waterproof footwear', why: 'Severe waterlogging' },
-            { icon: '🧴', item: 'Sunscreen SPF 30+', why: 'UV Index 6 (High)' },
-            { icon: '💧', item: 'Water bottle (1L+)', why: 'Heat index 41°C' },
-            { icon: '😷', item: 'N95 mask', why: 'AQI 78 (Satisfactory)' },
-            { icon: '📱', item: 'Power bank', why: 'Power cuts likely' },
-          ].map((p, i, arr) => (
+          <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 800, marginBottom: 14 }}>{weather.packing.title}</div>
+          {weather.packing.items.map((p, i, arr) => (
             <div key={p.item} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               paddingBottom: i < arr.length - 1 ? 12 : 0,
@@ -882,38 +774,38 @@ function AlertsTab() {
               <div style={{ fontSize: 22, width: 30, flexShrink: 0, textAlign: 'center' }}>{p.icon}</div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>{p.item}</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 1 }}>{p.why}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 1 }}>{p.reason}</div>
               </div>
             </div>
           ))}
         </Card>
       </div>
 
-      {/* Durga Puja Event Planner */}
-      <SectionLabel>Event Planner</SectionLabel>
+      {/* Seasonal event planner */}
+      <SectionLabel>{weather.event.sectionLabel}</SectionLabel>
       <Card grad="linear-gradient(140deg,rgba(251,191,36,0.08) 0%,rgba(239,68,68,0.04) 100%)" border="rgba(251,191,36,0.14)" pad={18}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#fbbf24', marginBottom: 3 }}>🪔 Durga Puja 2026</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)' }}>Oct 2–6 · Starts in {W.festivalDays} days</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#fbbf24', marginBottom: 3 }}>{weather.event.icon} {weather.event.title}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)' }}>{weather.event.dateRange} · Starts in {weather.event.daysAway} days</div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.32)' }}>Expected</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Post-monsoon</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>{weather.event.expectedSeason}</div>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>28°C avg</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{weather.event.expectedTemperature}°C avg</div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>Expected temp</div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#4ade80' }}>Low Rain</div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>~15% chance</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#4ade80' }}>{weather.event.rainLabel}</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>~{weather.event.rainChance}% chance</div>
           </div>
         </div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55 }}>
-          💡 Plan pandal visits 5–9 AM for best weather. Avoid afternoons during first two days.
+          {weather.event.advice}
         </div>
       </Card>
     </div>
@@ -1081,9 +973,169 @@ const PERSONALIZATION_PRIORITY: Array<{ variant: PersonalizationVariant; matches
   { variant: 'general', matches: () => true },
 ]
 
-export function getPersonalizedWeather(profile: Profile): PersonalizedWeather {
+export function getPersonalizedWeather(profile: Profile, weather: DashboardWeatherData = DEMO_WEATHER_DATA): PersonalizedWeather {
   const variant = PERSONALIZATION_PRIORITY.find(rule => rule.matches(profile))?.variant ?? 'general'
-  return { variant, ...PERSONALIZED_VARIANTS[variant] }
+  const base = PERSONALIZED_VARIANTS[variant]
+  const { current, airQuality, uv, rainfall, running, astronomy } = weather
+  const primaryPollutant = airQuality.pollutants[0]
+  const temperatureRange = `${current.low}–${current.high}°C`
+  const outdoorWindow = `${running.start}–${running.end}`
+
+  if (variant === 'skin-sun') {
+    return {
+      variant,
+      ...base,
+      headline: `${uv.label} UV calls for a gentler outdoor plan.`,
+      overview: `${current.condition} conditions are around ${current.temperature}°C, with UV at ${uv.index}. Since you marked skin sensitivity, plan longer outdoor time outside the ${uv.peakHours} peak and follow today’s protection guidance.`,
+      window: outdoorWindow,
+      factors: [
+        { label: 'UV', value: `${uv.index} · ${uv.label}` },
+        { label: 'Humidity', value: `${current.humidity}%` },
+        { label: 'Temperature', value: `${current.temperature}°C` },
+      ],
+      tiles: [
+        { icon: 'shield', title: 'Skin & Sun', value: `UV ${uv.index} · ${uv.label}`, detail: uv.recommendation, tone: 'rose' },
+        { icon: 'sun', title: 'Exposure', value: `Peak ${uv.peakHours}`, detail: `Burn time ${uv.burnTime}`, tone: 'amber' },
+        { icon: 'outdoor', title: 'Safer window', value: outdoorWindow, detail: running.summary, tone: 'green' },
+        { icon: 'evening', title: 'Evening', value: astronomy.goldenHour, detail: `Sunset ${astronomy.sunset}`, tone: 'violet' },
+      ],
+      recommendations: [
+        { icon: 'outdoor', title: `Use ${outdoorWindow} for outdoor plans`, reason: running.summary },
+        { icon: 'shield', title: uv.recommendation, reason: `UV is ${uv.index} (${uv.label}) today.` },
+        { icon: 'evening', title: 'Choose a calmer evening window', reason: `Golden hour begins around ${astronomy.goldenHour}.` },
+      ],
+    }
+  }
+
+  if (variant === 'uv-heat') {
+    return {
+      variant,
+      ...base,
+      headline: `${current.condition}, with heat and UV worth planning around.`,
+      overview: `It is ${current.temperature}°C and feels like ${current.feelsLike}°C. UV is ${uv.index} (${uv.label}), peaking ${uv.peakHours}. Your better activity window is ${outdoorWindow}.`,
+      window: outdoorWindow,
+      factors: [
+        { label: 'UV', value: `${uv.index} · ${uv.label}` },
+        { label: 'Feels like', value: `${current.feelsLike}°C` },
+        { label: 'Humidity', value: `${current.humidity}%` },
+      ],
+      tiles: [
+        { icon: 'sun', title: 'UV & Heat', value: `UV ${uv.index} · ${uv.label}`, detail: `Peak ${uv.peakHours}`, tone: 'amber' },
+        { icon: 'outdoor', title: 'Outdoor', value: outdoorWindow, detail: running.summary, tone: 'green' },
+        { icon: 'comfort', title: 'Comfort', value: `Feels ${current.feelsLike}°C`, detail: `Heat index ${current.heatIndex}°C`, tone: 'rose' },
+        { icon: 'sun', title: 'Sun', value: `Sunrise ${astronomy.sunrise}`, detail: `Sunset ${astronomy.sunset}`, tone: 'violet' },
+      ],
+      recommendations: [
+        { icon: 'outdoor', title: `Use ${outdoorWindow} for longer activity`, reason: running.summary },
+        { icon: 'comfort', title: 'Keep the peak heat lighter', reason: `It may feel close to ${current.feelsLike}°C.` },
+        { icon: 'shield', title: uv.recommendation, reason: `Peak exposure is ${uv.peakHours}.` },
+      ],
+    }
+  }
+
+  if (variant === 'uv-sun') {
+    return {
+      variant,
+      ...base,
+      headline: `${uv.label} UV, with a softer outdoor window.`,
+      overview: `${current.condition} conditions are expected today. UV is ${uv.index}, with peak exposure ${uv.peakHours}; the suggested activity window is ${outdoorWindow}.`,
+      window: outdoorWindow,
+      factors: [
+        { label: 'UV', value: `${uv.index} · ${uv.label}` },
+        { label: 'Sunrise', value: astronomy.sunrise },
+        { label: 'Sunset', value: astronomy.sunset },
+      ],
+      tiles: [
+        { icon: 'sun', title: 'UV', value: `${uv.index} · ${uv.label}`, detail: `Peak ${uv.peakHours}`, tone: 'amber' },
+        { icon: 'evening', title: 'Sun', value: astronomy.goldenHour, detail: `Sunset ${astronomy.sunset}`, tone: 'violet' },
+        { icon: 'outdoor', title: 'Outdoors', value: outdoorWindow, detail: running.summary, tone: 'green' },
+        { icon: 'shield', title: 'Sun protection', value: uv.recommendation, detail: `Burn time ${uv.burnTime}`, tone: 'rose' },
+      ],
+      recommendations: [
+        { icon: 'outdoor', title: `Plan activity for ${outdoorWindow}`, reason: running.summary },
+        { icon: 'shield', title: uv.recommendation, reason: `UV is expected to reach ${uv.index}.` },
+        { icon: 'evening', title: 'Use the golden-hour window', reason: `Gentler light begins around ${astronomy.goldenHour}.` },
+      ],
+    }
+  }
+
+  if (variant === 'cold') {
+    return {
+      variant,
+      ...base,
+      headline: `${current.condition}, ranging from ${temperatureRange}.`,
+      overview: `Today is ${current.temperature}°C with a low of ${current.low}°C. Since you marked cold sensitivity, use the suggested ${outdoorWindow} window and keep a layer ready around the cooler edges of the day.`,
+      window: outdoorWindow,
+      factors: [
+        { label: 'Low', value: `${current.low}°C` },
+        { label: 'Now', value: `${current.temperature}°C` },
+        { label: 'High', value: `${current.high}°C` },
+      ],
+      tiles: [
+        { icon: 'cold', title: 'Cold', value: `${current.low}°C low`, detail: 'Coolest forecast reading', tone: 'blue' },
+        { icon: 'comfort', title: 'Comfort', value: `${current.feelsLike}°C feel`, detail: weather.comfort.label, tone: 'green' },
+        { icon: 'temperature', title: 'Temperature', value: `${current.high}°C high`, detail: current.condition, tone: 'amber' },
+        { icon: 'evening', title: 'Evening', value: `Sunset ${astronomy.sunset}`, detail: `Range ${temperatureRange}`, tone: 'violet' },
+      ],
+      recommendations: [
+        { icon: 'outdoor', title: `Use ${outdoorWindow} for outdoor plans`, reason: running.summary },
+        { icon: 'cold', title: 'Keep a light extra layer ready', reason: `The forecast low is ${current.low}°C.` },
+        { icon: 'evening', title: 'Recheck conditions near sunset', reason: `Sunset is at ${astronomy.sunset}.` },
+      ],
+    }
+  }
+
+  if (variant === 'air-quality') {
+    return {
+      variant,
+      ...base,
+      headline: `Air quality is ${airQuality.label.toLowerCase()} today.`,
+      overview: `AQI is ${airQuality.index}. ${airQuality.advice}`,
+      window: outdoorWindow,
+      factors: [
+        { label: 'AQI', value: `${airQuality.index} · ${airQuality.label}` },
+        { label: primaryPollutant?.label ?? 'Pollutant', value: primaryPollutant ? `${primaryPollutant.value} ${primaryPollutant.unit}` : 'Not available' },
+        { label: 'Visibility', value: `${current.visibility} km` },
+      ],
+      tiles: [
+        { icon: 'air', title: 'Air quality', value: `AQI ${airQuality.index}`, detail: airQuality.label, tone: 'rose' },
+        { icon: 'air', title: primaryPollutant?.label ?? 'Pollution', value: primaryPollutant ? `${primaryPollutant.value} ${primaryPollutant.unit}` : 'Not available', detail: 'Primary reported pollutant', tone: 'amber' },
+        { icon: 'indoor', title: 'Guidance', value: airQuality.label, detail: airQuality.updatedLabel, tone: 'green' },
+        { icon: 'outdoor', title: 'Activity window', value: outdoorWindow, detail: running.summary, tone: 'violet' },
+      ],
+      recommendations: [
+        { icon: 'air', title: `Plan for AQI ${airQuality.index}`, reason: airQuality.advice },
+        { icon: 'outdoor', title: `Use ${outdoorWindow} if heading out`, reason: running.summary },
+        { icon: 'indoor', title: 'Recheck the latest reading', reason: airQuality.updatedLabel },
+      ],
+    }
+  }
+
+  return {
+    variant,
+    ...base,
+    headline: `${current.condition}, with today’s details in one place.`,
+    overview: `It is ${current.temperature}°C and feels like ${current.feelsLike}°C. Rain chance is ${rainfall.chance}%, humidity is ${current.humidity}%, and winds are ${current.windSpeed} km/h ${current.windDirection}.`,
+    window: outdoorWindow,
+    basis: `Today’s ${current.city} conditions`,
+    factors: [
+      { label: 'Temperature', value: `${current.temperature}°C` },
+      { label: 'Rain', value: `${rainfall.chance}%` },
+      { label: 'Humidity', value: `${current.humidity}%` },
+      { label: 'Wind', value: `${current.windSpeed} km/h ${current.windDirection}` },
+    ],
+    tiles: [
+      { icon: 'rain', title: 'Rain', value: `${rainfall.chance}% chance`, detail: `${rainfall.today} ${rainfall.unit} ${rainfall.periodLabel.toLowerCase()}`, tone: 'blue' },
+      { icon: 'comfort', title: 'Comfort', value: `Feels ${current.feelsLike}°C`, detail: `${current.humidity}% humidity`, tone: 'rose' },
+      { icon: 'wind', title: 'Wind', value: `${current.windSpeed} km/h ${current.windDirection}`, detail: `Gusts ${current.windGust} km/h`, tone: 'green' },
+      { icon: 'evening', title: 'Sun', value: `Sunset ${astronomy.sunset}`, detail: `Golden hour ${astronomy.goldenHour}`, tone: 'violet' },
+    ],
+    recommendations: [
+      { icon: 'outdoor', title: `Use ${outdoorWindow} for outdoor plans`, reason: running.summary },
+      { icon: 'rain', title: `Plan for a ${rainfall.chance}% rain chance`, reason: `${rainfall.today} ${rainfall.unit} is reported ${rainfall.periodLabel.toLowerCase()}.` },
+      { icon: 'comfort', title: `Expect it to feel like ${current.feelsLike}°C`, reason: `Humidity is ${current.humidity}%.` },
+    ],
+  }
 }
 
 function loadStoredProfile(): Profile | null {
@@ -1103,10 +1155,10 @@ function SetupChip({ label, selected, onClick, disabled = false }: { label: stri
   return <button className={`setup-chip${selected ? ' selected' : ''}${disabled ? ' disabled' : ''}`} onClick={disabled ? undefined : onClick} type="button" disabled={disabled}><span className="chip-mark">{selected ? '✓' : '+'}</span>{label}</button>
 }
 
-function Setup({ onComplete }: { onComplete: (profile: Profile) => void }) {
+function Setup({ weather, onComplete }: { weather: DashboardWeatherData; onComplete: (profile: Profile) => void }) {
   const [step, setStep] = useState<SetupStep>('welcome')
   const [name, setName] = useState('')
-  const location = HOME_LOCATION
+  const location = weather.current.city
   const [age, setAge] = useState(29)
   const [height, setHeight] = useState(168)
   const [weight, setWeight] = useState(64)
@@ -1158,11 +1210,11 @@ function Setup({ onComplete }: { onComplete: (profile: Profile) => void }) {
   return (
     <main className="setup-shell"><div className="setup-noise" /><div className="setup-topbar"><div className="brand-mark"><span>✦</span> MAUSAM</div>{step !== 'welcome' && step !== 'ready' && <div className="setup-progress"><span style={{ width: `${Math.max(9, (stepIndex / 5) * 100)}%` }} /></div>}{step !== 'welcome' && <button className="setup-back" onClick={back} type="button">←</button>}</div>
       <div className="setup-content">
-        {step === 'welcome' && <section className="setup-hero welcome-glass setup-animate"><div className="welcome-orb welcome-orb-a" /><div className="welcome-orb welcome-orb-b" /><div className="welcome-menu"><span className="welcome-menu-active">today</span><span>discover</span><span>for you</span><span>mausam</span></div><div className="welcome-brand"><span>✦</span> MAUSAM</div><div className="setup-eyebrow">PERSONAL WEATHER INTELLIGENCE</div><h1>feel the<br /><em>weather.</em></h1><p>Personal signals for a clearer day. Mausam turns the air, light and rain around you into guidance made for your body.</p><div className="welcome-reading"><span className="reading-dot" /><div><small>FIRST READING</small><strong>Kolkata · monsoon</strong></div><b>31°</b></div><button className="welcome-start" onClick={next} type="button"><span>start your profile</span><b>→</b></button><div className="setup-footnote">Your weather. Your rhythm. Your way.</div></section>}
-        {step === 'location' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">01 / YOUR PLACE</div><h2>Where should we<br /><em>start looking?</em></h2><p className="setup-copy">Your local weather, air quality and seasonal patterns will shape every insight.</p><label className="setup-label">YOUR NAME <span>REQUIRED</span></label><input className={`setup-input${nameError ? ' input-error' : ''}`} placeholder="What should we call you?" value={name} onChange={event => { setName(event.target.value); setNameError('') }} aria-invalid={Boolean(nameError)} />{nameError && <div className="setup-error">{nameError}</div>}<label className="setup-label">HOME LOCATION</label><div className="location-field"><span>⌖</span><div className="setup-input" style={{ display: 'flex', alignItems: 'center', color: '#fff', opacity: 1, pointerEvents: 'none' }}>{location}</div><b>Current</b></div><div className="location-card"><span className="location-icon">◉</span><div><strong>{location}</strong><small>West Bengal · India</small></div><span className="location-check">✓</span></div><button className="setup-primary" onClick={next} type="button">That’s right <span>→</span></button></section>}
+        {step === 'welcome' && <section className="setup-hero welcome-glass setup-animate"><div className="welcome-orb welcome-orb-a" /><div className="welcome-orb welcome-orb-b" /><div className="welcome-menu"><span className="welcome-menu-active">today</span><span>discover</span><span>for you</span><span>mausam</span></div><div className="welcome-brand"><span>✦</span> MAUSAM</div><div className="setup-eyebrow">PERSONAL WEATHER INTELLIGENCE</div><h1>feel the<br /><em>weather.</em></h1><p>Personal signals for a clearer day. Mausam turns the air, light and rain around you into guidance made for your body.</p><div className="welcome-reading"><span className="reading-dot" /><div><small>FIRST READING</small><strong>{weather.current.city} · {weather.current.condition}</strong></div><b>{weather.current.temperature}°</b></div><button className="welcome-start" onClick={next} type="button"><span>start your profile</span><b>→</b></button><div className="setup-footnote">Your weather. Your rhythm. Your way.</div></section>}
+        {step === 'location' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">01 / YOUR PLACE</div><h2>Where should we<br /><em>start looking?</em></h2><p className="setup-copy">Your local weather, air quality and seasonal patterns will shape every insight.</p><label className="setup-label">YOUR NAME <span>REQUIRED</span></label><input className={`setup-input${nameError ? ' input-error' : ''}`} placeholder="What should we call you?" value={name} onChange={event => { setName(event.target.value); setNameError('') }} aria-invalid={Boolean(nameError)} />{nameError && <div className="setup-error">{nameError}</div>}<label className="setup-label">HOME LOCATION</label><div className="location-field"><span>⌖</span><div className="setup-input" style={{ display: 'flex', alignItems: 'center', color: '#fff', opacity: 1, pointerEvents: 'none' }}>{location}</div><b>Current</b></div><div className="location-card"><span className="location-icon">◉</span><div><strong>{location}</strong><small>{weather.current.region} · India</small></div><span className="location-check">✓</span></div><button className="setup-primary" onClick={next} type="button">That’s right <span>→</span></button></section>}
         {step === 'body' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">02 / YOUR BASELINE</div><h2>A little context<br /><em>goes a long way.</em></h2><p className="setup-copy">These numbers help us make hydration, heat and activity guidance more personal.</p><div className="setup-body-stack"><div><label className="setup-label">AGE</label>{slider('Age', age, 13, 90, 'yrs', setAge)}</div><div><label className="setup-label">GENDER</label><div className="gender-options">{['Female', 'Male', 'Non-binary', 'Prefer not to say'].map(item => <button key={item} className={sex === item ? 'active' : ''} onClick={() => setSex(item)} type="button">{item}</button>)}</div></div>{slider('Height', height, 120, 220, 'cm', setHeight)}{slider('Weight', weight, 35, 180, 'kg', setWeight)}</div><button className="setup-primary" onClick={() => setStep('sensitivities')} type="button">Save baseline <span>→</span></button></section>}
         {step === 'sensitivities' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">03 / YOUR RESPONSE</div><h2>What does the<br /><em>weather stir up?</em></h2><p className="setup-copy">Select everything that affects you. We’ll surface the risk before it becomes a bad day.</p><label className="setup-label">WEATHER & AIR TRIGGERS</label><div className="setup-chips">{choiceSets.sensitivities.map(item => <SetupChip key={item} label={item} selected={sensitivities.includes(item)} onClick={() => toggle(item, sensitivities, setSensitivities)} />)}</div><label className="setup-label">HEALTH CONCERNS <span>OPTIONAL</span></label><div className="setup-chips">{choiceSets.concerns.map(item => <SetupChip key={item} label={item} selected={concerns.includes(item)} disabled={item !== 'None of these' && concerns.includes('None of these')} onClick={() => toggleConcern(item)} />)}</div><button className="setup-primary" onClick={next} type="button">Tune my alerts <span>→</span></button></section>}
-        {step === 'routine' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">04 / YOUR RHYTHM</div><h2>What should your<br /><em>day feel like?</em></h2><p className="setup-copy">We’ll turn conditions into useful nudges for the way you actually live.</p><label className="setup-label">WHAT MATTERS MOST</label><div className="setup-chips">{choiceSets.goals.map(item => <SetupChip key={item} label={item} selected={goals.includes(item)} onClick={() => toggle(item, goals, setGoals)} />)}</div><label className="setup-label">YOUR USUAL ACTIVITY</label><div className="setup-segmented">{['Low', 'Moderate', 'High'].map(item => <button key={item} className={activity === item ? 'active' : ''} onClick={() => setActivity(item)} type="button">{item}</button>)}</div><div className="setup-preview"><span>✦</span><div><strong>Your first insight</strong><small>Monsoon humidity is high today. We’ll suggest your best outdoor window and hydration target.</small></div></div><button className="setup-primary" onClick={next} type="button">See my plan <span>→</span></button></section>}
+        {step === 'routine' && <section className="setup-panel setup-animate"><div className="setup-eyebrow">04 / YOUR RHYTHM</div><h2>What should your<br /><em>day feel like?</em></h2><p className="setup-copy">We’ll turn conditions into useful nudges for the way you actually live.</p><label className="setup-label">WHAT MATTERS MOST</label><div className="setup-chips">{choiceSets.goals.map(item => <SetupChip key={item} label={item} selected={goals.includes(item)} onClick={() => toggle(item, goals, setGoals)} />)}</div><label className="setup-label">YOUR USUAL ACTIVITY</label><div className="setup-segmented">{['Low', 'Moderate', 'High'].map(item => <button key={item} className={activity === item ? 'active' : ''} onClick={() => setActivity(item)} type="button">{item}</button>)}</div><div className="setup-preview"><span>✦</span><div><strong>Your first insight</strong><small>{weather.current.condition} · {weather.current.temperature}°C · {weather.current.humidity}% humidity. We’ll suggest your best outdoor window and daily guidance.</small></div></div><button className="setup-primary" onClick={next} type="button">See my plan <span>→</span></button></section>}
         {step === 'ready' && <section className="setup-panel setup-login setup-animate"><div className="login-symbol">✦</div><div className="setup-eyebrow">MAUSAM PROFILE READY</div><h2>Your world,<br /><em>in sync.</em></h2><p className="setup-copy">Your personal weather intelligence is ready. Pull the slider to enter your daily view.</p><div className="entry-slider" style={{ '--entry-progress': `${entryProgress}%`, '--entry-progress-ratio': entryProgress / 100 } as React.CSSProperties}><input aria-label="Slide to enter Mausam" type="range" min="0" max="100" value={entryProgress} onChange={event => { const value = Number(event.target.value); setEntryProgress(value); if (value === 100) onComplete({ name, location, sensitivities, concerns, goals, age, height, weight, activity }) }} /><span /><strong>SLIDE TO DIVE IN <b>→</b></strong><i className="entry-handle">→</i></div><div className="setup-consent">Your answers stay on this device until you choose to create an account.</div></section>}
       </div>{step !== 'welcome' && step !== 'ready' && <div className="setup-step-count">{String(stepIndex).padStart(2, '0')} <span>/ 04</span></div>}
     </main>
@@ -1189,8 +1241,8 @@ function PersonalizedIconGraphic({ name }: { name: PersonalizedIcon }) {
   )
 }
 
-function PersonalizedWeatherPage({ profile, onBack }: { profile: Profile; onBack: () => void }) {
-  const personalized = useMemo(() => getPersonalizedWeather(profile), [profile])
+function PersonalizedWeatherPage({ profile, weather, onBack }: { profile: Profile; weather: DashboardWeatherData; onBack: () => void }) {
+  const personalized = useMemo(() => getPersonalizedWeather(profile, weather), [profile, weather])
   const [whyOpen, setWhyOpen] = useState(false)
 
   return (
@@ -1203,7 +1255,7 @@ function PersonalizedWeatherPage({ profile, onBack }: { profile: Profile; onBack
           <strong>Your Mausam</strong>
           <span>
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" /></svg>
-            {profile.location || HOME_LOCATION}, West Bengal
+            {weather.current.city}, {weather.current.region}
           </span>
         </div>
       </header>
@@ -1291,10 +1343,14 @@ function PersonalizedWeatherPage({ profile, onBack }: { profile: Profile; onBack
 export default function App() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [profile, setProfile] = useState<Profile | null>(loadStoredProfile)
+  const [weather, setWeather] = useState<DashboardWeatherData>(DEMO_WEATHER_DATA)
+  const [weatherSource, setWeatherSource] = useState<'demo' | 'loading' | 'live' | 'error'>(() =>
+    import.meta.env.VITE_WEATHER_API_URL?.trim() ? 'loading' : 'demo',
+  )
   const [tab, setTab] = useState<Tab>('home')
   const [showPersonalized, setShowPersonalized] = useState(false)
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
-    localStorage.getItem('mausam-theme') === 'light' ? 'light' : 'dark',
+    localStorage.getItem('mausam-theme') === 'dark' ? 'dark' : 'light',
   )
 
   useEffect(() => {
@@ -1306,14 +1362,40 @@ export default function App() {
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
   }, [profile])
 
+  useEffect(() => {
+    const controller = new AbortController()
+    const endpointConfigured = Boolean(import.meta.env.VITE_WEATHER_API_URL?.trim())
+    const configuredRefresh = Number(import.meta.env.VITE_WEATHER_REFRESH_MS)
+    const refreshMs = Number.isFinite(configuredRefresh) && configuredRefresh >= 10_000 ? configuredRefresh : 300_000
+
+    const refreshWeather = async () => {
+      try {
+        const nextWeather = await fetchWeatherDashboard(controller.signal)
+        setWeather(nextWeather)
+        setWeatherSource(endpointConfigured ? 'live' : 'demo')
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setWeatherSource('error')
+      }
+    }
+
+    void refreshWeather()
+    const refreshTimer = endpointConfigured ? window.setInterval(refreshWeather, refreshMs) : undefined
+
+    return () => {
+      controller.abort()
+      if (refreshTimer !== undefined) window.clearInterval(refreshTimer)
+    }
+  }, [])
+
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [tab, showPersonalized])
 
-  if (!profile) return <Setup onComplete={setProfile} />
+  if (!profile) return <Setup weather={weather} onComplete={setProfile} />
 
   return (
-    <div className={`mausam-app theme-${theme}`} data-theme={theme} style={{
+    <div className={`mausam-app theme-${theme}`} data-theme={theme} data-weather-source={weatherSource} style={{
       background: '#04050a',
       height: '100dvh',
       minHeight: '100dvh',
@@ -1333,12 +1415,12 @@ export default function App() {
       }}>
         <div ref={scrollRef} className="no-scrollbar app-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {showPersonalized ? (
-            <PersonalizedWeatherPage profile={profile} onBack={() => setShowPersonalized(false)} />
+            <PersonalizedWeatherPage profile={profile} weather={weather} onBack={() => setShowPersonalized(false)} />
           ) : <>
-            {tab === 'home' && <HomeTab profile={profile} theme={theme} setTheme={setTheme} onOpenPersonalized={() => setShowPersonalized(true)} />}
-            {tab === 'health' && <HealthTab />}
-            {tab === 'forecast' && <ForecastTab />}
-            {tab === 'alerts' && <AlertsTab />}
+            {tab === 'home' && <HomeTab profile={profile} theme={theme} setTheme={setTheme} onOpenPersonalized={() => setShowPersonalized(true)} weather={weather} />}
+            {tab === 'health' && <HealthTab weather={weather} />}
+            {tab === 'forecast' && <ForecastTab weather={weather} />}
+            {tab === 'alerts' && <AlertsTab weather={weather} />}
           </>}
         </div>
         {!showPersonalized && <BottomNav tab={tab} setTab={setTab} />}

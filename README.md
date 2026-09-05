@@ -19,7 +19,7 @@ A mobile-first Kolkata weather experience that combines conditions, health conte
 
 Most weather apps stop at temperature and rain probability. Mausam is designed around the decisions people make after checking the weather: whether to run, carry protection, change a commute, limit outdoor exposure, water crops, or avoid swimming.
 
-The current build is a responsive product prototype focused on Kolkata during monsoon season. It uses a curated local dataset to demonstrate the complete interface and interaction model. A live weather service is not connected yet.
+The current build is a responsive product prototype focused on Kolkata. It includes a typed weather-data contract, a safe local fallback dataset, and a configurable endpoint for connecting live conditions without rewriting the interface.
 
 ## The experience
 
@@ -36,7 +36,8 @@ The current build is a responsive product prototype focused on Kolkata during mo
 
 - Kolkata-first weather context rather than generic global summaries
 - Light and dark themes with a custom animated day/night switch
-- Animated rain-cloud companion with cloud, lightning, raindrop, and puddle motion
+- Sunny and rainy weather-card presets selected automatically from the current condition, with an optional backend override
+- Animated rain-cloud companion with cloud, lightning, raindrop, and puddle motion, plus a warm sunny companion
 - Clear current-weather hierarchy with location, temperature, condition, and three essential readings
 - Balanced metric cards for air quality, UV exposure, best run time, and rainfall
 - Practical cards for commuting, swimming conditions, gardening, and seasonal context
@@ -46,6 +47,7 @@ The current build is a responsive product prototype focused on Kolkata during mo
 - Touch-friendly navigation, horizontal forecast snapping, and momentum scrolling
 - Responsive layout designed for phone screens first and larger screens second
 - Reduced-motion support and visible keyboard focus states
+- API-driven current conditions, hourly and daily forecasts, icons, AQI and UV bars, health readings, alerts, recommendations, and supporting cards
 
 ## Work completed
 
@@ -72,6 +74,11 @@ The interface has gone through a focused visual and usability refinement:
 - Removed external web-font requests to prevent font-loading layout shifts and use the device’s native interface font
 - Added touch momentum, overscroll containment, gentle hourly-card snapping, and complete reduced-motion behaviour
 - Simplified the build configuration and retained search-engine blocking in standard project files
+- Moved all demonstration weather content into one typed dashboard model instead of scattering values through components
+- Added partial-response merging, so backend development can replace one section at a time while unfinished fields continue to use safe demo values
+- Added configurable background refresh and preserves the last valid dashboard when a request fails
+- Made condition icons replaceable with emoji, public asset paths, or remote image URLs
+- Made the sunny/rainy hero selection infer from `conditionCode`, with optional explicit `heroVariant` control
 - Verified the production build after the UI and performance changes
 
 ## Run locally
@@ -103,6 +110,40 @@ npm run preview
 
 The optimized website is generated in `dist/`.
 
+## Connect a weather endpoint
+
+Copy `.env.example` to `.env.local`, then point `VITE_WEATHER_API_URL` to the backend endpoint. `VITE_WEATHER_REFRESH_MS` controls background refresh and must be at least 10 seconds.
+
+```env
+VITE_WEATHER_API_URL=http://localhost:3000/api/weather
+VITE_WEATHER_REFRESH_MS=60000
+```
+
+The endpoint may return the dashboard object directly or wrap it in `{ "data": { ... } }`. During integration it may also return only the fields currently available; missing object fields are filled from the local fallback. Arrays such as `hourly`, `daily`, `alerts`, and `locations` replace their corresponding fallback arrays, so each supplied array item should be complete.
+
+For example, this small response immediately changes the hero to rainy, updates the temperature, AQI and UV, and leaves the remaining sections on fallback data until the backend supplies them:
+
+```json
+{
+  "current": {
+    "temperature": 20,
+    "condition": "Light Rain",
+    "conditionCode": "rain",
+    "heroVariant": "rainy"
+  },
+  "airQuality": {
+    "index": 10,
+    "label": "Good"
+  },
+  "uv": {
+    "index": 5,
+    "label": "Moderate"
+  }
+}
+```
+
+The complete TypeScript contract and fallback payload live in [`src/weatherData.ts`](./src/weatherData.ts). Forecast `icon` fields accept an emoji, a path such as `/weather-icons/rain.png`, or an HTTPS image URL. The app derives an icon from `conditionCode` when `icon` is omitted. Supported built-in codes include `sunny`, `clear`, `partly_cloudy`, `cloudy`, `overcast`, `drizzle`, `showers`, `rain`, `heavy_rain`, `thunderstorm`, `storm`, `fog`, `mist`, `wind`, and `snow`.
+
 ## Android app
 
 Mausam uses Capacitor so the responsive website remains the single source of truth for web and Android.
@@ -128,10 +169,11 @@ For a release build, update the Android version code and name, run the sync comm
 ├── docs/                    README and promotional visuals
 ├── public/                  Static web assets
 ├── src/
-│   ├── App.tsx              Screens, components, onboarding, and demo weather data
+│   ├── App.tsx              Screens, components, onboarding, and shared-data rendering
 │   ├── index.css            Themes, responsive layouts, cards, and animations
 │   ├── main.tsx             React entry point
-│   └── imports/             Local image assets
+│   ├── weatherData.ts        API contract, fallback payload, icon mapping, and data loader
+│   └── imports/              Local image assets
 ├── capacitor.config.ts      Android wrapper configuration
 ├── index.html               Web document shell and metadata
 ├── vite.config.ts           Development and production build configuration
@@ -140,12 +182,14 @@ For a release build, update the Android version code and name, run the sync comm
 
 ## Data and persistence
 
-- Weather, AQI, forecast, and alert values currently come from constants in `src/App.tsx`.
+- Weather, AQI, forecast, alert, health, travel, and personalised values all read from the shared model in `src/weatherData.ts`.
+- With no endpoint configured, the app uses `DEMO_WEATHER_DATA` and remains fully usable.
+- With an endpoint configured, a valid response updates the shared model across every screen and refreshes on the configured interval.
 - Theme preference is stored locally in the browser.
 - The onboarding profile and its selected weather and health concerns are stored locally on the device.
-- No account, remote database, analytics service, or live weather endpoint is currently connected.
+- No account, remote database, or analytics service is currently connected.
 
-These boundaries make the next engineering steps clear: connect a trusted weather source, optionally sync profiles across devices, model loading and failure states, and validate guidance against live data.
+The next engineering step is to map a trusted weather provider into the documented dashboard contract and set the endpoint environment variable.
 
 ## Design principles
 
@@ -163,4 +207,4 @@ The responsive interface, persistent onboarding flow, personalized weather brief
 npm run build
 ```
 
-The next major milestone is replacing the demonstration dataset with live, location-aware weather and environmental data.
+The interface is ready for a backend to replace the fallback payload with live, location-aware weather and environmental data.

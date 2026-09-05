@@ -2962,3 +2962,71 @@ input:-webkit-autofill {
   #root .mausam-app .personalized-why button > svg,
   #root .mausam-app .personalized-why-panel { transition: none; }
 }
+
+/* ── Sunny current-weather variant ─────────────────────────── */
+#root .mausam-app .weather-hero-card.is-sunny {
+  background:
+    radial-gradient(circle at 82% 18%, rgba(255, 191, 62, .2), transparent 34%),
+    linear-gradient(145deg, #443316 0%, #2d2312 50%, #19140c 100%) !important;
+  border-color: rgba(255, 217, 126, .28) !important;
+  box-shadow: inset 0 1px rgba(255, 244, 203, .2), 0 24px 50px rgba(24, 15, 2, .28) !important;
+}
+#root .mausam-app .weather-hero-card.is-sunny .hero-ambient-top {
+  background: radial-gradient(circle, rgba(255, 194, 57, .24), transparent 66%) !important;
+}
+#root .mausam-app .weather-hero-card.is-sunny .hero-ambient-bottom {
+  background: radial-gradient(circle, rgba(229, 128, 24, .12), transparent 66%) !important;
+}
+#root .mausam-app .weather-companion-sunny .sun-buddy-image {
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: hue-rotate(-36deg) saturate(1.28) contrast(1.03);
+  animation: sunBuddyFloat 3.8s ease-in-out infinite;
+}
+@keyframes sunBuddyFloat {
+  0%, 100% { transform: translate3d(0, 1px, 0) scale(.97); }
+  50% { transform: translate3d(0, -3px, 0) scale(1.01); }
+}
+
+#root .mausam-app.theme-light .weather-hero-card.is-sunny {
+  background:
+    radial-gradient(circle at 82% 15%, rgba(255, 187, 52, .34), transparent 34%),
+    linear-gradient(145deg, #fffdf2 0%, #fff1bd 52%, #f7d982 100%) !important;
+  border-color: rgba(206, 147, 29, .25) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .88), 0 22px 46px rgba(157, 105, 15, .18) !important;
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .hero-ambient-top {
+  background: radial-gradient(circle, rgba(255, 185, 40, .3), transparent 66%) !important;
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .hero-ambient-bottom {
+  background: radial-gradient(circle, rgba(255, 219, 117, .34), transparent 66%) !important;
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .hero-location-pin {
+  color: #9b5608 !important;
+  background: rgba(255, 255, 255, .52) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .78), 0 5px 14px rgba(166, 102, 10, .12);
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .hero-location-pin svg,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .hero-location-pin path {
+  color: #9b5608 !important;
+  fill: #9b5608 !important;
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .hero-location-name,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-temp-value,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-temp-value > span,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-stat-value {
+  color: #3b2a10 !important;
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-temp-value > span:last-child,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-meta,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-stat-label,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-stat-value span {
+  color: rgba(73, 49, 13, .65) !important;
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-condition {
+  color: rgba(64, 43, 11, .82) !important;
+}
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-stats-grid {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .5), rgba(255, 246, 207, .34)) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .72), 0 10px 24px rgba(154, 104, 14, .1) !important;
+}
