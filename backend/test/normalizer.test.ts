@@ -157,4 +157,21 @@ describe('toDashboardWeatherData', () => {
     expect(result.overview).toHaveLength(4)
     expect(result.overview[0].value).toContain('AQI 78')
   })
+
+  it('includes all Phase 3 curated/derived sections in the payload', () => {
+    const result = toDashboardWeatherData(buildFixture(), buildAirQualityFixture(), CONTEXT)
+    expect(result.pollen).toBeDefined()
+    expect(result.alerts).toBeInstanceOf(Array)
+    expect(result.commute).toBeDefined()
+    expect(result.swimming).toBeDefined()
+    expect(result.garden).toBeDefined()
+    expect(result.locations.length).toBeGreaterThan(0)
+    expect(result.packing).toBeDefined()
+    expect(result.event).toBeDefined()
+  })
+
+  it('raises a thunderstorm alert consistent with the thunderstorm current condition', () => {
+    const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
+    expect(result.alerts.some(a => a.title.includes('Thunderstorm'))).toBe(true)
+  })
 })

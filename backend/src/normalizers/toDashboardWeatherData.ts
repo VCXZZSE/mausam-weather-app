@@ -7,11 +7,25 @@ import { normalizeAirQuality } from './airQuality.js'
 import { normalizeUv } from './uv.js'
 import { calculateAstronomy } from '../astronomy/astronomyCalculator.js'
 import { computeComfort, computeOverview, computeRainfall } from './derived.js'
+import { computePollen } from '../data/pollenSeasonalTable.js'
+import { computeCuratedAlerts } from '../data/curatedAlerts.js'
+import { computeCommute } from '../rules/commute.js'
+import { computeSwimming } from '../rules/swimming.js'
+import { computeGarden } from '../rules/garden.js'
+import { computeLocations } from '../rules/locations.js'
+import { computePacking } from '../rules/packing.js'
+import { computeEvent } from '../rules/event.js'
 
-// Sections intentionally NOT produced here (pollen, alerts, commute,
-// swimming, garden, locations, packing, event, running, rainfall.month/
+// Sections intentionally NOT produced here (running, rainfall.month/
 // monthlyAverage/history) are left out of the returned object so the
 // frontend's deep merge preserves DEMO_WEATHER_DATA's fallback values.
+//
+// Data provenance (see BACKEND_HANDOFF_LOCAL.md §16):
+//  LIVE:    current/hourly/daily (Open-Meteo forecast), airQuality (Open-Meteo AQI)
+//  LOCAL COMPUTATION: uv, astronomy, comfort, rainfall (derived from live values)
+//  CURATED/RULE-BASED: pollen, alerts, commute, swimming, garden, locations,
+//                       packing, event — deterministic demo content, not live
+//                       measurements. See each module's header comment.
 export type WeatherPayload = {
   updatedAt: string
   current: Partial<DashboardWeatherData['current']>
@@ -23,6 +37,14 @@ export type WeatherPayload = {
   comfort: DashboardWeatherData['comfort']
   rainfall: Pick<DashboardWeatherData['rainfall'], 'chance' | 'today' | 'unit' | 'periodLabel' | 'monthLabel'>
   overview: DashboardWeatherData['overview']
+  pollen: DashboardWeatherData['pollen']
+  alerts: DashboardWeatherData['alerts']
+  commute: DashboardWeatherData['commute']
+  swimming: DashboardWeatherData['swimming']
+  garden: DashboardWeatherData['garden']
+  locations: DashboardWeatherData['locations']
+  packing: DashboardWeatherData['packing']
+  event: DashboardWeatherData['event']
 }
 
 /** @deprecated kept for backward compatibility with earlier Phase 1 imports */
@@ -125,6 +147,62 @@ export function toDashboardWeatherData(
     bestWindowLabel,
   })
 
+  const currentDate = new Date(data.current_weather.time)
+  const month = currentDate.getMonth()
+  const rainChanceToday = daily[0]?.rainChance ?? 0
+  const visibilityKm = Math.round((visibilityMeters / 1000) * 10) / 10
+
+  const pollen = computePollen(month)
+
+  const alerts = computeCuratedAlerts({
+    conditionCode,
+    temperature,
+    windSpeed,
+    rainChanceToday,
+    month,
+    aqiIndex: airQuality?.index,
+  })
+
+  const commute = computeCommute({
+    conditionCode,
+    rainChanceToday,
+    windSpeed,
+    visibilityKm,
+    city: context.city,
+  })
+
+  const swimming = computeSwimming({
+    conditionCode,
+    temperature,
+    uvIndex: uv.index,
+    windSpeed,
+    rainChanceToday,
+    peakTime: astronomy.solarNoon,
+  })
+
+  const garden = computeGarden({
+    temperature,
+    rainChanceToday,
+    humidity,
+    windSpeed,
+    month,
+  })
+
+  const locations = computeLocations({ temperature, condition, conditionCode })
+
+  const packing = computePacking({
+    temperature,
+    rainChanceToday,
+    uvIndex: uv.index,
+    windSpeed,
+    conditionCode,
+    aqiIndex: airQuality?.index,
+    city: context.city,
+    dateLabel: currentDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+  })
+
+  const event = computeEvent({ daily, currentDate, month })
+
   return {
     updatedAt: 'Updated just now',
     current: {
@@ -156,5 +234,13 @@ export function toDashboardWeatherData(
     comfort,
     rainfall,
     overview,
+    pollen,
+    alerts,
+    commute,
+    swimming,
+    garden,
+    locations,
+    packing,
+    event,
   }
 }
