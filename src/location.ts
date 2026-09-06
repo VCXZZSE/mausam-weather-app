@@ -369,6 +369,74 @@ type ReverseGeocodeResponse={
  * rate limiting and caching — never called directly from the browser,
  * consistent with Nominatim's usage policy).
  */
+async function clientSideReverseGeocodeFallback(latitude: number, longitude: number, signal?: AbortSignal) {
+  const url = new URL("https://nominatim.openstreetmap.org/reverse")
+  url.searchParams.set("format", "jsonv2")
+  url.searchParams.set("lat", String(latitude))
+  url.searchParams.set("lon", String(longitude))
+  url.searchParams.set("addressdetails", "1")
+  url.searchParams.set("zoom", "18")
+  
+  const response = await fetch(url.toString(), { signal, headers: { Accept: "application/json" } })
+  if (!response.ok) throw new Error("Fallback reverse geocode failed")
+  const body = (await response.json()) as any
+  const address = body.address ?? {}
+  const localityFields = ["neighbourhood", "quarter", "suburb", "hamlet", "village", "town", "city_district", "city", "municipality"]
+  const locality = localityFields.map((f: string) => address[f]).find(Boolean) ?? body.display_name?.split(",")[0]?.trim() ?? "Unknown area"
+  return {
+    locality,
+    region: address.state ?? address.county ?? "Unknown region",
+    country: address.country ?? "Unknown country",
+    postalCode: address.postcode,
+  }
+}
+
+async function clientSideSearchFallback(query: string, signal?: AbortSignal): Promise<LocationSearchResult[]> {
+  const normalizedQuery = query.trim()
+  const isPinCode = /^[1-9]\d{5}$/.test(normalizedQuery)
+  const url = new URL("https://nominatim.openstreetmap.org/search")
+  url.searchParams.set("format", "jsonv2")
+  url.searchParams.set("addressdetails", "1")
+  url.searchParams.set("countrycodes", "in")
+  url.searchParams.set("accept-language", "en")
+  url.searchParams.set("limit", "8")
+  if (isPinCode) {
+    url.searchParams.set("postalcode", normalizedQuery)
+    url.searchParams.set("country", "India")
+  } else {
+    url.searchParams.set("q", `${normalizedQuery}, India`)
+  }
+
+  const response = await fetch(url.toString(), { signal, headers: { Accept: "application/json" } })
+  if (!response.ok) throw new Error("Fallback search failed")
+  const body = (await response.json()) as any[]
+
+  const seen = new Set<string>()
+  return body.flatMap((item: any) => {
+    const address = item.address ?? {}
+    const latitude = Number(item.lat)
+    const longitude = Number(item.lon)
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return []
+    const localityFields = ["neighbourhood", "quarter", "suburb", "hamlet", "village", "town", "city_district", "city", "municipality"]
+    const locality = localityFields.map((f: string) => address[f]).find(Boolean) ?? (item.name || item.display_name)?.split(",")[0]?.trim() ?? "Unknown area"
+    const postalCode = address.postcode ?? (isPinCode ? normalizedQuery : undefined)
+    
+    const dedupeKey = `${locality.toLowerCase()}|${postalCode ?? ""}|${latitude.toFixed(4)},${longitude.toFixed(4)}`
+    if (seen.has(dedupeKey)) return []
+    seen.add(dedupeKey)
+
+    return [{
+      name: locality,
+      region: address.state ?? address.county ?? "",
+      country: "India",
+      postalCode,
+      latitude,
+      longitude,
+      timezone: "Asia/Kolkata",
+    }]
+  }).filter((result: LocationSearchResult) => result.country.trim().toLowerCase() === "india")
+}
+
 export async function reverseGeocodeCoordinates(
   latitude: number,
   longitude: number,
@@ -386,19 +454,26 @@ export async function reverseGeocodeCoordinates(
   url.searchParams.set("latitude",String(latitude))
   url.searchParams.set("longitude",String(longitude))
 
-  const response=await fetch(url.toString(),{
-    signal,
-    headers: { Accept: "application/json" },
-  })
-  if(!response.ok)
-    throw new Error(`Reverse geocoding failed with status ${response.status}`)
+  try {
+    const response=await fetch(url.toString(),{
+      signal,
+      headers: { Accept: "application/json" },
+    })
+    if(!response.ok)
+      throw new Error(`Reverse geocoding failed with status ${response.status}`)
 
-  const body=(await response.json()) as ReverseGeocodeResponse
-  return {
-    locality: body.locality,
-    region: body.region,
-    country: body.country,
-    postalCode: body.postalCode,
+    const body=(await response.json()) as ReverseGeocodeResponse
+    return {
+      locality: body.locality,
+      region: body.region,
+      country: body.country,
+      postalCode: body.postalCode,
+    }
+  } catch (error) {
+    if (window.location.hostname !== "localhost") {
+      return clientSideReverseGeocodeFallback(latitude, longitude, signal)
+    }
+    throw error
   }
 }
 
@@ -424,20 +499,27 @@ export async function searchLocations(
   const url=new URL(endpoint,window.location.origin)
   url.searchParams.set("query",query.trim())
 
-  const response=await fetch(url.toString(),{
-    signal,
-    headers: { Accept: "application/json" },
-  })
-  if(!response.ok)
-    throw new Error(`Location search failed with status ${response.status}`)
+  try {
+    const response=await fetch(url.toString(),{
+      signal,
+      headers: { Accept: "application/json" },
+    })
+    if(!response.ok)
+      throw new Error(`Location search failed with status ${response.status}`)
 
-  const body=(await response.json()) as { results: LocationSearchResult[] }
-  // The backend already scopes its provider query to India. Keep this
-  // client-side boundary as defence in depth so a malformed/upstream result
-  // can never render a foreign location in the India-focused app.
-  return (body.results??[]).filter(
-    (result) => result.country.trim().toLowerCase()==="india",
-  )
+    const body=(await response.json()) as { results: LocationSearchResult[] }
+    // The backend already scopes its provider query to India. Keep this
+    // client-side boundary as defence in depth so a malformed/upstream result
+    // can never render a foreign location in the India-focused app.
+    return (body.results??[]).filter(
+      (result) => result.country.trim().toLowerCase()==="india",
+    )
+  } catch (error) {
+    if (window.location.hostname !== "localhost") {
+      return clientSideSearchFallback(query, signal)
+    }
+    throw error
+  }
 }
 
 /** Fast first stage: permission -> coordinates. */

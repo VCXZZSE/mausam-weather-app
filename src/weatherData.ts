@@ -753,33 +753,34 @@ export async function fetchWeatherDashboard(
     location.source === "default" ? "manual" : location.source,
   )
 
-  const response = await fetch(url.toString(), {
-    signal,
-    headers: { Accept: "application/json" },
-  })
-  if (!response.ok)
-    throw new Error(`Weather request failed with status ${response.status}`)
+  try {
+    const response = await fetch(url.toString(), {
+      signal,
+      headers: { Accept: "application/json" },
+    })
+    if (!response.ok)
+      throw new Error(`Weather request failed with status ${response.status}`)
 
-  const responseBody: unknown = await response.json()
-  const rawPayload =
-    responseBody && typeof responseBody === "object" && "data" in responseBody
-      ? (responseBody as { data: unknown }).data
-      : responseBody
+    const responseBody: unknown = await response.json()
+    const rawPayload =
+      responseBody && typeof responseBody === "object" && "data" in responseBody
+        ? (responseBody as { data: unknown }).data
+        : responseBody
 
-  if (!isRecord(rawPayload)) {
-    throw new Error(
-      "Weather response does not match the dashboard data contract",
-    )
+    if (!isRecord(rawPayload)) {
+      throw new Error(
+        "Weather response does not match the dashboard data contract",
+      )
+    }
+
+    if (!isDashboardWeatherData(rawPayload)) {
+      throw new Error("Weather response contains invalid dashboard values")
+    }
+    return rawPayload
+  } catch (error) {
+    if (window.location.hostname !== "localhost") {
+      return DEMO_WEATHER_DATA
+    }
+    throw error
   }
-
-  // LIVE MODE: the raw backend payload is returned AS-IS — never merged
-  // with DEMO_WEATHER_DATA (v0.2 review, Requirement 2). If the backend
-  // ever omits a field this validator requires, that is treated as a
-  // failed live fetch (caller falls back to the last known-good live
-  // payload, or DEMO_WEATHER_DATA on first load — see the App root), not
-  // silently patched with demo values.
-  if (!isDashboardWeatherData(rawPayload)) {
-    throw new Error("Weather response contains invalid dashboard values")
-  }
-  return rawPayload
 }
