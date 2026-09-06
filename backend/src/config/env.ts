@@ -72,7 +72,7 @@ const envSchema = z.object({
   // see backend/.env.example for how to obtain a key. Left empty, the AQI
   // section is omitted rather than substituted with a different country's
   // index standard.
-  DATA_GOV_IN_API_KEY: z.string().default(""),
+  DATA_GOV_IN_API_KEY: z.string().trim().default(""),
   DATA_GOV_IN_BASE_URL: z
     .string()
     .url()

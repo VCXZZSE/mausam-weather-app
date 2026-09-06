@@ -28,7 +28,7 @@ describe("loadEnv", () => {
     expect(env.DEFAULT_CITY).toBe("Kolkata")
     expect(env.DEFAULT_REGION).toBe("West Bengal")
     expect(env.WEATHER_CACHE_TTL_MS).toBeGreaterThanOrEqual(10_000)
-    expect(env.AIR_QUALITY_CACHE_TTL_MS).toBeGreaterThanOrEqual(10_000)
+    expect(env.CPCB_CACHE_TTL_MS).toBeGreaterThanOrEqual(10_000)
   })
 
   it("throws on invalid environment configuration", () => {

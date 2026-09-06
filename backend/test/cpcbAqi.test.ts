@@ -1,129 +1,49 @@
-import { describe, expect, it } from "vitest"
-import { normalizeCpcbAirQuality } from "../src/normalizers/cpcbAqi.js"
-import type { CpcbRecord } from "../src/providers/cpcbClient.js"
+import { describe,expect,it } from "vitest"
+import { normalizeCpcbAirQuality,stationUpdateTime } from "../src/normalizers/cpcbAqi.js"
+import { cpcbRecords } from "./cpcbFixtures.js"
 
-const KOLKATA = { latitude: 22.5726, longitude: 88.3639 }
+const KOLKATA={ latitude: 22.5726,longitude: 88.3639 }
 
-function record(overrides: Partial<CpcbRecord> = {}): CpcbRecord {
-  return {
-    country: "India",
-    state: "West Bengal",
-    city: "Kolkata",
-    station: "Rabindra Bharati University, Kolkata - WBPCB",
-    last_update: "05-09-2026 09:00:00",
-    pollutant_id: "PM2.5",
-    pollutant_avg: "65",
-    latitude: "22.627",
-    longitude: "88.3806",
-    ...overrides,
-  }
-}
-
-describe("normalizeCpcbAirQuality", () => {
-  it("computes a sub-index from a single reported pollutant using the CPCB breakpoint table", () => {
-    // PM2.5 = 65 falls in the 61-90 -> 101-200 band:
-    // ((200-101)/(90-61)) * (65-61) + 101 = 114.65... -> rounds to 115
-    const result = normalizeCpcbAirQuality(
-      [record({ pollutant_id: "PM2.5", pollutant_avg: "65" })],
-      KOLKATA,
-      50,
-    )
-    expect(result).toBeDefined()
-    expect(result!.index).toBe(115)
-    expect(result!.label).toBe("Moderate")
-    expect(result!.standard).toBe("IN_NAQI")
-    expect(result!.source).toBe("CPCB")
+describe("normalizeCpcbAirQuality",() => {
+  it("uses the largest published sub-index without applying concentration breakpoints again",() => {
+    const result=normalizeCpcbAirQuality(cpcbRecords(),KOLKATA,50)
+    expect(result).toMatchObject({ index: 78,label: "Satisfactory",standard: "IN_NAQI",source: "CPCB" })
+    expect(result?.pollutants).toHaveLength(3)
+    expect(result?.pollutants.every(p => p.unit==="AQI sub-index")).toBe(true)
   })
 
-  it("reports the overall AQI as the MAX sub-index across multiple reported pollutants", () => {
-    const records = [
-      record({ pollutant_id: "PM2.5", pollutant_avg: "20" }), // Good band
-      record({ pollutant_id: "PM10", pollutant_avg: "400" }), // Very Poor band, higher sub-index
-    ]
-    const result = normalizeCpcbAirQuality(records, KOLKATA, 50)
-    expect(result).toBeDefined()
-    expect(result!.label).toBe("Very Poor")
+  it.each([[50,"Good"],[51,"Satisfactory"],[100,"Satisfactory"],[101,"Moderate"],[200,"Moderate"],[201,"Poor"],[300,"Poor"],[301,"Very Poor"],[400,"Very Poor"],[401,"Severe"]])("labels AQI %s as %s",(index,label) => {
+    expect(normalizeCpcbAirQuality(cpcbRecords({ pollutant_avg: String(index) }),KOLKATA,50)?.label).toBe(label)
   })
 
-  it("selects the nearest station within range and reports its name/distance", () => {
-    const near = record({
-      station: "Near Station",
-      latitude: "22.58",
-      longitude: "88.37",
-    })
-    const far = record({
-      station: "Far Station",
-      latitude: "28.6",
-      longitude: "77.2",
-    })
-    const result = normalizeCpcbAirQuality([near, far], KOLKATA, 50)
-    expect(result?.stationName).toBe("Near Station")
-    expect(result?.stationDistanceKm).toBeLessThan(50)
+  it("requires three distinct pollutants including particulate matter",() => {
+    expect(normalizeCpcbAirQuality(cpcbRecords().slice(0,2),KOLKATA,50)).toBeUndefined()
+    const gases=cpcbRecords().map((r,i) => ({ ...r,pollutant_id: ["NO2","CO","SO2"][i] }))
+    expect(normalizeCpcbAirQuality(gases,KOLKATA,50)).toBeUndefined()
   })
 
-  it("returns undefined when no station is within the configured max distance", () => {
-    const farOnly = record({
-      station: "Delhi Station",
-      latitude: "28.6139",
-      longitude: "77.2090",
-    })
-    const result = normalizeCpcbAirQuality([farOnly], KOLKATA, 50)
-    expect(result).toBeUndefined()
+  it("selects the nearest usable station and does not mix stations or timestamps",() => {
+    const near=cpcbRecords({ station: "Near",latitude: "22.58",longitude: "88.37" })
+    const far=cpcbRecords({ station: "Far" })
+    expect(normalizeCpcbAirQuality([...far,...near],KOLKATA,50)?.stationName).toBe("Near")
+    expect(normalizeCpcbAirQuality([...far,...near.slice(0,2)],KOLKATA,50)?.stationName).toBe("Far")
+    const split=near.map((r,i) => ({ ...r,last_update: r.last_update!.slice(0,-2)+String(i).padStart(2,"0") }))
+    expect(normalizeCpcbAirQuality(split,KOLKATA,50)).toBeUndefined()
   })
 
-  it("returns undefined when the nearest station has no parseable pollutant data", () => {
-    const badRecord = record({ pollutant_avg: "not-a-number" })
-    const result = normalizeCpcbAirQuality([badRecord], KOLKATA, 50)
-    expect(result).toBeUndefined()
+  it.each(["NA","","-1","501","NaN"])("rejects invalid published readings: %s",(value) => {
+    expect(normalizeCpcbAirQuality(cpcbRecords({ pollutant_avg: value }),KOLKATA,50)).toBeUndefined()
   })
 
-  it("returns undefined for an empty record set", () => {
-    expect(normalizeCpcbAirQuality([], KOLKATA, 50)).toBeUndefined()
+  it("rejects stale, future, distant, and invalid-coordinate records",() => {
+    for(const overrides of [
+      { last_update: "01-01-2000 00:00:00" },{ last_update: "01-01-2099 00:00:00" },
+      { latitude: "28.6",longitude: "77.2" },{ latitude: "" },{ latitude: "91" },
+    ]) expect(normalizeCpcbAirQuality(cpcbRecords(overrides),KOLKATA,50)).toBeUndefined()
   })
 
-  it("categorizes correctly at category boundaries (50/51, 100/101, etc.)", () => {
-    // PM10 breakpoints: 0-50 -> 0-50 (Good), 51-100 -> 51-100 (Satisfactory)
-    const good = normalizeCpcbAirQuality(
-      [record({ pollutant_id: "PM10", pollutant_avg: "50" })],
-      KOLKATA,
-      50,
-    )
-    const satisfactory = normalizeCpcbAirQuality(
-      [record({ pollutant_id: "PM10", pollutant_avg: "51" })],
-      KOLKATA,
-      50,
-    )
-    expect(good!.label).toBe("Good")
-    expect(satisfactory!.label).toBe("Satisfactory")
-  })
-
-  it("groups multiple pollutant records for the same station together rather than treating them as separate stations", () => {
-    const records = [
-      record({
-        station: "Station A",
-        pollutant_id: "PM2.5",
-        pollutant_avg: "40",
-      }),
-      record({
-        station: "Station A",
-        pollutant_id: "PM10",
-        pollutant_avg: "60",
-      }),
-    ]
-    const result = normalizeCpcbAirQuality(records, KOLKATA, 50)
-    expect(result?.pollutants).toHaveLength(2)
-  })
-
-  it("is deterministic for the same input", () => {
-    const records = [record()]
-    const first = normalizeCpcbAirQuality(records, KOLKATA, 50)
-    const second = normalizeCpcbAirQuality(records, KOLKATA, 50)
-    expect(first).toEqual(second)
-  })
-
-  it("never labels the result as US_AQI/OPEN_METEO (source honesty)", () => {
-    const result = normalizeCpcbAirQuality([record()], KOLKATA, 50)
-    expect(result?.standard).not.toBe("US_AQI")
-    expect(result?.source).not.toBe("OPEN_METEO")
+  it("parses government reporting times in IST and rejects impossible dates",() => {
+    expect(stationUpdateTime("06-09-2026 05:00:00")).toBe(Date.parse("2026-09-05T23:30:00Z"))
+    expect(stationUpdateTime("31-02-2026 05:00:00")).toBeNaN()
   })
 })

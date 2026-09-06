@@ -8,7 +8,7 @@
 // presented to users as a live/measured reading.
 import type { DashboardWeatherData } from "../types/dashboard.js"
 
-type PollenLevels = { tree: number grass: number weed: number }
+type PollenLevels = { tree: number; grass: number; weed: number }
 
 // Percent (0-100) values per month index (0 = January).
 const POLLEN_BY_MONTH: PollenLevels[] = [

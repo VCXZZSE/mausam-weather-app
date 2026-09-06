@@ -16,7 +16,7 @@ export type StaticLocation = {
   // coincidence. Coastal/deltaic West Bengal locations close to the same
   // monsoon system are left unset and continue to share Kolkata's live
   // condition, which is a reasonable regional approximation for them.
-  conditionOverride?: { conditionCode: string condition: string }
+  conditionOverride?: { conditionCode: string; condition: string }
 }
 
 export const STATIC_LOCATIONS: StaticLocation[] = [

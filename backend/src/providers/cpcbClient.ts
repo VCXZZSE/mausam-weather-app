@@ -4,45 +4,37 @@ import { z } from "zod"
 // data, via the Government of India's open data portal (data.gov.in).
 // Free registration required for an API key — see backend/.env.example.
 //
-// IMPORTANT VERIFICATION NOTE: this client's field mapping is based on the
-// publicly documented schema of data.gov.in resource
-// 3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69 ("Real time Air Quality Index from
-// various locations"), which is the commonly referenced CPCB real-time AQI
-// dataset on the portal. The endpoint itself was confirmed reachable in
-// development (it returns a structured `{"error":"Key not authorised"}`
-// for an invalid key, rather than a network failure), but the actual
-// success-path response shape has NOT been verified against a live
-// authorized response, because no valid DATA_GOV_IN_API_KEY was available
-// in the development environment. Treat this integration as implemented
-// but NOT live-verified until exercised with a real key — see the Phase
-// report for details.
-//
-// Each record in this dataset is one pollutant reading at one monitoring
-// station (not a pre-aggregated AQI) — the AQI itself is computed from
-// these readings using CPCB's own published sub-index methodology, see
-// normalizers/cpcbAqi.ts.
+// Official dataset: https://www.data.gov.in/catalog/real-time-air-quality-index
+// Records contain pollutant-wise AQI values. Live verification requires a
+// personal data.gov.in key; mock fixtures do not establish live availability.
+const numericText=z.union([z.string(),z.number()]).transform(String)
 
-const cpcbRecordSchema = z.object({
+const cpcbRecordSchema=z.object({
   country: z.string().optional(),
   state: z.string().optional(),
   city: z.string().optional(),
   station: z.string().optional(),
   last_update: z.string().optional(),
   pollutant_id: z.string(),
-  pollutant_avg: z.string().optional(),
-  pollutant_min: z.string().optional(),
-  pollutant_max: z.string().optional(),
-  latitude: z.string(),
-  longitude: z.string(),
-})
+  pollutant_avg: numericText.nullish(),
+  avg_value: numericText.nullish(),
 
-const cpcbResponseSchema = z.object({
+  latitude: numericText,
+  longitude: numericText,
+}).transform(({ avg_value,pollutant_avg,...record }) => ({
+  ...record,
+  // The current OGD schema uses avg_value; older exports use pollutant_avg.
+  pollutant_avg: avg_value??pollutant_avg??undefined,
+}))
+
+const cpcbResponseSchema=z.object({
   records: z.array(cpcbRecordSchema),
+  total: z.coerce.number().int().nonnegative().optional(),
 })
 
-export type CpcbRecord = z.infer<typeof cpcbRecordSchema>
+export type CpcbRecord=z.infer<typeof cpcbRecordSchema>
 
-export type FetchCpcbOptions = {
+export type FetchCpcbOptions={
   baseUrl: string
   apiKey: string
   limit?: number
@@ -63,38 +55,40 @@ export async function fetchCpcbRecords(
   const {
     baseUrl,
     apiKey,
-    limit = 5000,
-    timeoutMs = 5000,
-    fetchImpl = fetch,
-  } = options
-  if (!apiKey) {
+    limit=5000,
+    timeoutMs=5000,
+    fetchImpl=fetch,
+  }=options
+  if(!apiKey) {
     throw new Error("CPCB (data.gov.in) API key is not configured")
   }
 
-  const url = new URL(baseUrl)
-  url.searchParams.set("api-key", apiKey)
-  url.searchParams.set("format", "json")
-  url.searchParams.set("limit", String(limit))
+  const url=new URL(baseUrl)
+  url.searchParams.set("api-key",apiKey)
+  url.searchParams.set("format","json")
+  url.searchParams.set("limit",String(limit))
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  const controller=new AbortController()
+  const timeout=setTimeout(() => controller.abort(),timeoutMs)
 
   try {
-    const response = await fetchImpl(url.toString(), {
-      signal: controller.signal,
-      headers: { Accept: "application/json" },
-    })
-    if (!response.ok) {
-      throw new Error(
-        `CPCB (data.gov.in) request failed with status ${response.status}`,
-      )
+    const records: CpcbRecord[]=[]
+    // Read all pages: a single truncated bulk page can omit nearby stations.
+    for(let page=0;page<100;page+=1) {
+      url.searchParams.set("offset",String(records.length))
+      const response=await fetchImpl(url.toString(),{
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      })
+      if(!response.ok) throw new Error(`CPCB request failed with status ${response.status}`)
+      const result=cpcbResponseSchema.safeParse(await response.json())
+      if(!result.success) throw new Error("CPCB response failed validation")
+      const body=result.data
+      records.push(...body.records)
+      if(body.total!==undefined? records.length>=body.total:body.records.length<limit) return records
+      if(body.records.length===0) throw new Error("CPCB response ended before all records were received")
     }
-    const body: unknown = await response.json()
-    const result = cpcbResponseSchema.safeParse(body)
-    if (!result.success) {
-      throw new Error("CPCB (data.gov.in) response failed validation")
-    }
-    return result.data.records
+    throw new Error("CPCB pagination limit exceeded")
   } finally {
     clearTimeout(timeout)
   }

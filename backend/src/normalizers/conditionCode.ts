@@ -1,7 +1,7 @@
 // Maps WMO weather codes (used by Open-Meteo) to the frontend's internal
 // conditionCode enum (see src/weatherData.ts CONDITION_ICONS keys).
 
-export type ConditionInfo = { conditionCode: string condition: string }
+export type ConditionInfo = { conditionCode: string; condition: string }
 
 const WMO_CONDITIONS: Record<number, ConditionInfo> = {
   0: { conditionCode: "clear", condition: "Clear sky" },

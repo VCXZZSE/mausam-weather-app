@@ -4456,12 +4456,33 @@ export function LocationSetup({
 
   const finishSelection = async (
     location: UserLocation,
-    enrichedLocation?: Promise<UserLocation>,
+    enrich?: (signal: AbortSignal) => Promise<UserLocation>,
   ) => {
-    const [locationResult, weatherResult] = await Promise.allSettled([
-      enrichedLocation ?? Promise.resolve(location),
-      fetchWeatherDashboard(location),
+    // Prefetch briefly, but never trap onboarding behind a slow API.
+    const controller = new AbortController()
+    let latestLocation = location
+    const requests = Promise.allSettled([
+      (enrich ? enrich(controller.signal) : Promise.resolve(location)).then(value => {
+        latestLocation = value
+        return value
+      }),
+      fetchWeatherDashboard(location, controller.signal),
     ])
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const fallback = [
+      { status: "fulfilled", value: location },
+      { status: "rejected", reason: new Error("Prefetch timed out") },
+    ] as const
+    const [locationResult, weatherResult] = await Promise.race([
+      requests,
+      new Promise<typeof fallback>((resolve) => {
+        timer = setTimeout(() => resolve([
+          { status: "fulfilled", value: latestLocation }, fallback[1],
+        ]), 4000)
+      }),
+    ])
+    clearTimeout(timer)
+    controller.abort()
     const baseLocation =
       locationResult.status === "fulfilled" ? locationResult.value : location
     const weatherTimezone =
@@ -4494,7 +4515,6 @@ export function LocationSetup({
             },
           }
         : undefined
-    saveLocation(resolvedLocation)
     onResolved(resolvedLocation, resolvedWeather)
   }
 
@@ -4506,7 +4526,9 @@ export function LocationSetup({
       // Address resolution and weather are independent once coordinates
       // exist. Fetching them together avoids a serial network round trip
       // and prevents demo temperature/time data flashing on the dashboard.
-      await finishSelection(coordinates, enrichDeviceLocation(coordinates))
+      await finishSelection(coordinates, (signal) =>
+        enrichDeviceLocation(coordinates, signal),
+      )
     } catch (error) {
       const reason =
         error instanceof GeolocationError
@@ -4514,16 +4536,18 @@ export function LocationSetup({
           : "position-unavailable"
       setErrorMessage(
         reason === "permission-denied"
-          ? "Location access is blocked. Allow it in this browser’s Site Permissions, then try again — or search manually."
+          ? "Location access is blocked by your browser or device. If this site is already allowed, enable Location Services for this browser in your device settings, then try again."
+          : reason === "policy-blocked"
+            ? "This embedded preview blocks location. Open Mausam directly in a browser tab, then tap Use my current area."
           : reason === "insecure-context"
-            ? "Location only works on HTTPS or localhost. Open the local preview at http://localhost:8443 and try again."
+            ? "GPS is unavailable on this HTTP network address. On this computer, open http://localhost:8443. On a phone, open an HTTPS version of Mausam."
             : reason === "unsupported"
               ? "Location isn't supported on this device. Search for your area instead."
               : reason === "services-disabled"
-                ? "Location permission is allowed, but device Location Services are off. Turn them on and try again."
+                ? "Your device is not providing location to this browser. Check device Location Services and the browser’s system location permission, then try again."
                 : reason === "timeout"
                   ? "Location took too long to respond. Check that device Location Services are on, then try again — or search manually."
-                  : "Permission was allowed, but the device did not provide coordinates. Enable Location Services for your browser or VS Code, then try again — or search manually.",
+                  : "The device did not provide coordinates. Check Location Services for your browser, then try again — or search manually.",
       )
       setManualOpen(true)
     } finally {
@@ -4623,23 +4647,17 @@ export function LocationSetup({
 
           <button
             type="button"
-            style={{
-              marginTop: 16,
-              background: "none",
-              border: 0,
-              color: "rgba(255,255,255,0.6)",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              textDecoration: "underline",
-            }}
+            className="location-manual-toggle"
+            aria-expanded={manualOpen}
+            aria-controls="location-manual-panel"
+            disabled={locating}
             onClick={() => setManualOpen((open) => !open)}
           >
             Search manually instead
           </button>
 
           {manualOpen && (
-            <div style={{ marginTop: 12 }}>
+            <div id="location-manual-panel" className="location-manual-panel">
               <form
                 className="location-search-form"
                 onSubmit={(event) => {
@@ -4656,7 +4674,7 @@ export function LocationSetup({
                     className="setup-input"
                     inputMode="search"
                     autoComplete="postal-code"
-                    placeholder="e.g. Kadamtala or 711101"
+                    placeholder="e.g. Saltlake or 711101"
                     value={manualQuery}
                     onChange={(event) => {
                       setManualQuery(event.target.value)
@@ -4686,6 +4704,7 @@ export function LocationSetup({
                     marginTop: 8,
                     cursor: "pointer",
                   }}
+                  disabled={locating}
                   onClick={() => chooseResult(result)}
                 >
                   <span className="location-icon">◉</span>
@@ -4707,16 +4726,8 @@ export function LocationSetup({
 
           <button
             type="button"
-            style={{
-              marginTop: 16,
-              background: "none",
-              border: 0,
-              color: "rgba(255,255,255,0.4)",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              textDecoration: "underline",
-            }}
+            className="location-demo-button"
+            disabled={locating}
             onClick={useDemoLocation}
           >
             Continue with Kolkata demo location
@@ -4769,12 +4780,26 @@ export default function App() {
       )
       prefetchedLocationKey.current = `${location.latitude},${location.longitude}`
     }
+    saveLocation(location)
     setUserLocation(location)
   }
 
   useEffect(() => {
     localStorage.setItem("mausam-theme", theme)
   }, [theme])
+
+  useEffect(() => {
+    if (userLocation?.source !== "device" || userLocation.locality !== "Current location") return
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 12_000)
+    void enrichDeviceLocation(userLocation, controller.signal).then(location => {
+      if (!controller.signal.aborted && location.locality !== "Current location") {
+        saveLocation(location)
+        setUserLocation(location)
+      }
+    })
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [userLocation])
 
   useEffect(() => {
     if (!profile) return

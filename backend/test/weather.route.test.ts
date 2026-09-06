@@ -1,3 +1,4 @@
+import { cpcbBody } from "./cpcbFixtures.js"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { buildApp } from "../src/app.js"
 import { loadEnv } from "../src/config/env.js"
@@ -54,23 +55,6 @@ function openMeteoForecastFixture() {
   }
 }
 
-function openMeteoAirQualityFixture() {
-  const times = Array.from(
-    { length: 24 },
-    (_, i) => `2026-08-28T${String(i).padStart(2, "0")}:00`,
-  )
-  return {
-    hourly: {
-      time: times,
-      pm2_5: times.map(() => 42),
-      pm10: times.map(() => 68),
-      ozone: times.map(() => 38),
-      nitrogen_dioxide: times.map(() => 22),
-      us_aqi: times.map(() => 78),
-    },
-  }
-}
-
 function stubFetchByUrl(handlers: {
   forecast?: () => unknown
   airQuality?: () => unknown
@@ -81,13 +65,13 @@ function stubFetchByUrl(handlers: {
     "fetch",
     vi.fn(async (input: string | URL) => {
       const url = input.toString()
-      if (url.includes("air-quality")) {
+      if (url.includes("data.gov.in")) {
         if (handlers.airQualityFails)
           throw new Error("air quality provider down")
         return {
           ok: true,
           json: async () =>
-            (handlers.airQuality ?? openMeteoAirQualityFixture)(),
+            (handlers.airQuality ?? cpcbBody)(),
         }
       }
       if (handlers.forecastFails) throw new Error("forecast provider down")
@@ -105,7 +89,7 @@ describe("GET /api/health", () => {
   })
 
   it("returns ok status", async () => {
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({ method: "GET", url: "/api/health" })
     expect(response.statusCode).toBe(200)
     expect(response.json()).toMatchObject({ status: "ok" })
@@ -121,7 +105,7 @@ describe("GET /api/weather", () => {
   it("returns a normalized payload including Phase 2 sections when both providers succeed", async () => {
     stubFetchByUrl({})
 
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({ method: "GET", url: "/api/weather" })
 
     expect(response.statusCode).toBe(200)
@@ -152,7 +136,7 @@ describe("GET /api/weather", () => {
   it("returns 502 when the core forecast provider fails and no cached value exists", async () => {
     stubFetchByUrl({ forecastFails: true })
 
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({ method: "GET", url: "/api/weather" })
 
     expect(response.statusCode).toBe(502)
@@ -163,7 +147,7 @@ describe("GET /api/weather", () => {
   it("omits airQuality gracefully when the air quality provider fails and there is no cache", async () => {
     stubFetchByUrl({ airQualityFails: true })
 
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({ method: "GET", url: "/api/weather" })
 
     expect(response.statusCode).toBe(200)
@@ -176,7 +160,7 @@ describe("GET /api/weather", () => {
   it("still returns core weather fields when only the air quality provider is down", async () => {
     stubFetchByUrl({ airQualityFails: true })
 
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({ method: "GET", url: "/api/weather" })
     const body = response.json()
 
@@ -191,7 +175,7 @@ describe("GET /api/weather", () => {
 
   it("uses explicit coordinates from the query string, not the default location", async () => {
     stubFetchByUrl({})
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
 
     const response = await app.inject({
       method: "GET",
@@ -213,8 +197,8 @@ describe("GET /api/weather", () => {
       "fetch",
       vi.fn(async (input: string | URL) => {
         const url = input.toString()
-        if (url.includes("air-quality"))
-          return { ok: true, json: async () => openMeteoAirQualityFixture() }
+        if (url.includes("data.gov.in"))
+          return { ok: true, json: async () => cpcbBody() }
         callCount += 1
         const fixture = openMeteoForecastFixture()
         fixture.current_weather.temperature = callCount === 1 ? 31 : 15
@@ -222,7 +206,7 @@ describe("GET /api/weather", () => {
       }),
     )
 
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const kolkata = await app.inject({
       method: "GET",
       url: "/api/weather?latitude=22.5726&longitude=88.3639",
@@ -248,7 +232,7 @@ describe("GET /api/weather", () => {
 
   it('marks a request with no coordinates as source "default" when defaults are allowed', async () => {
     stubFetchByUrl({})
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
 
     const response = await app.inject({ method: "GET", url: "/api/weather" })
     expect(response.json().location.source).toBe("default")
@@ -257,7 +241,7 @@ describe("GET /api/weather", () => {
 
   it("rejects an out-of-range latitude", async () => {
     stubFetchByUrl({})
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({
       method: "GET",
       url: "/api/weather?latitude=999&longitude=88",

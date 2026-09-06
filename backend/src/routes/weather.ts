@@ -43,7 +43,7 @@ const weatherQuerySchema = z.object({
 
 export async function weatherRoute(
   app: FastifyInstance,
-  options: { env: Env caches: WeatherCaches },
+  options: { env: Env; caches: WeatherCaches },
 ): Promise<void> {
   const { env, caches } = options
 

@@ -14,7 +14,7 @@ export type EventInput = {
   month: number
 }
 
-function nextSaturday(from: Date): { date: Date daysAway: number } {
+function nextSaturday(from: Date): { date: Date; daysAway: number } {
   const day = from.getUTCDay() // 0 = Sunday, 6 = Saturday
   const daysAway = (6 - day + 7) % 7
   const date = new Date(from)

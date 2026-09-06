@@ -9,7 +9,7 @@ export type OpenMeteoCoordinates = {
 // normalizers/toDashboardWeatherData.ts). Rejects malformed/incomplete
 // responses (missing fields, wrong types, empty arrays) rather than
 // letting `undefined`/`NaN` silently propagate into DashboardWeatherData —
-// mirrors the shape-check already used by openMeteoAirQualityClient.ts.
+// validates the upstream response before normalization.
 const numberArray = z.array(z.number())
 
 const openMeteoResponseSchema = z.object({

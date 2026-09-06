@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import App from "../src/App"
 
@@ -346,6 +346,31 @@ describe("App — location-first state machine", () => {
     expect(calledUrl.searchParams.get("longitude")).toBe("88.364")
   })
 
+  it("advances to Ready when GPS succeeds but weather and address APIs hang", async () => {
+    seedProfile()
+    vi.useFakeTimers()
+    try {
+      const geolocation = navigator.geolocation as unknown as {
+        getCurrentPosition: ReturnType<typeof vi.fn>
+      }
+      geolocation.getCurrentPosition.mockImplementation((success: PositionCallback) => {
+        success({ coords: { latitude: 22.5726, longitude: 88.3639, accuracy: 20 } } as GeolocationPosition)
+      })
+      fetchMock.mockImplementation(() => new Promise(() => {}))
+      render(<App />)
+      fireEvent.click(screen.getByRole("button", { name: /use my current area/i }))
+      await act(async () => { await vi.advanceTimersByTimeAsync(4000) })
+      expect(screen.getByLabelText(/Slide to enter Mausam/i)).toBeInTheDocument()
+      expect(localStorage.getItem(LOCATION_STORAGE_KEY)).toBeNull()
+      fireEvent.change(screen.getByLabelText(/Slide to enter Mausam/i), { target: { value: "100" } })
+      expect(JSON.parse(localStorage.getItem(LOCATION_STORAGE_KEY)!)).toMatchObject({
+        latitude: 22.573, longitude: 88.364, source: "device",
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it("tries a fast area-level fix first, then falls back to precise GPS", async () => {
     seedProfile()
     const geolocation = navigator.geolocation as unknown as {
@@ -439,7 +464,7 @@ describe("App — location-first state machine", () => {
 
     // Manual selection now proceeds.
     await user.type(
-      await screen.findByPlaceholderText(/kadamtala or 711101/i),
+      await screen.findByRole("textbox", { name: /search india by area/i }),
       "Mumbai",
     )
     await user.click(screen.getByRole("button", { name: /^search$/i }))
@@ -509,7 +534,7 @@ describe("App — location-first state machine", () => {
     await user.click(
       await screen.findByRole("button", { name: /search manually instead/i }),
     )
-    const input = await screen.findByPlaceholderText(/kadamtala or 711101/i)
+    const input = await screen.findByRole("textbox", { name: /search india by area/i })
     await user.type(input, "711101")
     expect(
       fetchMock.mock.calls.filter((call) =>
@@ -538,7 +563,7 @@ describe("App — location-first state machine", () => {
       await screen.findByRole("button", { name: /search manually instead/i }),
     )
     await user.type(
-      await screen.findByPlaceholderText(/kadamtala or 711101/i),
+      await screen.findByRole("textbox", { name: /search india by area/i }),
       "71110",
     )
     await user.click(screen.getByRole("button", { name: /^search$/i }))
@@ -593,7 +618,7 @@ describe("App — location-first state machine", () => {
       await screen.findByRole("button", { name: /search manually instead/i }),
     )
     await user.type(
-      await screen.findByPlaceholderText(/kadamtala or 711101/i),
+      await screen.findByRole("textbox", { name: /search india by area/i }),
       "Mumbai",
     )
     await user.click(screen.getByRole("button", { name: /^search$/i }))

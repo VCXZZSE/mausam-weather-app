@@ -393,57 +393,6 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       tone: "focus-outdoors",
     },
   ],
-  airQuality: {
-    index: 78,
-    scaleMax: 500,
-    scaleLabels: [
-      "Good",
-      "Satisfactory",
-      "Moderate",
-      "Poor",
-      "Very Poor",
-      "Severe",
-    ],
-    label: "Satisfactory",
-    updatedLabel: "Updated just now",
-    icon: "😷",
-    advice:
-      "💡 Asthma / COPD sufferers: limit outdoor time. Mask recommended near high-traffic zones.",
-    pollutants: [
-      {
-        label: "PM2.5",
-        value: 42,
-        scaleMax: 100,
-        unit: "µg/m³",
-        color: "#f59e0b",
-      },
-      {
-        label: "PM10",
-        value: 68,
-        scaleMax: 150,
-        unit: "µg/m³",
-        color: "#f97316",
-      },
-      {
-        label: "O₃",
-        value: 38,
-        scaleMax: 120,
-        unit: "µg/m³",
-        color: "#60a5fa",
-      },
-      {
-        label: "NO₂",
-        value: 22,
-        scaleMax: 80,
-        unit: "µg/m³",
-        color: "#a78bfa",
-      },
-    ],
-    standard: "IN_NAQI",
-    source: "CPCB",
-    stationName: "Demo CPCB station",
-    stationDistanceKm: 4.2,
-  },
   uv: {
     index: 6,
     scaleMax: 11,
@@ -732,7 +681,9 @@ function isDashboardWeatherData(value: unknown): value is DashboardWeatherData {
       // legitimately absent when the provider is unavailable (see the
       // `airQuality` field comment above); the UI handles that explicitly.
       (!candidate.airQuality ||
-        typeof candidate.airQuality.index === "number") &&
+        (Number.isFinite(candidate.airQuality.index) &&
+          candidate.airQuality.standard === "IN_NAQI" &&
+          candidate.airQuality.source === "CPCB")) &&
       candidate.uv &&
       typeof candidate.uv.index === "number" &&
       candidate.astronomy &&

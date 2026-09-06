@@ -1,3 +1,4 @@
+import { cpcbBody } from "./cpcbFixtures.js"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { buildApp } from "../src/app.js"
 import { loadEnv } from "../src/config/env.js"
@@ -54,34 +55,17 @@ function openMeteoForecastFixture() {
   }
 }
 
-function openMeteoAirQualityFixture() {
-  const times = Array.from(
-    { length: 24 },
-    (_, i) => `2026-09-05T${String(i).padStart(2, "0")}:00`,
-  )
-  return {
-    hourly: {
-      time: times,
-      pm2_5: times.map(() => 10),
-      pm10: times.map(() => 20),
-      ozone: times.map(() => 15),
-      nitrogen_dioxide: times.map(() => 8),
-      us_aqi: times.map(() => 35),
-    },
-  }
-}
-
 function stubFetchByUrl(
-  handlers: { forecastFails?: boolean airQualityFails?: boolean } = {},
+  handlers: { forecastFails?: boolean; airQualityFails?: boolean } = {},
 ) {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL) => {
       const url = input.toString()
-      if (url.includes("air-quality")) {
+      if (url.includes("data.gov.in")) {
         if (handlers.airQualityFails)
           throw new Error("air quality provider down")
-        return { ok: true, json: async () => openMeteoAirQualityFixture() }
+        return { ok: true, json: async () => cpcbBody() }
       }
       if (handlers.forecastFails) throw new Error("forecast provider down")
       return { ok: true, json: async () => openMeteoForecastFixture() }
@@ -96,7 +80,7 @@ describe("POST /api/personalized-briefing", () => {
 
   it("returns a valid briefing for a valid request", async () => {
     stubFetchByUrl()
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
 
     const response = await app.inject({
       method: "POST",
@@ -119,7 +103,7 @@ describe("POST /api/personalized-briefing", () => {
 
   it("defaults persona to general and succeeds with an empty body", async () => {
     stubFetchByUrl()
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({
       method: "POST",
       url: "/api/personalized-briefing",
@@ -131,7 +115,7 @@ describe("POST /api/personalized-briefing", () => {
 
   it("returns 400 for an invalid persona", async () => {
     stubFetchByUrl()
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({
       method: "POST",
       url: "/api/personalized-briefing",
@@ -144,7 +128,7 @@ describe("POST /api/personalized-briefing", () => {
 
   it("returns 502 when the core weather provider fails and no cache exists", async () => {
     stubFetchByUrl({ forecastFails: true })
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({
       method: "POST",
       url: "/api/personalized-briefing",
@@ -156,7 +140,7 @@ describe("POST /api/personalized-briefing", () => {
 
   it("still succeeds when only the air quality provider fails (aqi becomes null)", async () => {
     stubFetchByUrl({ airQualityFails: true })
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({
       method: "POST",
       url: "/api/personalized-briefing",
@@ -169,7 +153,7 @@ describe("POST /api/personalized-briefing", () => {
 
   it("accepts explicit latitude/longitude and reuses the shared coordinate-keyed weather cache", async () => {
     stubFetchByUrl()
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({
       method: "POST",
       url: "/api/personalized-briefing",
@@ -198,7 +182,7 @@ describe("POST /api/personalized-briefing", () => {
 
   it("never leaks internal error details in the response body", async () => {
     stubFetchByUrl({ forecastFails: true })
-    const app = await buildApp(loadEnv({}))
+    const app = await buildApp(loadEnv({ DATA_GOV_IN_API_KEY: "test-key" }))
     const response = await app.inject({
       method: "POST",
       url: "/api/personalized-briefing",

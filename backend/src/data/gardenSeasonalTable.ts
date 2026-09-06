@@ -4,7 +4,7 @@
 // knowledge, not a live agricultural data feed.
 import type { IndiaSeason } from "./season.js"
 
-export type GardenSeasonalInfo = { title: string note: string }
+export type GardenSeasonalInfo = { title: string; note: string }
 
 const GARDEN_SEASONAL: Record<IndiaSeason, GardenSeasonalInfo> = {
   Monsoon: {

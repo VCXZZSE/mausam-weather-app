@@ -86,7 +86,7 @@ export type FetchReverseGeocodeOptions = {
   baseUrl: string
   userAgent: string
   minIntervalMs: number
-  coordinates: { latitude: number longitude: number }
+  coordinates: { latitude: number; longitude: number }
   timeoutMs?: number
   fetchImpl?: typeof fetch
 }

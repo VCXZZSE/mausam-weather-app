@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "npm run dev:all",
+    "dev:frontend": "vite --host 0.0.0.0",
     "dev:backend": "cd backend && npm run dev",
-    "dev:all": "concurrently --names \"frontend,backend\" --prefix-colors \"cyan,yellow\" \"npm run dev\" \"npm run dev:backend\"",
+    "dev:all": "concurrently --names \"frontend,backend\" --prefix-colors \"cyan,yellow\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

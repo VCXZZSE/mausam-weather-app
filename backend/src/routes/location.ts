@@ -37,7 +37,7 @@ export function createLocationCaches(env: Env): LocationCaches {
 
 export async function locationRoute(
   app: FastifyInstance,
-  options: { env: Env caches: LocationCaches },
+  options: { env: Env; caches: LocationCaches },
 ): Promise<void> {
   const { env, caches } = options
 

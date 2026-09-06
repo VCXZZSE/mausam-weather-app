@@ -27,7 +27,7 @@ export type MinimalLogger = {
 export async function resolveAirQuality(
   env: Env,
   caches: AirQualityCaches,
-  coordinates: { latitude: number longitude: number },
+  coordinates: { latitude: number; longitude: number },
   log: MinimalLogger,
 ): Promise<DashboardWeatherData["airQuality"] | undefined> {
   if (!env.DATA_GOV_IN_API_KEY) return undefined
@@ -50,9 +50,10 @@ export async function resolveAirQuality(
         "No usable CPCB station reading is available near these coordinates",
       )
     return result
-  } catch (error) {
+  } catch {
+    // Provider errors can contain request URLs with the government API key.
     log.warn(
-      { err: error },
+      { provider: "CPCB" },
       "CPCB National AQI is unavailable; omitting airQuality rather than substituting US AQI",
     )
     return undefined

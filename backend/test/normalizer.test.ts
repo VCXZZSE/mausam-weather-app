@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest"
 import { toDashboardWeatherData } from "../src/normalizers/toDashboardWeatherData.js"
 import type { OpenMeteoResponse } from "../src/providers/openMeteoClient.js"
-import { normalizeAirQuality } from "../src/normalizers/airQuality.js"
+import { normalizeCpcbAirQuality } from "../src/normalizers/cpcbAqi.js"
+import { cpcbRecords } from "./cpcbFixtures.js"
 import type { DashboardWeatherData } from "../src/types/dashboard.js"
 
 const CONTEXT = {
@@ -62,29 +63,8 @@ function buildFixture(
   }
 }
 
-// toDashboardWeatherData's second parameter is the ALREADY-RESOLVED
-// airQuality section (see aqi/resolveAirQuality.ts, which picks CPCB or
-// Open-Meteo before the normalizer ever runs) — so this fixture builds
-// that final normalized shape directly, via the same normalizeAirQuality
-// function the real Open-Meteo path uses, rather than raw provider JSON.
 function buildAirQualityFixture(): DashboardWeatherData["airQuality"] {
-  const times = Array.from(
-    { length: 24 },
-    (_, i) => `2026-08-28T${String(i).padStart(2, "0")}:00`,
-  )
-  return normalizeAirQuality(
-    {
-      hourly: {
-        time: times,
-        pm2_5: times.map(() => 42),
-        pm10: times.map(() => 68),
-        ozone: times.map(() => 38),
-        nitrogen_dioxide: times.map(() => 22),
-        us_aqi: times.map(() => 78),
-      },
-    },
-    times[5],
-  )
+  return normalizeCpcbAirQuality(cpcbRecords(), CONTEXT, 50)!
 }
 
 describe("toDashboardWeatherData", () => {
@@ -208,7 +188,7 @@ describe("toDashboardWeatherData", () => {
     )
     expect(result.airQuality).toBeDefined()
     expect(result.airQuality?.index).toBe(78)
-    expect(result.airQuality?.pollutants).toHaveLength(4)
+    expect(result.airQuality).toEqual(buildAirQualityFixture())
   })
 
   it("normalizes uv from the current hour uv_index", () => {

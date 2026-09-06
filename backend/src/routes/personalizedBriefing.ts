@@ -17,7 +17,7 @@ const generator: BriefingGenerator = new DeterministicBriefingGenerator()
 
 export async function personalizedBriefingRoute(
   app: FastifyInstance,
-  options: { env: Env caches: WeatherCaches },
+  options: { env: Env; caches: WeatherCaches },
 ): Promise<void> {
   const { env, caches } = options
 
