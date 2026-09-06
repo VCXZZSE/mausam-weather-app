@@ -448,7 +448,11 @@ export async function reverseGeocodeCoordinates(
   postalCode?: string
 }> {
   const endpoint=import.meta.env.VITE_LOCATION_REVERSE_API_URL?.trim()
-  if(!endpoint) throw new Error("Reverse geocoding endpoint is not configured")
+  
+  // If no endpoint configured or not on localhost, use direct Nominatim fallback
+  if(!endpoint || window.location.hostname !== "localhost") {
+    return clientSideReverseGeocodeFallback(latitude, longitude, signal)
+  }
 
   const url=new URL(endpoint,window.location.origin)
   url.searchParams.set("latitude",String(latitude))
@@ -470,9 +474,7 @@ export async function reverseGeocodeCoordinates(
       postalCode: body.postalCode,
     }
   } catch (error) {
-    if (window.location.hostname !== "localhost") {
-      return clientSideReverseGeocodeFallback(latitude, longitude, signal)
-    }
+    // If backend fails on localhost, still throw so developer sees the issue
     throw error
   }
 }
@@ -494,7 +496,11 @@ export async function searchLocations(
 ): Promise<LocationSearchResult[]> {
   const endpoint=import.meta.env.VITE_LOCATION_SEARCH_API_URL?.trim()
   if(!query.trim()) return []
-  if(!endpoint) throw new Error("Location search endpoint is not configured")
+  
+  // If no endpoint configured or not on localhost, use direct Nominatim fallback
+  if(!endpoint || window.location.hostname !== "localhost") {
+    return clientSideSearchFallback(query, signal)
+  }
 
   const url=new URL(endpoint,window.location.origin)
   url.searchParams.set("query",query.trim())
@@ -515,9 +521,7 @@ export async function searchLocations(
       (result) => result.country.trim().toLowerCase()==="india",
     )
   } catch (error) {
-    if (window.location.hostname !== "localhost") {
-      return clientSideSearchFallback(query, signal)
-    }
+    // If backend fails on localhost, still throw so developer sees the issue
     throw error
   }
 }
