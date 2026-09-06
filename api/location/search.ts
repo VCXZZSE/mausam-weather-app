@@ -1,10 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+// Vercel serverless function for location search
+// Uses Nominatim (OpenStreetMap) - free, no API key
 
-// Location search using Nominatim (OpenStreetMap) - free, no API key
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-) {
+export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
   

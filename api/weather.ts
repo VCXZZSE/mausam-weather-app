@@ -1,11 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+// Vercel serverless function for weather data
+// Fetches from Open-Meteo (free, no API key needed)
 
-// Minimal serverless weather endpoint for Vercel deployments
-// Fetches real weather data from Open-Meteo (free, no API key needed)
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-) {
+export default async function handler(req: any, res: any) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')

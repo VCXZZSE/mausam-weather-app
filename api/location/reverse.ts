@@ -1,10 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
+// Vercel serverless function for reverse geocoding
+// Uses Nominatim (OpenStreetMap) - free, no API key
 
-// Reverse geocoding using Nominatim - free, no API key
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-) {
+export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
   
@@ -47,8 +44,9 @@ export default async function handler(
     }
 
     const data = await response.json()
-    const addr = data.address || {}
 
+    // Extract location information
+    const addr = data.address || {}
     const result = {
       locality: addr.suburb || addr.neighbourhood || addr.city || addr.town || addr.village || '',
       region: addr.state || '',
