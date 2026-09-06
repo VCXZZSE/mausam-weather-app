@@ -2,6 +2,18 @@
 
 This branch README records implementation changes and verification only. The project overview remains in the main branch README.
 
+## Vercel live weather and AQI deployment
+
+- The frontend now uses relative `/api/weather` requests when no explicit backend URL is configured; the localhost-only restriction is removed.
+- `api/weather.ts` returns the complete dashboard contract through `lib/normalizers/toDashboardWeatherData.ts`, including condition, time, UV, derived metrics, astronomy, and activity rules copied from the backend implementation.
+- Supporting modules live under root `lib/`, outside the serverless entrypoint directory.
+- Configured `DATA_GOV_IN_API_KEY` as a Vercel secret for Production and Preview and redeployed. The secret remains outside Git; cloning this repository does not configure another Vercel project.
+- AQI selects the nearest qualifying CPCB station to the selected coordinates within 50 km by default. PIN search uses the coordinates of the selected search result, not a fixed PIN-to-station mapping.
+- Stations need at least three valid pollutant readings, including PM2.5 or PM10, at a common reporting time within the last 24 hours. A closer station with unusable data is skipped.
+- CPCB feed caching defaults to 30 minutes per warm serverless instance. After expiry, the next request attempts a refresh; failed refreshes can reuse cached data, still subject to the 24-hour reading validity check. Station selection runs for each requested location.
+- Public production verification at https://mausam-roan.vercel.app returned HTTP 200 for Kolkata (Fort William, AQI 70) and New Delhi (Talkatora Garden, AQI 62), both Satisfactory and reported at 13:00 IST on 6 September 2026. These are historical verification snapshots, not fixed values.
+- See [the API deployment guide](api/README.md) for configuration and limitations.
+
 ## Capacitor configuration
 
 - Added `capacitor.config.ts` to the root TypeScript project so the editor uses the configured module resolution and installed Capacitor types.

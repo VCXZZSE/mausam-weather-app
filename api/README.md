@@ -1,72 +1,45 @@
-# Vercel Serverless Function Configuration for Weather API
+# Vercel weather and location APIs
 
-The `/api` directory contains Vercel serverless functions that provide weather and location data when deployed to Vercel.
+## Live weather pipeline
 
-## Problem Solved
+`GET /api/weather` accepts the selected latitude/longitude and returns the complete `DashboardWeatherData` payload. It fetches Open-Meteo weather and CPCB AQI, then executes `lib/normalizers/toDashboardWeatherData.ts` with condition mapping, time calculations, UV normalization, derived metrics, astronomy, and activity rules.
 
-On localhost, the backend runs at `http://localhost:3000` and provides full weather data transformation. On Vercel deployments, there is no Node.js backend running, so we need serverless functions.
+The root `lib/` modules are copies of the backend implementation. Keep corresponding changes synchronized. Supporting modules stay outside `api/` so they are not treated as separate serverless entrypoints.
 
-## Current Implementation Status
+`/api/location/search` and `/api/location/reverse` resolve selected locations. The frontend defaults to relative API routes. Demo weather is used only when explicitly enabled or before a location is available; live request failures are surfaced as errors.
 
-### ✅ Location APIs (Working)
-- `/api/location/reverse` - Reverse geocoding (coordinates → place name)
-- `/api/location/search` - Location search (place name/PIN → coordinates)
-- Both use Nominatim (OpenStreetMap) - free, no API key required
+## Vercel configuration
 
-### ⚠️ Weather API (Partial Implementation)
-- `/api/weather` - Returns raw Open-Meteo forecast data
-- **Issue**: Frontend expects fully transformed `DashboardWeatherData` format with computed fields
-- **Current Status**: Returns simplified structure, NOT compatible with frontend
+Set `DATA_GOV_IN_API_KEY` as a server-side secret in the Vercel environments you deploy to, then redeploy. The current project's Production and Preview environments were configured on 6 September 2026. No credential is stored in this repository. Local Fastify development reads the key from Git-ignored `backend/.env`.
 
-## What Needs to be Done
+For the standard Vercel deployment, leave these unset:
 
-To make weather work on Vercel, you need to either:
+- `VITE_WEATHER_API_URL`
+- `VITE_LOCATION_SEARCH_API_URL`
+- `VITE_LOCATION_REVERSE_API_URL`
+- `VITE_USE_DEMO_WEATHER`
 
-1. **Full Backend Port** (Complex - not yet done)
-   - Copy ALL backend normalizers, calculators, and rules to `/api/weather.ts`
-   - Implement astronomical calculations, AQI fetching, derived metrics, etc.
-   - This is a massive refactor (1000+ lines of business logic)
+Setting `VITE_USE_DEMO_WEATHER=true` explicitly enables demo weather. Never prefix the government key with `VITE_`, which would expose it to the browser.
 
-2. **Environment-Based Configuration** (Simple - recommended for now)
-   - Use demo weather data on Vercel deployments
-   - Keep real backend for localhost development
-   - Set `VITE_USE_DEMO_WEATHER=true` in Vercel environment variables
+## Dynamic AQI station selection
 
-3. **Deploy the Full Backend** (Infrastructure change)
-   - Deploy the existing backend as a separate service (Railway, Render, etc.)
-   - Update Vercel env vars to point to the deployed backend URL
-   - Requires managing a separate deployment
+AQI uses the coordinates of the selected location, including the selected PIN search result. It chooses the nearest CPCB station with usable data within `CPCB_MAX_STATION_DISTANCE_KM` (default 50 km). There is no fixed mapping from Kolkata or a PIN to Fort William or Jadavpur.
 
-## Recommended Next Steps
+A station qualifies only with at least three valid pollutant readings, including PM2.5 or PM10, from a common reporting timestamp within the last 24 hours. Invalid and excessively future-dated readings are rejected. If the closest station does not qualify, another qualifying station can be selected. If none qualifies, AQI is omitted.
 
-### For Immediate Vercel Deployment (Demo Data)
+The bulk station feed is cached for `CPCB_CACHE_TTL_MS` (default 30 minutes) per warm serverless instance. Location matching runs on each request, even when the feed is cached. After expiry, the next request attempts a provider refresh; if it fails, previously cached readings may be reused only while they still pass the freshness checks. Values therefore depend on government reporting and caching, not on each page refresh.
 
-In Vercel Project Settings → Environment Variables, add:
-```
-VITE_WEATHER_API_URL=
-VITE_USE_DEMO_WEATHER=true
-VITE_LOCATION_SEARCH_API_URL=/api/location/search
-VITE_LOCATION_REVERSE_API_URL=/api/location/reverse
-```
+The response identifies the station, distance, reporting time, and CPCB/IN_NAQI source. Missing credentials or unavailable usable data do not produce fabricated or US-AQI fallback values.
 
-This will:
-- ✅ Location search works (real data)
-- ✅ Manual location selection works  
-- ⚠️ Weather shows demo Kolkata data (not location-specific)
+## Production verification
 
-### For Real Weather on Vercel (Requires Full Backend Port)
+Public endpoint: https://mausam-roan.vercel.app/api/weather
 
-Complete the `toDashboardWeatherData` transformation in `/api/weather.ts` by:
-1. Copying `backend/src/normalizers/*` logic
-2. Implementing astronomy calculations
-3. Adding CPCB AQI fetching with your API key
-4. Implementing all derived metrics (comfort, rainfall, etc.)
-5. Adding rule-based content (commute, swimming, pollen, etc.)
+Verified HTTP 200 responses after deployment on 6 September 2026:
 
-**Estimated effort**: 6-8 hours of development work
+| Requested location | Selected station | AQI | Category | Station reporting time |
+| --- | --- | --- | --- | --- |
+| Kolkata (22.5726, 88.3639) | Fort William, Kolkata - WBPCB | 70 | Satisfactory | 6 September 2026, 13:00 IST |
+| New Delhi (28.6139, 77.209) | Talkatora Garden, Delhi - DPCC | 62 | Satisfactory | 6 September 2026, 13:00 IST |
 
-## Files Created
-
-- `/api/weather.ts` - Weather data endpoint (incomplete transformation)
-- `/api/location/search.ts` - Location search (fully working)
-- `/api/location/reverse.ts` - Reverse geocoding (fully working)
+These are historical observations, not fixed application values or verification of every PIN. Personalized briefing has no equivalent Vercel serverless endpoint and uses the frontend's local computation fallback.
