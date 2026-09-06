@@ -755,9 +755,8 @@ export async function fetchWeatherDashboard(
   const endpoint = import.meta.env.VITE_WEATHER_API_URL?.trim() || "/api/weather"
   const forceDemo = import.meta.env.VITE_USE_DEMO_WEATHER === "true"
 
-  if (forceDemo || !location) {
-    return DEMO_WEATHER_DATA
-  }
+  if (forceDemo) return DEMO_WEATHER_DATA
+  if (!location) throw new Error("A resolved location is required for live weather")
 
   const url = new URL(endpoint, window.location.origin)
   url.searchParams.set("latitude", String(location.latitude))

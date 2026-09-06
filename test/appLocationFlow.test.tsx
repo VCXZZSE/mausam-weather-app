@@ -326,6 +326,48 @@ describe("App — location-first state machine", () => {
     },
   )
 
+  it("does not present the sunny demo as a first reading before location selection", () => {
+    render(<App />)
+    expect(screen.getByText("Choose your area to get your first reading")).toBeInTheDocument()
+    expect(screen.queryByText(/Bright & Sunny/)).not.toBeInTheDocument()
+    expect(screen.queryByText("FIRST READING")).not.toBeInTheDocument()
+  })
+
+  it("shows loading then an honest error instead of the sunny demo, and supports retry", async () => {
+    seedProfile()
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({
+      latitude: 22.5726, longitude: 88.3639, locality: "Kolkata",
+      region: "West Bengal", country: "India", timezone: "Asia/Kolkata", source: "manual",
+    }))
+    let rejectRequest!: (reason: Error) => void
+    fetchMock.mockImplementationOnce(() => new Promise((_, reject) => { rejectRequest = reject }))
+    render(<App />)
+    expect(screen.getByText("Getting your weather")).toBeInTheDocument()
+    expect(screen.queryByText(/Bright & Sunny/)).not.toBeInTheDocument()
+    await act(async () => { rejectRequest(new Error("offline")) })
+    expect(await screen.findByText("Weather unavailable")).toBeInTheDocument()
+    expect(screen.queryByText(/Bright & Sunny/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: /Try again/ }))
+    await screen.findByText("29")
+  })
+
+  it("ignores a completed old weather request after changing location", async () => {
+    seedProfile()
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({
+      latitude: 22.5726, longitude: 88.3639, locality: "Kolkata",
+      region: "West Bengal", country: "India", timezone: "Asia/Kolkata", source: "manual",
+    }))
+    let resolveOld!: (response: { ok: boolean; json: () => Promise<ReturnType<typeof weatherFixture>> }) => void
+    fetchMock.mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve }))
+    render(<App />)
+    fireEvent.click(screen.getByRole("button", { name: "Change location" }))
+    expect(screen.getByText(/where are/i)).toBeInTheDocument()
+    await act(async () => { resolveOld({ ok: true, json: async () => weatherFixture() }) })
+    expect(screen.getByText(/where are/i)).toBeInTheDocument()
+    expect(screen.queryByText("29")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Bright & Sunny/)).not.toBeInTheDocument()
+  })
+
   it("keeps completed users on the dashboard when reopening the app", async () => {
     seedProfile()
     localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({

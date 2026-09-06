@@ -1,3 +1,4 @@
+import { OfficialAdvisories } from "./OfficialAdvisories"
 import {
   useState,
   useEffect,
@@ -926,6 +927,7 @@ function HomeTab({
       </div>
 
       <AudienceFocus items={weather.overview} />
+      <OfficialAdvisories location={location} />
 
       {/* Hourly Forecast */}
       <div style={{ marginBottom: 22 }}>
@@ -1199,94 +1201,7 @@ function HomeTab({
             </div>
           </Card>
 
-          {/* Local swimming conditions for Kolkata. */}
-          <Card
-            className="secondary-pair-card swimming-tile"
-            grad="linear-gradient(140deg,#083344 0%,#031520 100%)"
-            border="rgba(34,211,238,0.08)"
-          >
-            <Badge color="#f87171" bg="rgba(239,68,68,0.14)">
-              {weather.swimming.badge}
-            </Badge>
-            <CardLabel>
-              {weather.swimming.venue} · {weather.swimming.distance}
-            </CardLabel>
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: "white",
-                lineHeight: 1,
-              }}
-            >
-              {weather.swimming.depth}
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 400,
-                  color: "rgba(255,255,255,0.35)",
-                }}
-              >
-                {weather.swimming.depthUnit}
-              </span>
-            </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: "rgba(255,255,255,0.35)",
-                marginTop: 5,
-              }}
-            >
-              Pool depth
-            </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: "rgba(255,255,255,0.3)",
-                marginTop: 3,
-              }}
-            >
-              💧 ~{weather.swimming.waterTemperature}°C (est.) · Peak{" "}
-              {weather.swimming.peakTime}
-            </div>
-            <div style={{ fontSize: 9, color: "#f87171", marginTop: 5 }}>
-              {weather.swimming.advice}
-            </div>
-          </Card>
 
-          {/* Garden */}
-          <Card
-            className="secondary-pair-card garden-tile"
-            grad="linear-gradient(140deg,#14532d 0%,#071a10 100%)"
-            border="rgba(74,222,128,0.08)"
-          >
-            <Badge color="#4ade80" bg="rgba(74,222,128,0.14)">
-              {weather.garden.badge}
-            </Badge>
-            <CardLabel>Garden & Crops</CardLabel>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "white",
-                lineHeight: 1.45,
-              }}
-            >
-              {weather.garden.title}
-            </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: "rgba(255,255,255,0.3)",
-                marginTop: 7,
-              }}
-            >
-              🌱 Soil: {weather.garden.soil}
-            </div>
-            <div style={{ fontSize: 9, color: "#4ade80", marginTop: 5 }}>
-              {weather.garden.note}
-            </div>
-          </Card>
         </div>
       </div>
 
@@ -3657,7 +3572,7 @@ function Setup({
   weather,
   onComplete,
 }: {
-  weather: DashboardWeatherData
+  weather: DashboardWeatherData | null
   onComplete: (profile: Profile) => void
 }) {
   const [step, setStep] = useState<SetupStep>("welcome")
@@ -3813,12 +3728,12 @@ function Setup({
             <div className="welcome-reading">
               <span className="reading-dot" />
               <div>
-                <small>FIRST READING</small>
+                <small>{weather ? "DEMO PREVIEW" : "LOCAL WEATHER"}</small>
                 <strong>
-                  {weather.current.city} · {weather.current.condition}
+                  {weather ? `${weather.current.city} · ${weather.current.condition}` : "Choose your area to get your first reading"}
                 </strong>
               </div>
-              <b>{weather.current.temperature}°</b>
+              {weather && <b>{weather.current.temperature}°</b>}
             </div>
             <button className="welcome-start" onClick={next} type="button">
               <span>start your profile</span>
@@ -3994,9 +3909,8 @@ function Setup({
               <div>
                 <strong>Your first insight</strong>
                 <small>
-                  {weather.current.condition} · {weather.current.temperature}°C
-                  · {weather.current.humidity}% humidity. We’ll suggest your
-                  best outdoor window and daily guidance.
+                  {weather ? `${weather.current.condition} · ${weather.current.temperature}°C · ${weather.current.humidity}% humidity. ` : "Once you select your area, "}
+                  we’ll use local weather to suggest your best outdoor window and daily guidance.
                 </small>
               </div>
             </div>
@@ -4754,7 +4668,7 @@ export default function App() {
     () => Boolean(loadStoredProfile() && loadStoredLocation()),
   )
   const [weather, setWeather] =
-    useState<DashboardWeatherData>(DEMO_WEATHER_DATA)
+    useState<DashboardWeatherData | null>(() => isLiveWeatherEnabled() ? null : DEMO_WEATHER_DATA)
   const [userLocation, setUserLocation] = useState<UserLocation | null>(
     loadStoredLocation,
   )
@@ -4772,6 +4686,8 @@ export default function App() {
     localStorage.getItem("mausam-theme") === "dark" ? "dark" : "light",
   )
   const prefetchedLocationKey = useRef<string | null>(null)
+  const [weatherLocationKey, setWeatherLocationKey] = useState<string | null>(null)
+  const [weatherRetry, setWeatherRetry] = useState(0)
 
   const resolveLocation = (
     location: UserLocation,
@@ -4781,6 +4697,11 @@ export default function App() {
       setWeather(prefetchedWeather)
       setWeatherSource(isLiveWeatherEnabled() ? "live" : "demo")
       prefetchedLocationKey.current = `${location.latitude},${location.longitude}`
+      setWeatherLocationKey(prefetchedLocationKey.current)
+    } else {
+      setWeather(null)
+      setWeatherSource("loading")
+      setWeatherLocationKey(null)
     }
     saveLocation(location)
     setUserLocation(location)
@@ -4815,50 +4736,57 @@ export default function App() {
     // silently substituted default.
     if (!userLocation) return
 
-    const controller = new AbortController()
     const endpointConfigured = isLiveWeatherEnabled()
     const configuredRefresh = Number(import.meta.env.VITE_WEATHER_REFRESH_MS)
-    const refreshMs =
-      Number.isFinite(configuredRefresh) && configuredRefresh >= 10_000
-        ? configuredRefresh
-        : 300_000
-
-    const refreshWeather = async () => {
-      try {
-        const nextWeather = await fetchWeatherDashboard(
-          userLocation,
-          controller.signal,
-        )
-        setWeather(nextWeather)
-        setWeatherSource(endpointConfigured ? "live" : "demo")
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return
-        setWeatherSource("error")
-      }
-    }
-
+    const refreshMs = Number.isFinite(configuredRefresh) && configuredRefresh >= 10_000
+      ? configuredRefresh : 300_000
+    let disposed = false
+    let activeRequest: AbortController | undefined
     const locationKey = `${userLocation.latitude},${userLocation.longitude}`
+    const refreshWeather = async () => {
+      activeRequest?.abort()
+      const request = new AbortController()
+      activeRequest = request
+      const timeout = window.setTimeout(() => {
+        request.abort()
+        if (!disposed && activeRequest === request) {
+          setWeather(null)
+          setWeatherSource("error")
+        }
+      }, 20_000)
+      try {
+        const nextWeather = await fetchWeatherDashboard(userLocation, request.signal)
+        if (disposed || request.signal.aborted || activeRequest !== request) return
+        setWeather(nextWeather)
+        setWeatherLocationKey(locationKey)
+        setWeatherSource(endpointConfigured ? "live" : "demo")
+      } catch {
+        if (disposed || activeRequest !== request) return
+        setWeather(null)
+        setWeatherSource("error")
+      } finally { window.clearTimeout(timeout) }
+    }
     if (prefetchedLocationKey.current === locationKey) {
       prefetchedLocationKey.current = null
     } else {
+      setWeather(null)
+      setWeatherSource("loading")
       void refreshWeather()
     }
-    const refreshTimer = endpointConfigured
-      ? window.setInterval(refreshWeather, refreshMs)
-      : undefined
-
+    const refreshTimer = endpointConfigured ? window.setInterval(refreshWeather, refreshMs) : undefined
     return () => {
-      controller.abort()
+      disposed = true
+      activeRequest?.abort()
       if (refreshTimer !== undefined) window.clearInterval(refreshTimer)
     }
-  }, [userLocation])
+  }, [userLocation, weatherRetry])
 
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [tab, showPersonalized])
 
   if (!profile || !profileSetupComplete)
-    return <Setup weather={weather} onComplete={(nextProfile) => {
+    return <Setup weather={isLiveWeatherEnabled() ? null : weather} onComplete={(nextProfile) => {
       setProfile(nextProfile)
       setProfileSetupComplete(true)
     }} />
@@ -4883,8 +4811,19 @@ export default function App() {
         onBack={() => setPendingLocation(null)}
       />
     )
-  // Asserts non-null values for the rest of the app render tree.
-  if (!userLocation || !weather) return null
+  if (!userLocation) return null
+  if (!weather || weatherLocationKey !== `${userLocation.latitude},${userLocation.longitude}`) {
+    const failed = weatherSource === "error"
+    return <main className="setup-shell" data-weather-source={failed ? "error" : "loading"}>
+      <div className="setup-content"><section className="setup-panel">
+        <div className="setup-eyebrow">{userLocation.locality} · LIVE WEATHER</div>
+        <h2>{failed ? "Weather unavailable" : "Getting your weather"}</h2>
+        <p className="setup-copy" role="status">{failed ? "We couldn’t load current conditions for your area. Try again to get a fresh reading." : "Fetching current conditions for your selected area…"}</p>
+        {failed && <button type="button" className="setup-primary" onClick={() => setWeatherRetry(value => value + 1)}>Try again <span>↻</span></button>}
+        <button type="button" className="location-manual-toggle" onClick={() => { clearStoredLocation(); setUserLocation(null); setWeather(null); setWeatherLocationKey(null) }}>Change location</button>
+      </section></div>
+    </main>
+  }
 
   return (
     <div
@@ -4937,6 +4876,8 @@ export default function App() {
                   onChangeLocation={() => {
                     clearStoredLocation()
                     setUserLocation(null)
+                    setWeather(null)
+                    setWeatherLocationKey(null)
                   }}
                   weather={weather}
                 />

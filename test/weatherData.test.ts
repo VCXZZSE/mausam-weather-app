@@ -199,9 +199,12 @@ describe("fetchWeatherDashboard — demo-data-leak prevention (v0.2 review, Requ
     expect(result.airQuality).toBeUndefined()
   })
 
-  it("returns DEMO_WEATHER_DATA wholesale (never partially) when no location is resolved yet", async () => {
-    const result = await fetchWeatherDashboard(undefined)
-    expect(result).toBe(DEMO_WEATHER_DATA)
+  it("refuses to substitute demo readings when live weather has no resolved location", async () => {
+    vi.stubEnv("VITE_USE_DEMO_WEATHER", "false")
+    const fetcher = vi.fn()
+    vi.stubGlobal("fetch", fetcher)
+    await expect(fetchWeatherDashboard(undefined)).rejects.toThrow("resolved location")
+    expect(fetcher).not.toHaveBeenCalled()
   })
 
   it("returns DEMO_WEATHER_DATA wholesale when VITE_USE_DEMO_WEATHER is explicitly set", async () => {

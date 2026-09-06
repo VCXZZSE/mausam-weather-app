@@ -10,6 +10,7 @@ describe("loadEnv", () => {
     // no obvious error, which is a real demo-reliability trap.
     const env = loadEnv({})
     expect(env.ALLOWED_ORIGINS).toContain("http://localhost:8443")
+    expect(env.ALLOWED_ORIGINS).toContain("http://127.0.0.1:8443")
   })
 
   it("still allows the generic Vite default (5173) as a fallback", () => {

@@ -7,7 +7,7 @@ const envSchema = z.object({
     // 8443 is the frontend's actual Vite dev-server default (see
     // vite.config.ts); 5173 is Vite's own generic default, kept as a
     // fallback for anyone overriding PORT locally.
-    .default("http://localhost:8443,http://localhost:5173")
+    .default("http://localhost:8443,http://localhost:5173,http://127.0.0.1:8443,http://127.0.0.1:5173")
     .transform((value) =>
       value
         .split(",")
