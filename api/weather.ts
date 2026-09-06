@@ -3,8 +3,7 @@
 // This mirrors backend/src/routes/weather.ts exactly, reusing the same
 // shared transformation pipeline (lib/**, copied from backend/src/**)
 // instead of returning the raw Open-Meteo response. See
-// VERCEL_WEATHER_ISSUE.md for the history of why this previously fell
-// back to demo data.
+// api/README.md for the live weather pipeline and deployment configuration.
 //
 // The shared modules live in lib/ at the project root, NOT under api/:
 // Vercel turns every file under api/ into its own Serverless Function, so

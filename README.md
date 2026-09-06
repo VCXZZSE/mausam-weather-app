@@ -1,82 +1,163 @@
-# backend-v0.3 — Change log
+<div align="center">
 
-This branch README records implementation changes and verification only. The project overview remains in the main branch README.
+# Mausam Weather
 
-## Vercel live weather and AQI deployment
+**Local weather, translated into a better day.**
 
-- The frontend now uses relative `/api/weather` requests when no explicit backend URL is configured; the localhost-only restriction is removed.
-- `api/weather.ts` returns the complete dashboard contract through `lib/normalizers/toDashboardWeatherData.ts`, including condition, time, UV, derived metrics, astronomy, and activity rules copied from the backend implementation.
-- Supporting modules live under root `lib/`, outside the serverless entrypoint directory.
-- Configured `DATA_GOV_IN_API_KEY` as a Vercel secret for Production and Preview and redeployed. The secret remains outside Git; cloning this repository does not configure another Vercel project.
-- AQI selects the nearest qualifying CPCB station to the selected coordinates within 50 km by default. PIN search uses the coordinates of the selected search result, not a fixed PIN-to-station mapping.
-- Stations need at least three valid pollutant readings, including PM2.5 or PM10, at a common reporting time within the last 24 hours. A closer station with unusable data is skipped.
-- CPCB feed caching defaults to 30 minutes per warm serverless instance. After expiry, the next request attempts a refresh; failed refreshes can reuse cached data, still subject to the 24-hour reading validity check. Station selection runs for each requested location.
-- Public production verification at https://mausam-roan.vercel.app returned HTTP 200 for Kolkata (Fort William, AQI 70) and New Delhi (Talkatora Garden, AQI 62), both Satisfactory and reported at 13:00 IST on 6 September 2026. These are historical verification snapshots, not fixed values.
-- See [the API deployment guide](api/README.md) for configuration and limitations.
+A mobile-first weather app with location-specific forecasts, Indian government air quality, and practical guidance for daily plans.
 
-## Capacitor configuration
+[Open the live app](https://mausam-roan.vercel.app) · [Deployment guide](api/README.md)
 
-- Added `capacitor.config.ts` to the root TypeScript project so the editor uses the configured module resolution and installed Capacitor types.
-- The configuration is now included in `tsc --noEmit`, rather than being left outside the checked project.
-- Preserved the Android application ID, application name, and `dist` web directory.
+</div>
 
-## Location and onboarding
+![Mausam dashboard design showcase](docs/mausam-mobile-showcase.svg)
 
-- Preserved the location-first onboarding order: profile setup → location selection → Ready slider → dashboard.
-- Save the selected location only after completing the Ready slider, so refreshing before confirmation does not skip that step.
-- Limit address/weather prefetch during selection to four seconds so slow backend requests do not trap onboarding.
-- Preserve an address that resolves successfully even if the parallel weather request times out.
-- Retry address enrichment after entering the dashboard when device coordinates are available but the location still has its placeholder label.
-- Removed the browser Permissions API preflight that could reject a location attempt before requesting coordinates. Device location is requested directly from the button interaction.
-- Keep area-level positioning first, followed by a precise-position retry for eligible failures.
-- Bound permission-status queries and add an application deadline for geolocation providers that fail to invoke their callbacks. Late callbacks are ignored.
-- Distinguish site denial, device/system denial, embedded permissions-policy restrictions, insecure HTTP origins, unavailable coordinates, and timeout errors.
-- Clarified recovery messages for HTTPS requirements and device-level browser permissions.
-- Allow relative URLs in the location API client and report missing search configuration as an error rather than an empty result.
-- Added regression coverage for permission handling, retries, stalled providers, and progression to the Ready slider when backend requests hang.
+## What Mausam does
 
-## Location screen layout
+Choose a location using device coordinates or place/PIN search, complete onboarding, and see weather for that location. The dashboard combines current conditions and forecasts with comfort metrics, astronomy, and activity guidance. Its visual design is inspired by Kolkata and the monsoon, while weather requests use the selected coordinates.
 
-- Put manual search and demo selection on separate full-width rows.
-- Added touch-friendly minimum heights, a divider, and extra spacing above the demo action.
-- Added expanded-state accessibility attributes to the manual-search toggle.
-- Disable competing selection controls while resolving a location.
+| Feature | What you get |
+| --- | --- |
+| Location-first setup | Profile → location selection → Ready confirmation → dashboard |
+| Current weather | Temperature, feels-like, conditions, humidity, wind, and visibility |
+| Forecast | Hourly outlook and seven-day weather with rain probabilities |
+| Indian air quality | Nearest usable CPCB station, National AQI category, pollutant sub-indices, distance, and reporting time |
+| Astronomy and comfort | Sun/moon information, UV, and derived comfort and rainfall metrics |
+| Daily planning | Weather-based running, commute, packing, swimming, and garden guidance |
+| Your Mausam | Profile-aware briefing with important metrics and suggested activity windows |
+| Interface | Light/dark themes, animated weather companions, responsive layouts, and reduced-motion support |
+| Android | Capacitor wrapper around the web application |
 
-## Backend startup and development
+## How the data works
 
-- Repaired missing property separators in backend TypeScript declarations that prevented the backend from starting.
-- `npm run dev` now starts both frontend and backend through `dev:all`.
-- Added `npm run dev:frontend` for intentionally running Vite alone; retained `dev:backend`.
-- Load the backend's own `.env` file during server startup, independent of the shell's working directory.
+The browser requests `/api/weather` with the selected latitude and longitude. On Vercel, the serverless endpoint fetches Open-Meteo weather and optional CPCB station data, then returns the complete dashboard model through `toDashboardWeatherData()`.
 
-## Indian government AQI
+```text
+Selected location coordinates
+          ↓
+  /api/weather
+          ↓
+  Open-Meteo + CPCB
+          ↓
+  Normalizers · astronomy · derived metrics · activity rules
+          ↓
+  Location-specific dashboard
+```
 
-- Use CPCB station data from the Government of India's data.gov.in resource for India National AQI.
-- Fixed the live response mapping: current records use `avg_value`; older exports use `pollutant_avg`. Both formats and numeric/string values are accepted.
-- Read all result pages so nearby stations are not omitted by a truncated first page.
-- Select the nearest usable station within the configured distance, defaulting to 50 km.
-- Treat government pollutant values as published AQI sub-indices, not concentrations. Removed the second application of concentration breakpoints and incorrect concentration units.
-- Calculate overall AQI from the maximum published sub-index, requiring at least three distinct pollutants including PM2.5 or PM10.
-- Keep stations and reporting timestamps separate; reject invalid, incomplete, future-dated, and more-than-24-hour-old readings.
-- Show the Indian category, station name, distance, reporting time in IST, and pollutant sub-indices.
-- Removed the unused Open-Meteo US-AQI provider, normalizer, and obsolete tests.
-- Removed fabricated demo CPCB readings and require CPCB/IN_NAQI source metadata in frontend live-data validation.
-- Omit AQI when no usable government reading exists; do not substitute US AQI or demo values.
-- Trim the government API key, load it only on the backend, and avoid logging provider errors that could contain credential-bearing URLs.
-- Updated route fixtures and tests to cover the government feed, pagination, station selection, categories, unavailable data, and caching.
+Local development runs a Fastify backend with the corresponding transformation pipeline. Vercel uses the supporting modules in `lib/`; keep these copies synchronized with the matching `backend/src/` modules when changing shared weather logic.
 
-## Verification
+### Dynamic AQI
 
-- Frontend: 41 tests passed.
-- Backend: 213 tests passed.
-- Frontend and backend TypeScript checks passed.
-- Production frontend build passed.
-- Live PIN search and reverse geocoding returned valid Kolkata results.
-- Live CPCB verification and the running weather endpoint returned Fort William, Kolkata - WBPCB, AQI 66 (Satisfactory), reported at 09:00 IST on 6 September 2026. This is a verification snapshot, not a fixed application value.
-- The supplied API key is kept in Git-ignored `backend/.env`; no real key is included in this branch.
+AQI is selected by distance from the chosen coordinates, not by a fixed city or PIN mapping. For example, Jadavpur is selected only if it is the nearest qualifying station; another location may select Fort William.
 
-## Remaining device verification
+- The default search radius is **50 km**.
+- A station needs at least three valid pollutant readings, including PM2.5 or PM10, from a common reporting timestamp within the last 24 hours.
+- The overall AQI is the maximum published pollutant sub-index. These values are **AQI sub-indices**, not pollutant concentrations.
+- The station feed is cached for **30 minutes** per warm serverless instance. Station matching still runs for each requested location.
+- After cache expiry, the next request attempts a refresh. A failed refresh may reuse cached readings while they still meet the freshness checks.
+- Missing credentials or a lack of qualifying stations causes AQI to be omitted. The app does not substitute US AQI or fabricated readings.
 
-- Automatic location acquisition on the reported MacBook/Chrome setup still requires device verification: permission was granted, but the browser timed out without coordinates. The timeout and error handling are tested; a successful real-device fix has not been confirmed.
-- macOS Location Services and browser access must be enabled. Local HTTP works at `localhost`; a phone opening an HTTP LAN address requires an HTTPS deployment for browser geolocation.
-- Android runtime GPS and a signed native build have not been verified on a physical device in this session.
+CPCB coverage is for India. Weather can work elsewhere without a corresponding Indian AQI reading.
+
+### Live, derived, and seasonal content
+
+Forecast weather and CPCB AQI come from providers. Astronomy and comfort metrics are calculated. Activity suggestions are rule-based; pollen and some seasonal/local planning content use curated approximations. Curated advisories are not official IMD alerts, and seasonal estimates are not live measurements.
+
+Demo weather is explicitly enabled with `VITE_USE_DEMO_WEATHER=true`, or used before a location is available. A failed live weather request surfaces an error instead of silently replacing the response with demo weather.
+
+## Run locally
+
+The repository pins Node.js 22 and pnpm 10.34.3 in `.mise.toml`. Install the frontend and backend dependencies separately:
+
+```bash
+git clone https://github.com/VCXZZSE/mausam-weather-app.git
+cd mausam-weather-app
+pnpm install --frozen-lockfile
+npm ci --prefix backend
+```
+
+For a fresh clone, create the local environment files:
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+```
+
+If you already have these files, preserve your existing values. For local AQI, set `DATA_GOV_IN_API_KEY` in `backend/.env`. Leave it empty to run weather without AQI. Environment files containing credentials are Git-ignored.
+
+```bash
+npm run dev
+```
+
+This starts both services:
+
+- Frontend: `http://localhost:8443`
+- Fastify API: `http://localhost:3000`
+
+The root `.env.example` points browser requests to the local backend. Device location requires browser/system permission and a secure context; use localhost locally or HTTPS when accessing from another device. Manual search is available when device positioning fails.
+
+### Useful commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start frontend and backend together |
+| `npm run dev:frontend` | Start Vite only |
+| `npm run dev:backend` | Start Fastify only |
+| `npm run build` | Build the frontend into `dist/` |
+| `npm run preview` | Preview the frontend build; start the local API separately when using local API URLs |
+| `npm test` | Run frontend tests |
+| `npm test --prefix backend` | Run backend tests |
+| `pnpm exec tsc --noEmit` | Check frontend TypeScript |
+| `npm run typecheck --prefix backend` | Check backend TypeScript |
+
+## Deploy to Vercel
+
+The app is deployed at **[mausam-roan.vercel.app](https://mausam-roan.vercel.app)**.
+
+1. Import the repository into Vercel with the project root set to `.` and the Vite framework preset. The frontend build command is `npm run build`, with `dist` as its output.
+2. Add `DATA_GOV_IN_API_KEY` as a **server-side secret** for the environments that need CPCB AQI.
+3. Leave `VITE_WEATHER_API_URL`, `VITE_LOCATION_SEARCH_API_URL`, `VITE_LOCATION_REVERSE_API_URL`, and `VITE_USE_DEMO_WEATHER` unset for the standard deployment. The frontend uses relative serverless routes and live weather by default.
+4. Redeploy after changing environment variables.
+
+Never put the government key in a `VITE_` variable or commit it to Git. The existing project's Production and Preview secrets are configured in Vercel; cloning the repository does not copy those settings to another project.
+
+The deployed personalized briefing uses local frontend computation because `/api/personalized-briefing` has no Vercel serverless counterpart. The local Fastify backend exposes that endpoint.
+
+See [the API deployment guide](api/README.md) for station selection, caching, and recorded production checks.
+
+## Android
+
+With Android Studio and the Android SDK configured:
+
+```bash
+npm run android        # Build, sync, and open Android Studio
+npm run android:sync   # Build and sync web assets
+npm run android:run    # Run through Capacitor
+```
+
+Configure an API endpoint reachable from the device before building; the local development `localhost:3000` URL refers to the device itself when packaged. Physical-device GPS and a signed native release still require verification. Keep signing credentials outside Git.
+
+## Project structure
+
+```text
+├── api/                Vercel weather and location endpoints
+├── lib/                Supporting transformation modules for Vercel
+├── backend/            Fastify server, providers, rules, and backend tests
+├── src/                React screens, styles, location and API clients
+├── public/             Public assets
+├── test/               Frontend tests
+├── android/            Capacitor Android project
+├── docs/               Historical implementation notes and design reference
+├── .env.example        Local frontend and serverless configuration reference
+├── capacitor.config.ts Android wrapper configuration
+├── vercel.json         Deployment headers and API routing
+└── package.json        Frontend dependencies and development commands
+```
+
+## Preferences and current limitations
+
+Profile, theme, and confirmed location preferences are stored locally in the browser. Weather and location providers receive the coordinates or search queries needed to serve requests. The project does not include user accounts or a remote profile database.
+
+Device geolocation depends on browser permission, operating-system Location Services, and provider availability. A reported MacBook/Chrome positioning timeout still needs successful real-device verification. API and build checks do not establish physical-device GPS behavior.
+
+Historical development details are available in [the implementation notes](docs/PROJECT_CHANGES.md). Those notes may describe superseded behavior; use this README and the deployment guide for current setup.

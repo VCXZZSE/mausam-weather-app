@@ -1,6 +1,6 @@
 // CURATED / RULE-BASED DEMO ALERTS — NOT sourced from IMD or any live
 // government alert feed. There is no free, reliable IMD API (see
-// BACKEND_HANDOFF_LOCAL.md). These are deterministic, threshold-based
+// docs/BACKEND_HANDOFF_LOCAL.md). These are deterministic, threshold-based
 // advisories derived only from the already-normalized live weather values
 // (temperature, wind, rain chance, condition, month). The `source` field
 // is intentionally NOT "IMD" so this is never mistaken for an official

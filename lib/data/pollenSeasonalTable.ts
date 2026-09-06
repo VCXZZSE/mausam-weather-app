@@ -1,7 +1,7 @@
 // CURATED / DEMO-ORIENTED DATA — NOT LIVE MEASUREMENTS.
 //
 // There is no free pollen API with reliable India/Kolkata coverage (see
-// BACKEND_HANDOFF_LOCAL.md and Phase 2/3 provider research). This table is
+// docs/BACKEND_HANDOFF_LOCAL.md and Phase 2/3 provider research). This table is
 // a deterministic, month-indexed approximation of typical Kolkata/West
 // Bengal pollen behavior (tree bloom in late winter/summer, monsoon rain
 // suppressing airborne pollen, post-monsoon weed pollen). It must never be

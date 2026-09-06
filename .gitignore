@@ -21,4 +21,4 @@ logs/
 .vercel
 
 # Local-only backend handoff doc — never commit
-BACKEND_HANDOFF_LOCAL.md
+/docs/BACKEND_HANDOFF_LOCAL.md
