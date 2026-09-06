@@ -1,20 +1,26 @@
 // Vercel serverless function for weather data.
 //
 // This mirrors backend/src/routes/weather.ts exactly, reusing the same
-// shared transformation pipeline (api/shared/**, copied from
-// backend/src/**) instead of returning the raw Open-Meteo response. See
+// shared transformation pipeline (lib/**, copied from backend/src/**)
+// instead of returning the raw Open-Meteo response. See
 // VERCEL_WEATHER_ISSUE.md for the history of why this previously fell
 // back to demo data.
+//
+// The shared modules live in lib/ at the project root, NOT under api/:
+// Vercel turns every file under api/ into its own Serverless Function, so
+// keeping them here made the deployment exceed the Hobby plan's 12-function
+// limit (and created entrypoints with no default export). Vercel still
+// bundles lib/** into this function by tracing these imports.
 import { z } from "zod"
-import { loadEnv } from "./shared/config/env.js"
-import { fetchOpenMeteoData } from "./shared/providers/openMeteoClient.js"
-import { toDashboardWeatherData } from "./shared/normalizers/toDashboardWeatherData.js"
-import { KeyedMemoryCache } from "./shared/cache/keyedMemoryCache.js"
-import { coordinateCacheKey } from "./shared/types/location.js"
+import { loadEnv } from "../lib/config/env.js"
+import { fetchOpenMeteoData } from "../lib/providers/openMeteoClient.js"
+import { toDashboardWeatherData } from "../lib/normalizers/toDashboardWeatherData.js"
+import { KeyedMemoryCache } from "../lib/cache/keyedMemoryCache.js"
+import { coordinateCacheKey } from "../lib/types/location.js"
 import {
   createAirQualityCaches,
   resolveAirQuality,
-} from "./shared/aqi/resolveAirQuality.js"
+} from "../lib/aqi/resolveAirQuality.js"
 
 // Module-level state survives across warm invocations of the same
 // serverless instance (not across cold starts or other instances) — the
