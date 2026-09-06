@@ -737,7 +737,12 @@ export async function fetchWeatherDashboard(
 ): Promise<DashboardWeatherData> {
   const endpoint = import.meta.env.VITE_WEATHER_API_URL?.trim()
   const forceDemo = import.meta.env.VITE_USE_DEMO_WEATHER === "true"
-  if (!endpoint || forceDemo || !location) return DEMO_WEATHER_DATA
+  
+  // On non-localhost, skip backend API entirely and show demo data
+  // (backend only runs on localhost, not accessible from Vercel deployments)
+  if (!endpoint || forceDemo || !location || window.location.hostname !== "localhost") {
+    return DEMO_WEATHER_DATA
+  }
 
   const url = new URL(endpoint)
   url.searchParams.set("latitude", String(location.latitude))
@@ -778,9 +783,7 @@ export async function fetchWeatherDashboard(
     }
     return rawPayload
   } catch (error) {
-    if (window.location.hostname !== "localhost") {
-      return DEMO_WEATHER_DATA
-    }
+    // On localhost, throw errors for debugging
     throw error
   }
 }
