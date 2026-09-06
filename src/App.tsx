@@ -10,6 +10,7 @@ import {
   DEMO_WEATHER_DATA,
   fetchWeatherDashboard,
   getWeatherHeroVariant,
+  isLiveWeatherEnabled,
   resolveWeatherIcon,
   type DashboardWeatherData,
 } from "./weatherData"
@@ -4758,9 +4759,7 @@ export default function App() {
   } | null>(null)
   const [weatherSource, setWeatherSource] =
     useState<"demo" | "loading" | "live" | "error">(() =>
-      import.meta.env.VITE_WEATHER_API_URL?.trim() && loadStoredLocation()
-        ? "loading"
-        : "demo",
+      isLiveWeatherEnabled() && loadStoredLocation() ? "loading" : "demo",
     )
   const [tab, setTab] = useState<Tab>("home")
   const [showPersonalized, setShowPersonalized] = useState(false)
@@ -4775,9 +4774,7 @@ export default function App() {
   ) => {
     if (prefetchedWeather) {
       setWeather(prefetchedWeather)
-      setWeatherSource(
-        import.meta.env.VITE_WEATHER_API_URL?.trim() ? "live" : "demo",
-      )
+      setWeatherSource(isLiveWeatherEnabled() ? "live" : "demo")
       prefetchedLocationKey.current = `${location.latitude},${location.longitude}`
     }
     saveLocation(location)
@@ -4814,9 +4811,7 @@ export default function App() {
     if (!userLocation) return
 
     const controller = new AbortController()
-    const endpointConfigured = Boolean(
-      import.meta.env.VITE_WEATHER_API_URL?.trim(),
-    )
+    const endpointConfigured = isLiveWeatherEnabled()
     const configuredRefresh = Number(import.meta.env.VITE_WEATHER_REFRESH_MS)
     const refreshMs =
       Number.isFinite(configuredRefresh) && configuredRefresh >= 10_000

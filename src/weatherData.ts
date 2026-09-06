@@ -725,6 +725,18 @@ export type WeatherLocationParam = {
 }
 
 /**
+ * True whenever a live weather request will actually be attempted — i.e.
+ * VITE_USE_DEMO_WEATHER has not been explicitly set. A backend URL is no
+ * longer required: fetchWeatherDashboard falls back to the relative
+ * `/api/weather` Vercel serverless function when VITE_WEATHER_API_URL is
+ * unset. Callers should use this instead of checking VITE_WEATHER_API_URL
+ * directly (which only matters for local dev against the Fastify server).
+ */
+export function isLiveWeatherEnabled(): boolean {
+  return import.meta.env.VITE_USE_DEMO_WEATHER !== "true"
+}
+
+/**
  * Fetches live weather for the given resolved location. Per the
  * location-first architecture (backend-v0.2 handoff), no location means
  * no live request is attempted — the caller is expected to have already
@@ -735,16 +747,19 @@ export async function fetchWeatherDashboard(
   location: WeatherLocationParam | undefined,
   signal?: AbortSignal,
 ): Promise<DashboardWeatherData> {
-  const endpoint = import.meta.env.VITE_WEATHER_API_URL?.trim()
+  // Falls back to the relative Vercel serverless function when no explicit
+  // backend URL is configured (production build) — VITE_WEATHER_API_URL is
+  // only needed locally to point at the Fastify dev server on a different
+  // port (see .env.example). Both endpoints serve the same transformed
+  // DashboardWeatherData contract (see api/weather.ts).
+  const endpoint = import.meta.env.VITE_WEATHER_API_URL?.trim() || "/api/weather"
   const forceDemo = import.meta.env.VITE_USE_DEMO_WEATHER === "true"
-  
-  // On non-localhost, skip backend API entirely and show demo data
-  // (backend only runs on localhost, not accessible from Vercel deployments)
-  if (!endpoint || forceDemo || !location || window.location.hostname !== "localhost") {
+
+  if (forceDemo || !location) {
     return DEMO_WEATHER_DATA
   }
 
-  const url = new URL(endpoint)
+  const url = new URL(endpoint, window.location.origin)
   url.searchParams.set("latitude", String(location.latitude))
   url.searchParams.set("longitude", String(location.longitude))
   if (location.locality) url.searchParams.set("locality", location.locality)
@@ -783,7 +798,8 @@ export async function fetchWeatherDashboard(
     }
     return rawPayload
   } catch (error) {
-    // On localhost, throw errors for debugging
+    // Never silently substitute demo data for a real request failure —
+    // let the caller surface/handle the error.
     throw error
   }
 }

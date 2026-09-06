@@ -1,71 +1,113 @@
-// Vercel serverless function for weather data
-// Fetches from Open-Meteo (free, no API key needed)
+// Vercel serverless function for weather data.
+//
+// This mirrors backend/src/routes/weather.ts exactly, reusing the same
+// shared transformation pipeline (api/shared/**, copied from
+// backend/src/**) instead of returning the raw Open-Meteo response. See
+// VERCEL_WEATHER_ISSUE.md for the history of why this previously fell
+// back to demo data.
+import { z } from "zod"
+import { loadEnv } from "./shared/config/env.js"
+import { fetchOpenMeteoData } from "./shared/providers/openMeteoClient.js"
+import { toDashboardWeatherData } from "./shared/normalizers/toDashboardWeatherData.js"
+import { KeyedMemoryCache } from "./shared/cache/keyedMemoryCache.js"
+import { coordinateCacheKey } from "./shared/types/location.js"
+import {
+  createAirQualityCaches,
+  resolveAirQuality,
+} from "./shared/aqi/resolveAirQuality.js"
+
+// Module-level state survives across warm invocations of the same
+// serverless instance (not across cold starts or other instances) — the
+// same best-effort caching behavior the Fastify backend gets from its own
+// long-lived process, just with a shorter effective lifetime.
+const env = loadEnv(process.env)
+const forecastCache = new KeyedMemoryCache<Awaited<ReturnType<typeof fetchOpenMeteoData>>>(
+  env.WEATHER_CACHE_TTL_MS,
+)
+const airQualityCaches = createAirQualityCaches(env)
+
+const weatherQuerySchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  locality: z.string().trim().max(120).optional(),
+  region: z.string().trim().max(120).optional(),
+  country: z.string().trim().max(120).optional(),
+  source: z.enum(["device", "manual"]).optional(),
+})
 
 export default async function handler(req: any, res: any) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end()
   }
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' })
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" })
   }
 
   try {
-    const { latitude, longitude, locality, region, country, source } = req.query
+    const parsedQuery = weatherQuerySchema.safeParse(req.query)
+    if (!parsedQuery.success) {
+      return res.status(400).json({ error: "Invalid latitude/longitude" })
+    }
+    const query = parsedQuery.data
 
-    const lat = latitude ? parseFloat(latitude as string) : undefined
-    const lon = longitude ? parseFloat(longitude as string) : undefined
-
-    if (lat === undefined || lon === undefined) {
-      return res.status(400).json({ error: 'latitude and longitude are required' })
+    const hasExplicitCoordinates =
+      query.latitude !== undefined && query.longitude !== undefined
+    if (!hasExplicitCoordinates && !env.ALLOW_DEFAULT_LOCATION) {
+      return res.status(400).json({ error: "latitude and longitude are required" })
     }
 
-    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-      return res.status(400).json({ error: 'Invalid latitude/longitude' })
+    const coordinates = hasExplicitCoordinates
+      ? { latitude: query.latitude!, longitude: query.longitude! }
+      : { latitude: env.DEFAULT_LATITUDE, longitude: env.DEFAULT_LONGITUDE }
+    const locationSource = hasExplicitCoordinates
+      ? (query.source ?? "manual")
+      : "default"
+    const cacheKey = coordinateCacheKey(coordinates.latitude, coordinates.longitude)
+
+    // Same rationale as the Fastify route: the forecast and CPCB station
+    // feed are independent providers, started together so AQI latency is
+    // never added on top of weather latency.
+    const forecastPromise = forecastCache.getOrFetch(cacheKey, () =>
+      fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates }),
+    )
+    const airQualityPromise = resolveAirQuality(
+      env,
+      airQualityCaches,
+      coordinates,
+      { warn: (obj: unknown, msg?: string) => console.warn(msg ?? "", obj) },
+    )
+
+    let forecast
+    try {
+      forecast = await forecastPromise
+    } catch (error) {
+      console.error("Failed to load core weather data:", error)
+      return res.status(502).json({ error: "Weather data is temporarily unavailable" })
     }
 
-    // Fetch from Open-Meteo (free weather API, no key needed)
-    const forecastUrl = new URL('https://api.open-meteo.com/v1/forecast')
-    forecastUrl.searchParams.set('latitude', lat.toString())
-    forecastUrl.searchParams.set('longitude', lon.toString())
-    forecastUrl.searchParams.set('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,dew_point_2m')
-    forecastUrl.searchParams.set('hourly', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,is_day,surface_pressure,dew_point_2m')
-    forecastUrl.searchParams.set('daily', 'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant')
-    forecastUrl.searchParams.set('timezone', 'auto')
-    forecastUrl.searchParams.set('current_weather', 'true')
-    forecastUrl.searchParams.set('forecast_days', '7')
+    // AQI is non-critical: any CPCB failure degrades gracefully by omitting
+    // the section — never by substituting a different country's standard.
+    const airQuality = await airQualityPromise
 
-    const response = await fetch(forecastUrl.toString(), {
-      headers: { 'Accept': 'application/json' }
+    const payload = toDashboardWeatherData(forecast, airQuality, {
+      city:
+        query.locality ??
+        (hasExplicitCoordinates ? "Selected location" : env.DEFAULT_CITY),
+      region: query.region ?? (hasExplicitCoordinates ? "" : env.DEFAULT_REGION),
+      country: query.country ?? "",
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      source: locationSource,
     })
-    
-    if (!response.ok) {
-      console.error('Open-Meteo API error:', response.status, response.statusText)
-      return res.status(502).json({ error: 'Weather data is temporarily unavailable' })
-    }
 
-    const data = await response.json()
-
-    // Return the raw Open-Meteo response
-    // The frontend already knows how to handle this format
-    return res.status(200).json({
-      data,
-      metadata: {
-        locality: locality || 'Selected location',
-        region: region || '',
-        country: country || '',
-        latitude: lat,
-        longitude: lon,
-        source: source || 'manual'
-      }
-    })
+    return res.status(200).json(payload)
   } catch (error) {
-    console.error('Weather API handler error:', error)
-    return res.status(500).json({ error: 'Internal server error' })
+    console.error("Weather API handler error:", error)
+    return res.status(500).json({ error: "Internal server error" })
   }
 }
