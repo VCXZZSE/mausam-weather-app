@@ -4748,6 +4748,11 @@ export default function App() {
   resetOnboardingPreviewIfRequested()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [profile, setProfile] = useState<Profile | null>(loadStoredProfile)
+  // A saved profile alone is only a draft. Location is persisted after
+  // the Ready slider, so only the pair permits skipping the intro on reload.
+  const [profileSetupComplete, setProfileSetupComplete] = useState(
+    () => Boolean(loadStoredProfile() && loadStoredLocation()),
+  )
   const [weather, setWeather] =
     useState<DashboardWeatherData>(DEMO_WEATHER_DATA)
   const [userLocation, setUserLocation] = useState<UserLocation | null>(
@@ -4852,7 +4857,11 @@ export default function App() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [tab, showPersonalized])
 
-  if (!profile) return <Setup weather={weather} onComplete={setProfile} />
+  if (!profile || !profileSetupComplete)
+    return <Setup weather={weather} onComplete={(nextProfile) => {
+      setProfile(nextProfile)
+      setProfileSetupComplete(true)
+    }} />
 
   if (!userLocation && !pendingLocation)
     return (

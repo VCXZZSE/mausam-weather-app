@@ -22,6 +22,23 @@ function seedProfile() {
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(VALID_PROFILE))
 }
 
+// Exercise the real onboarding flow before location-specific assertions.
+function renderAtLocationStep() {
+  const result = render(<App />)
+  const start = screen.queryByRole("button", { name: /start your profile/i })
+  if (start) {
+    fireEvent.click(start)
+    fireEvent.change(screen.getByLabelText(/your name required/i), {
+      target: { value: VALID_PROFILE.name },
+    })
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }))
+    fireEvent.click(screen.getByRole("button", { name: /save baseline/i }))
+    fireEvent.click(screen.getByRole("button", { name: /tune my alerts/i }))
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }))
+  }
+  return result
+}
+
 function weatherFixture(overrides: Record<string, unknown> = {}) {
   return {
     updatedAt: "Updated at 3:45 pm",
@@ -297,9 +314,45 @@ describe("App — location-first state machine", () => {
     })
   })
 
+  it.each([null, "invalid-json", JSON.stringify({ latitude: 999 })])(
+    "starts at the intro for a saved draft profile with unusable location %s",
+    (location) => {
+      seedProfile()
+      if (location) localStorage.setItem(LOCATION_STORAGE_KEY, location)
+      render(<App />)
+      expect(screen.getByRole("button", { name: /start your profile/i })).toBeInTheDocument()
+      expect(screen.queryByText(/where are/i)).not.toBeInTheDocument()
+      expect(fetchMock).not.toHaveBeenCalled()
+    },
+  )
+
+  it("keeps completed users on the dashboard when reopening the app", async () => {
+    seedProfile()
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({
+      latitude: 22.5726, longitude: 88.3639, locality: "Kolkata",
+      region: "West Bengal", country: "India", timezone: "Asia/Kolkata",
+      source: "manual",
+    }))
+    const { container } = render(<App />)
+    await waitFor(() => {
+      expect(container.querySelector('[data-weather-source="live"]')).not.toBeNull()
+    })
+    expect(screen.queryByRole("button", { name: /start your profile/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/where are/i)).not.toBeInTheDocument()
+  })
+
+  it("returns to the intro after reloading unfinished location setup", () => {
+    seedProfile()
+    const view = renderAtLocationStep()
+    expect(screen.getByText(/where are/i)).toBeInTheDocument()
+    view.unmount()
+    render(<App />)
+    expect(screen.getByRole("button", { name: /start your profile/i })).toBeInTheDocument()
+  })
+
   it("makes NO weather request before a location is resolved (initial load)", async () => {
     seedProfile()
-    render(<App />)
+    renderAtLocationStep()
 
     // The location screen must be showing, not the dashboard.
     expect(await screen.findByText(/where are/i)).toBeInTheDocument()
@@ -324,7 +377,7 @@ describe("App — location-first state machine", () => {
     )
 
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
 
     await user.click(
       await screen.findByRole("button", { name: /use my current area/i }),
@@ -357,7 +410,7 @@ describe("App — location-first state machine", () => {
         success({ coords: { latitude: 22.5726, longitude: 88.3639, accuracy: 20 } } as GeolocationPosition)
       })
       fetchMock.mockImplementation(() => new Promise(() => {}))
-      render(<App />)
+      renderAtLocationStep()
       fireEvent.click(screen.getByRole("button", { name: /use my current area/i }))
       await act(async () => { await vi.advanceTimersByTimeAsync(4000) })
       expect(screen.getByLabelText(/Slide to enter Mausam/i)).toBeInTheDocument()
@@ -404,7 +457,7 @@ describe("App — location-first state machine", () => {
       )
 
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
     await user.click(
       await screen.findByRole("button", { name: /use my current area/i }),
     )
@@ -444,7 +497,7 @@ describe("App — location-first state machine", () => {
     )
 
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
 
     await user.click(
       await screen.findByRole("button", { name: /use my current area/i }),
@@ -503,7 +556,7 @@ describe("App — location-first state machine", () => {
   it("demo location: only requests weather after the explicit demo button is pressed", async () => {
     seedProfile()
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
 
     expect(
       fetchMock.mock.calls.filter((c) =>
@@ -529,7 +582,7 @@ describe("App — location-first state machine", () => {
   it("manual location search waits for submit and accepts an Indian six-digit PIN", async () => {
     seedProfile()
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
 
     await user.click(
       await screen.findByRole("button", { name: /search manually instead/i }),
@@ -557,7 +610,7 @@ describe("App — location-first state machine", () => {
   it("manual location search rejects an incomplete numeric PIN locally", async () => {
     seedProfile()
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
 
     await user.click(
       await screen.findByRole("button", { name: /search manually instead/i }),
@@ -594,7 +647,7 @@ describe("App — location-first state machine", () => {
     )
 
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
 
     // Location A (Kolkata) is authoritative first.
     await waitFor(() => {
@@ -687,7 +740,7 @@ describe("App — location-first state machine", () => {
       return { ok: true, json: async () => ({}) }
     })
 
-    render(<App />)
+    renderAtLocationStep()
 
     await waitFor(() =>
       expect(
@@ -742,7 +795,7 @@ describe("App — location-first state machine", () => {
     })
 
     const user = userEvent.setup()
-    render(<App />)
+    renderAtLocationStep()
 
     await waitFor(() =>
       expect(
@@ -779,7 +832,7 @@ describe("App — location-first state machine", () => {
       }),
     )
 
-    render(<App />)
+    renderAtLocationStep()
 
     // The live fixture's distinctive city label should render; the demo
     // dataset's distinctive alert/commute text must NOT appear anywhere,
