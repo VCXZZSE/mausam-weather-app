@@ -100,6 +100,9 @@ export type DashboardWeatherData = {
     advice: string
   }
   running: {
+    dayLabel?: "Today" | "Tomorrow"
+    date?: string
+    sunrise?: string
     badge: string
     start: string
     end: string

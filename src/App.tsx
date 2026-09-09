@@ -1058,15 +1058,15 @@ function HomeTab({
             <Badge color="#34d399" bg="rgba(52,211,153,0.14)">
               {weather.running.badge}
             </Badge>
-            <CardLabel>Best Run Time</CardLabel>
+            <CardLabel>Best Run Time{weather.running.dayLabel ? ` · ${weather.running.dayLabel}` : ""}</CardLabel>
             <div className="metric-card-number metric-run-time">
-              {weather.running.start}–{weather.running.end}
+              {weather.running.start ? `${weather.running.start}–${weather.running.end}` : "Unavailable"}
             </div>
             <div className="metric-card-emphasis">
               {weather.running.summary}
             </div>
             <div className="metric-card-note metric-card-accent">
-              Sunrise · {weather.astronomy.sunrise}
+              Sunrise · {weather.running.sunrise ?? (weather.running.dayLabel === "Tomorrow" ? "Unavailable" : weather.astronomy.sunrise)}
             </div>
           </Card>
 
@@ -3081,7 +3081,9 @@ export function getPersonalizedWeather(
   const { current, airQuality, uv, rainfall, running, astronomy } = weather
   const primaryPollutant = airQuality?.pollutants[0]
   const temperatureRange = `${current.low}–${current.high}°C`
-  const outdoorWindow = `${running.start}–${running.end}`
+  const outdoorWindow = running.start
+    ? `${running.dayLabel ? `${running.dayLabel} · ` : ""}${running.start}–${running.end}`
+    : "No suitable morning window"
 
   if (variant === "skin-sun") {
     return {
@@ -4833,7 +4835,7 @@ export default function App() {
 
   return (
     <div
-      className={`mausam-app theme-${theme}`}
+      className={`mausam-app theme-${theme}${menuOpen ? " sidebar-open" : ""}`}
       data-theme={theme}
       data-weather-source={weatherSource}
       style={{

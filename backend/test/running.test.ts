@@ -91,11 +91,12 @@ describe("computeRunning", () => {
     expect(result.summary.length).toBeGreaterThan(0)
   })
 
-  it("reports today's morning as already passed when the forecast starts after 9am", () => {
+  it("reports missing tomorrow data after today's morning has passed", () => {
     const data = buildFixture({ startHour: 14 })
     const result = computeRunning(data)
     expect(result.start).toBe("")
-    expect(result.summary).toContain("already passed")
+    expect(result.dayLabel).toBe("Tomorrow")
+    expect(result.summary).toContain("incomplete")
   })
 
   it("never spans across a day boundary (no cross-midnight window)", () => {
@@ -110,5 +111,68 @@ describe("computeRunning", () => {
       )
       expect(Number.isFinite(startHour)).toBe(true)
     }
+  })
+})
+
+function twoDays(currentTime: string) {
+  const data = buildFixture()
+  for (const key of Object.keys(data.hourly) as (keyof typeof data.hourly)[]) {
+    if (key === "time") data.hourly.time.push(...data.hourly.time.map(time => time.replace("2026-09-05", "2026-09-06")))
+    else data.hourly[key].push(...data.hourly[key])
+  }
+  data.current_weather.time = currentTime
+  data.daily.time.push("2026-09-06")
+  data.daily.sunrise.push("2026-09-06T05:22")
+  return data
+}
+
+describe("upcoming running mornings", () => {
+  it("uses tomorrow after 9am even when today's past hours remain in the response", () => {
+    const data = twoDays("2026-09-05T21:00")
+    data.hourly.weathercode.fill(95, 0, 24)
+    const result = computeRunning(data)
+    expect(result).toMatchObject({ dayLabel: "Tomorrow", date: "2026-09-06" })
+    expect(result.start).toMatch(/5\s*am/i)
+    expect(result.end).toMatch(/9\s*am/i)
+    expect(result.sunrise).toMatch(/5:22\s*am/i)
+  })
+
+  it("excludes elapsed and partially elapsed slots from today's recommendation", () => {
+    const result = computeRunning(twoDays("2026-09-05T06:30"))
+    expect(result.dayLabel).toBe("Today")
+    expect(result.start).toMatch(/7\s*am/i)
+    expect(result.end).toMatch(/9\s*am/i)
+  })
+
+  it("does not recommend tomorrow's storms or silently select a different day", () => {
+    const data = twoDays("2026-09-05T09:00")
+    data.hourly.weathercode.fill(95, 24)
+    expect(computeRunning(data)).toMatchObject({ dayLabel: "Tomorrow", start: "", end: "", summary: "No suitable morning window tomorrow." })
+  })
+
+  it("returns a real one-hour interval for a single favourable hour", () => {
+    const data = twoDays("2026-09-05T21:00")
+    data.hourly.weathercode.fill(95, 30, 33)
+    const result = computeRunning(data)
+    expect(result.start).toMatch(/5\s*am/i)
+    expect(result.end).toMatch(/6\s*am/i)
+  })
+
+  it("does not bridge missing hourly data", () => {
+    const data = twoDays("2026-09-05T21:00")
+    data.hourly.precipitation_probability[30] = NaN
+    const result = computeRunning(data)
+    expect(result.start).toMatch(/7\s*am/i)
+    expect(result.end).toMatch(/9\s*am/i)
+    expect(result.summary).toContain("Limited coverage")
+  })
+
+  it("handles month and year rollover in the location's calendar", () => {
+    const data = twoDays("2026-12-31T23:30")
+    data.hourly.time = data.hourly.time.map(time => time.replace("2026-09-05", "2026-12-31").replace("2026-09-06", "2027-01-01"))
+    const result = computeRunning(data)
+    expect(result).toMatchObject({ dayLabel: "Tomorrow", date: "2027-01-01" })
+    expect(result.start).toMatch(/5\s*am/i)
+    expect(result.sunrise).toBeUndefined()
   })
 })

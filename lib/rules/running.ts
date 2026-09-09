@@ -1,85 +1,57 @@
 import type { OpenMeteoResponse } from "../providers/openMeteoClient.js"
-import type {
-  DashboardWeatherData,
-  HourlyForecast,
-} from "../types/dashboard.js"
+import type { DashboardWeatherData, HourlyForecast } from "../types/dashboard.js"
 import { resolveCondition } from "../normalizers/conditionCode.js"
 import { parseLocalCalendarDate } from "../utils/locationTime.js"
 import { computeBestWindow } from "../briefing/bestWindow.js"
 
-function formatHour(date: Date, timeZone: string): string {
-  return date.toLocaleTimeString("en-IN", {
-    hour: "numeric",
-    minute: undefined,
-    hour12: true,
-    timeZone,
-  })
-}
+const HOUR = 3_600_000
+const formatHour = (date: Date) => date.toLocaleTimeString("en-IN", {
+  hour: "numeric", hour12: true, timeZone: "UTC",
+})
 
-const MORNING_START_HOUR = 5
-const MORNING_END_HOUR = 9
-
-/**
- * Finds the best early-morning (5am-9am) running window from TODAY's real
- * hourly forecast only, reusing the same scoring/contiguous-run logic as
- * the personalized briefing's best-window calculation (see
- * briefing/bestWindow.ts). Deliberately does not look into tomorrow: that
- * would require a day-boundary marker so computeBestWindow's
- * contiguous-run assumption doesn't wrongly bridge across midnight (e.g.
- * treating today-9am and tomorrow-5am as one continuous "window"). If
- * today's morning has already passed, an honest fallback is returned
- * rather than reaching into tomorrow. Never fabricates a time not present
- * in the provider's hourly data.
+/** Evaluate full upcoming hours in one local morning, never across days.
+ * Calendar dates use UTC getters only, preserving the provider's local time.
  */
-export function computeRunning(
-  data: OpenMeteoResponse,
-): DashboardWeatherData["running"] {
+export function computeRunning(data: OpenMeteoResponse): DashboardWeatherData["running"] {
+  const current = parseLocalCalendarDate(data.current_weather.time)
+  const nextHour = Math.ceil(current.getTime() / HOUR) * HOUR
+  const target = new Date(current)
+  target.setUTCHours(0, 0, 0, 0)
+  const tomorrow = nextHour >= target.getTime() + 9 * HOUR
+  if (tomorrow) target.setUTCDate(target.getUTCDate() + 1)
+  const date = target.toISOString().slice(0, 10)
+  const dayLabel = tomorrow ? "Tomorrow" : "Today"
+  const dayIndex = data.daily.time.indexOf(date)
+  const sunriseValue = data.daily.sunrise[dayIndex]
+  const sunrise = sunriseValue ? parseLocalCalendarDate(sunriseValue).toLocaleTimeString("en-IN", {
+    hour: "numeric", minute: "2-digit", hour12: true, timeZone: "UTC",
+  }) : undefined
+  const base = { badge: "FITNESS", dayLabel, date, sunrise } as const
   const candidates: HourlyForecast[] = []
-  const today = parseLocalCalendarDate(data.hourly.time[0])
-  const todayDateNumber =
-    today.getUTCFullYear() * 10000 +
-    (today.getUTCMonth() + 1) * 100 +
-    today.getUTCDate()
-
-  for (let i = 0; i < data.hourly.time.length; i++) {
-    const calendarDate = parseLocalCalendarDate(data.hourly.time[i])
-    const dateNumber =
-      calendarDate.getUTCFullYear() * 10000 +
-      (calendarDate.getUTCMonth() + 1) * 100 +
-      calendarDate.getUTCDate()
-    if (dateNumber !== todayDateNumber) break // stop at the first hour that belongs to a later day
-
-    const hour = calendarDate.getUTCHours()
-    if (hour < MORNING_START_HOUR || hour > MORNING_END_HOUR) continue
-
-    const info = resolveCondition(data.hourly.weathercode[i])
-    candidates.push({
-      time: formatHour(calendarDate, "UTC"),
-      temperature: Math.round(data.hourly.temperature_2m[i]),
-      condition: info.condition,
-      conditionCode: info.conditionCode,
-      rainChance: Math.round(data.hourly.precipitation_probability[i] ?? 0),
-    })
+  const starts: Date[] = []
+  let missing = false
+  for (let hour = 5; hour < 9; hour++) {
+    const start = new Date(target.getTime() + hour * HOUR)
+    if (start.getTime() < nextHour) continue
+    const timestamp = `${date}T${String(hour).padStart(2, "0")}:00`
+    const index = data.hourly.time.indexOf(timestamp)
+    const temperature = data.hourly.temperature_2m[index]
+    const rainChance = data.hourly.precipitation_probability[index]
+    const code = data.hourly.weathercode[index]
+    const valid = index >= 0 && [temperature, rainChance, code].every(Number.isFinite)
+    missing ||= !valid
+    // Missing hours must break a continuous window.
+    const info = valid ? resolveCondition(code) : { condition: "Unavailable", conditionCode: "storm" }
+    starts.push(start)
+    candidates.push({ time: formatHour(start), temperature: valid ? temperature : 0,
+      rainChance: valid ? rainChance : 100, ...info })
   }
-
-  if (candidates.length === 0) {
-    return {
-      badge: "FITNESS",
-      start: "",
-      end: "",
-      summary: "Today's early-morning window has already passed.",
-    }
-  }
-
   const window = computeBestWindow(candidates)
-  if (!window.start) {
-    return { badge: "FITNESS", start: "", end: "", summary: window.reason }
-  }
-
-  return {
-    badge: "FITNESS",
-    start: window.start,
-    end: window.end,
-    summary: `Good conditions ${window.start}–${window.end}`,
-  }
+  if (!window.start) return { ...base, start: "", end: "",
+    summary: missing ? `${dayLabel}'s morning forecast is incomplete.` : `No suitable morning window ${dayLabel.toLowerCase()}.` }
+  const last = candidates.findIndex(hour => hour.time === window.end)
+  // Each forecast hour is a one-hour slot: a lone 5am slot ends at 6am.
+  const end = formatHour(new Date(starts[last].getTime() + HOUR))
+  return { ...base, start: window.start, end,
+    summary: `Favourable forecast ${dayLabel.toLowerCase()}${missing ? " · Limited coverage" : ""}` }
 }

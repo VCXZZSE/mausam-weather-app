@@ -8,7 +8,12 @@
 .secondary-menu-header .app-weather-mark { margin: 0; }
 
 .profile-sidebar { --side-ink: #17344e; --side-muted: #5c768c; --side-line: rgba(67,116,151,.15); --side-card: rgba(255,255,255,.38); color: var(--side-ink); position: fixed; inset: 12px auto 12px max(12px, calc((100vw - 630px) / 2 + 12px)); margin: 0; padding: 0; width: min(368px, calc(100vw - 40px)); max-width: none; height: calc(100dvh - 24px); max-height: none; border: 1px solid rgba(255,255,255,.78); border-radius: 28px; overflow: hidden; background: linear-gradient(155deg, rgba(240,250,255,.91), rgba(223,239,251,.81) 55%, rgba(227,226,251,.86)); box-shadow: 16px 0 70px rgba(12,32,66,.2), inset 0 1px 0 white, inset -1px 0 0 rgba(255,255,255,.5); backdrop-filter: blur(32px) saturate(145%); -webkit-backdrop-filter: blur(32px) saturate(145%); font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; }
-.profile-sidebar::backdrop { background: rgba(15,34,58,.32); backdrop-filter: blur(9px) saturate(.75); -webkit-backdrop-filter: blur(9px) saturate(.75); animation: sidebar-backdrop-in .35s ease both; }
+.profile-sidebar::backdrop { background: rgba(15,34,58,.36); backdrop-filter: blur(16px) saturate(.75); -webkit-backdrop-filter: blur(16px) saturate(.75); animation: sidebar-backdrop-in .35s ease both; }
+/* Blur the page itself on phones, including browsers that don't reliably
+   composite dialog backdrop filters. The sidebar is portalled outside it. */
+@media (max-width: 700px) {
+  #root .mausam-app.sidebar-open { filter: blur(12px); }
+}
 .profile-sidebar[open] { animation: sidebar-slide-in .42s cubic-bezier(.2,.8,.2,1) both; }
 .profile-sidebar *, .profile-sidebar *::before, .profile-sidebar *::after { box-sizing: border-box; }
 .profile-sidebar button { font: inherit; cursor: pointer; }
