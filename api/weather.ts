@@ -12,7 +12,7 @@
 // bundles lib/** into this function by tracing these imports.
 import { z } from "zod"
 import { loadEnv } from "../lib/config/env.js"
-import { fetchOpenMeteoData } from "../lib/providers/openMeteoClient.js"
+import { fetchOpenMeteoData, assertCurrentForecastFresh } from "../lib/providers/openMeteoClient.js"
 import { toDashboardWeatherData } from "../lib/normalizers/toDashboardWeatherData.js"
 import { KeyedMemoryCache } from "../lib/cache/keyedMemoryCache.js"
 import { coordinateCacheKey } from "../lib/types/location.js"
@@ -41,6 +41,7 @@ const weatherQuerySchema = z.object({
 })
 
 export default async function handler(req: any, res: any) {
+  res.setHeader("Cache-Control", "no-store")
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
   res.setHeader("Access-Control-Allow-Headers", "Content-Type")
@@ -77,9 +78,11 @@ export default async function handler(req: any, res: any) {
     // Same rationale as the Fastify route: the forecast and CPCB station
     // feed are independent providers, started together so AQI latency is
     // never added on top of weather latency.
-    const forecastPromise = forecastCache.getOrFetch(cacheKey, () =>
-      fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates }),
-    )
+    const forecastPromise = forecastCache.getOrFetch(cacheKey, async () => {
+      const data = await fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates })
+      assertCurrentForecastFresh(data)
+      return data
+    }, { allowStale: false })
     const airQualityPromise = resolveAirQuality(
       env,
       airQualityCaches,
@@ -90,6 +93,7 @@ export default async function handler(req: any, res: any) {
     let forecast
     try {
       forecast = await forecastPromise
+      assertCurrentForecastFresh(forecast)
     } catch (error) {
       console.error("Failed to load core weather data:", error)
       return res.status(502).json({ error: "Weather data is temporarily unavailable" })

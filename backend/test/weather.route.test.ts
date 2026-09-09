@@ -12,7 +12,7 @@ function openMeteoForecastFixture() {
     timezone: "Asia/Kolkata",
     utc_offset_seconds: 19800,
     current_weather: {
-      time: times[0],
+      time: new Date(Date.now() + 19800_000).toISOString().slice(0, 16),
       temperature: 31,
       windspeed: 22,
       winddirection: 225,
@@ -86,6 +86,7 @@ function stubFetchByUrl(handlers: {
 describe("GET /api/health", () => {
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   it("returns ok status", async () => {
@@ -98,8 +99,47 @@ describe("GET /api/health", () => {
 })
 
 describe("GET /api/weather", () => {
+  it("does not reuse expired sunny weather when the refresh fails, and recovers with rain", async () => {
+    let now = Date.now()
+    vi.spyOn(Date, "now").mockImplementation(() => now)
+    stubFetchByUrl({ forecast: () => {
+      const fixture = openMeteoForecastFixture()
+      fixture.current_weather.weathercode = 0
+      return fixture
+    } })
+    const app = await buildApp(loadEnv({ WEATHER_CACHE_TTL_MS: "10000" }))
+    try {
+      const first = await app.inject({ method: "GET", url: "/api/weather" })
+      expect(first.json().current.conditionCode).toBe("clear")
+      expect(first.headers["cache-control"]).toBe("no-store")
+      now += 10001
+      stubFetchByUrl({ forecastFails: true })
+      expect((await app.inject({ method: "GET", url: "/api/weather" })).statusCode).toBe(502)
+      stubFetchByUrl({ forecast: () => {
+        const fixture = openMeteoForecastFixture()
+        fixture.current_weather.weathercode = 61
+        return fixture
+      } })
+      const recovered = await app.inject({ method: "GET", url: "/api/weather" })
+      expect(recovered.json().current.conditionCode).toBe("rain")
+    } finally { await app.close() }
+  })
+
+  it.each([-24 * 60, 10])("rejects a successful upstream response with a timestamp offset of %s minutes", async minutes => {
+    stubFetchByUrl({ forecast: () => {
+      const fixture = openMeteoForecastFixture()
+      fixture.current_weather.time = new Date(Date.now() + 19800_000 + minutes * 60_000).toISOString().slice(0, 16)
+      return fixture
+    } })
+    const app = await buildApp(loadEnv({}))
+    try {
+      expect((await app.inject({ method: "GET", url: "/api/weather" })).statusCode).toBe(502)
+    } finally { await app.close() }
+  })
+
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   it("returns a normalized payload including Phase 2 sections when both providers succeed", async () => {

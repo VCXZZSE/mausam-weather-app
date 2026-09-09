@@ -68,6 +68,26 @@ function buildAirQualityFixture(): DashboardWeatherData["airQuality"] {
 }
 
 describe("toDashboardWeatherData", () => {
+  it.each([
+    [0, 95, "clear"],
+    [61, 0, "rain"],
+    [95, 0, "thunderstorm"],
+  ])("keeps current code %s authoritative when hourly/daily code is %s", (currentCode, forecastCode, expected) => {
+    const fixture = buildFixture()
+    fixture.current_weather.time = "2026-08-28T12:45"
+    fixture.current_weather.weathercode = currentCode
+    fixture.hourly.weathercode.fill(forecastCode)
+    fixture.daily.weathercode.fill(forecastCode)
+    const result = toDashboardWeatherData(fixture, undefined, CONTEXT)
+    expect(result.current.conditionCode).toBe(expected)
+    expect(result.hourly[0]).toMatchObject({
+      time: "Now", conditionCode: expected, temperature: result.current.temperature,
+      isDay: result.current.isDay,
+    })
+    expect(result.hourly[1].time).toMatch(/1\s*pm/i)
+    expect(result.hourly[1].conditionCode).not.toBe(expected)
+  })
+
   it("maps current weather fields including derived hero variant", () => {
     const result = toDashboardWeatherData(buildFixture(), undefined, CONTEXT)
 
@@ -124,7 +144,7 @@ describe("toDashboardWeatherData", () => {
     expect(result.hourly.length).toBeLessThanOrEqual(10)
     expect(result.hourly[0].time).toBe("Now")
     expect(result.hourly[0].rainChance).toBe(92)
-    expect(result.hourly[0].isDay).toBe(false)
+    expect(result.hourly[0].isDay).toBe(true)
     expect(result.hourly[1].isDay).toBe(true)
   })
 

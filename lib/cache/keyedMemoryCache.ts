@@ -29,7 +29,11 @@ export class KeyedMemoryCache<T> {
     return this.entries.get(key)?.value
   }
 
-  async getOrFetch(key: string, fetcher: () => Promise<T>): Promise<T> {
+  async getOrFetch(
+    key: string,
+    fetcher: () => Promise<T>,
+    options: { allowStale?: boolean } = {},
+  ): Promise<T> {
     if (this.isFresh(key)) {
       return this.entries.get(key)!.value
     }
@@ -40,7 +44,7 @@ export class KeyedMemoryCache<T> {
       return value
     } catch (error) {
       const stale = this.entries.get(key)
-      if (stale !== undefined) {
+      if (stale !== undefined && options.allowStale !== false) {
         return stale.value
       }
       throw error

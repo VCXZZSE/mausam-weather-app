@@ -42,7 +42,7 @@ function renderAtLocationStep() {
 function weatherFixture(overrides: Record<string, unknown> = {}) {
   return {
     updatedAt: "Updated at 3:45 pm",
-    observedAt: "2026-09-05T10:15:00.000Z",
+    observedAt: new Date().toISOString(),
     location: {
       latitude: 22.5726,
       longitude: 88.3639,
@@ -325,6 +325,23 @@ describe("App — location-first state machine", () => {
       expect(fetchMock).not.toHaveBeenCalled()
     },
   )
+
+  it.each(["focus", "online", "visibilitychange"])("refreshes sunny weather to rain on %s without calling advisory feeds", async event => {
+    seedProfile()
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({
+      latitude: 22.5726, longitude: 88.3639, locality: "Kolkata",
+      region: "West Bengal", country: "India", timezone: "Asia/Kolkata", source: "manual",
+    }))
+    render(<App />)
+    await screen.findByText("29")
+    const fixture = weatherFixture()
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({
+      ...fixture, current: { ...fixture.current, condition: "Moderate rain", conditionCode: "rain", heroVariant: "rainy" },
+    }) })
+    fireEvent(event === "visibilitychange" ? document : window, new Event(event))
+    await screen.findByText("Moderate rain")
+    expect(fetchMock.mock.calls.some(call => call[0].toString().includes("/api/advisories"))).toBe(false)
+  })
 
   it("does not present the sunny demo as a first reading before location selection", () => {
     render(<App />)
@@ -705,7 +722,8 @@ describe("App — location-first state machine", () => {
       new URL(callsForA[0][0].toString()).searchParams.get("latitude"),
     ).toBe("22.5726")
 
-    // Switch to Location B (Mumbai, via manual search).
+    // Switch to Location B through the new sidebar.
+    await user.click(screen.getByRole("button", { name: "Open Mausam menu" }))
     await user.click(
       await screen.findByRole("button", { name: /change location/i }),
     )

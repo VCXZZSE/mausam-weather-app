@@ -775,6 +775,7 @@ export async function fetchWeatherDashboard(
   try {
     const response = await fetch(url.toString(), {
       signal,
+      cache: "no-store",
       headers: { Accept: "application/json" },
     })
     if (!response.ok)
@@ -795,10 +796,19 @@ export async function fetchWeatherDashboard(
     if (!isDashboardWeatherData(rawPayload)) {
       throw new Error("Weather response contains invalid dashboard values")
     }
+    if (!isCurrentWeatherFresh(rawPayload)) {
+      throw new Error("Current weather estimate is out of date")
+    }
     return rawPayload
   } catch (error) {
     // Never silently substitute demo data for a real request failure —
     // let the caller surface/handle the error.
     throw error
   }
+}
+
+/** Live payloads must include a recent provider timestamp, not the fetch time. */
+export function isCurrentWeatherFresh(weather: Pick<DashboardWeatherData, "observedAt">): boolean {
+  const age = Date.now() - Date.parse(weather.observedAt ?? "")
+  return Number.isFinite(age) && age <= 30 * 60_000 && age >= -5 * 60_000
 }

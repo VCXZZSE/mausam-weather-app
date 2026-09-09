@@ -25,6 +25,7 @@ Choose a location using device coordinates or place/PIN search, complete onboard
 | Astronomy and comfort | Sun/moon information, UV, and derived comfort and rainfall metrics |
 | Daily planning | Weather-based running, commute, packing, swimming, and garden guidance |
 | Your Mausam | Profile-aware briefing with important metrics and suggested activity windows |
+| Profile sidebar | Frosted-glass menu with onboarding details, a gender-aware avatar, location controls, briefing access, and local logout |
 | Interface | Light/dark themes, animated weather companions, responsive layouts, and reduced-motion support |
 | Android | Capacitor wrapper around the web application |
 
@@ -64,6 +65,16 @@ CPCB coverage is for India. Weather can work elsewhere without a corresponding I
 Forecast weather and CPCB AQI come from providers. Astronomy and comfort metrics are calculated. Activity suggestions are rule-based; pollen and some seasonal/local planning content use curated approximations. Curated advisories are not official IMD alerts, and seasonal estimates are not live measurements.
 
 Demo weather is explicitly enabled with `VITE_USE_DEMO_WEATHER=true`, or used before a location is available. A failed live weather request surfaces an error instead of silently replacing the response with demo weather.
+
+Current weather is treated as time-sensitive. The app bypasses browser caches, rejects provider observations older than 30 minutes, refreshes at least every five minutes, and refreshes again when the tab regains focus or connectivity. The hero card and the first hourly “Now” item use the same current condition so they cannot contradict one another. The provider update time is shown on the weather card.
+
+### Profile sidebar
+
+Press the Mausam logo from any dashboard page to open the frosted-glass profile sidebar. Its modal backdrop blurs the page underneath, and Escape or tapping the backdrop closes it. The sidebar displays the profile captured during onboarding, including age, gender, height, weight, activity level, goals, weather sensitivities, and health considerations. Female and male profiles receive matching illustrated avatars; older profiles and users who do not specify either receive a neutral initials avatar.
+
+Location changes now start from the sidebar rather than the main weather tile. The sidebar also opens the personalised daily briefing. Logging out clears the saved profile and confirmed location from the current device, then returns the user to onboarding. Theme switching remains in the homepage header and is intentionally absent from the sidebar.
+
+The official advisory card remains in its safe unavailable state. Farming and fishing feeds are not connected until verified IMD agrometeorological and fisheries sources are available, so the UI does not claim an all-clear.
 
 ## Run locally
 

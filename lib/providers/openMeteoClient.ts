@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { toLocationInstant } from "../utils/locationTime.js"
 
 export type OpenMeteoCoordinates = {
   latitude: number
@@ -58,6 +59,16 @@ const openMeteoResponseSchema = z.object({
 
 export type OpenMeteoResponse = z.infer<typeof openMeteoResponseSchema>
 
+// Current conditions are a 15-minute model estimate. Allow delivery lag,
+// but never display an old forecast (or a future timestamp) as current.
+export function assertCurrentForecastFresh(data: OpenMeteoResponse, now = Date.now()): void {
+  const instant = toLocationInstant(data.current_weather.time, data.utc_offset_seconds).getTime()
+  const age = now - instant
+  if (!Number.isFinite(age) || age > 30 * 60_000 || age < -5 * 60_000) {
+    throw new Error("Current weather estimate is out of date")
+  }
+}
+
 const HOURLY_VARS = [
   "temperature_2m",
   "apparent_temperature",
@@ -109,6 +120,7 @@ export async function fetchOpenMeteoData(
   try {
     const response = await fetchImpl(url.toString(), {
       signal: controller.signal,
+      headers: { "Cache-Control": "no-cache" },
     })
     if (!response.ok) {
       throw new Error(

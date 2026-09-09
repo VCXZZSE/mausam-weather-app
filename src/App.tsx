@@ -1,3 +1,4 @@
+import { MausamMenuButton, ProfileSidebar } from "./ProfileSidebar"
 import { OfficialAdvisories } from "./OfficialAdvisories"
 import {
   useState,
@@ -12,6 +13,7 @@ import {
   fetchWeatherDashboard,
   getWeatherHeroVariant,
   isLiveWeatherEnabled,
+  isCurrentWeatherFresh,
   resolveWeatherIcon,
   type DashboardWeatherData,
 } from "./weatherData"
@@ -365,7 +367,8 @@ function HomeTab({
   theme,
   setTheme,
   onOpenPersonalized,
-  onChangeLocation,
+  onOpenMenu,
+  menuOpen,
   weather,
 }: {
   profile: Profile
@@ -373,7 +376,8 @@ function HomeTab({
   theme: "dark" | "light"
   setTheme: (theme: "dark" | "light") => void
   onOpenPersonalized: () => void
-  onChangeLocation: () => void
+  onOpenMenu: () => void
+  menuOpen: boolean
   weather: DashboardWeatherData
 }) {
   const { current } = weather
@@ -408,38 +412,7 @@ function HomeTab({
     <div className="home-screen app-page" style={{ padding: "52px 16px 24px" }}>
       <header className="app-top-header" aria-label="Mausam header">
         <div className="app-header-group">
-          <span className="app-weather-mark" aria-hidden="true">
-            <svg
-              viewBox="0 0 48 48"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle
-                className="app-weather-sun"
-                cx="29"
-                cy="19"
-                r="10"
-                fill="currentColor"
-                stroke="none"
-                opacity=".95"
-              />
-              <path d="M29 5v4M29 29v4M15 19h4M39 19h4M19 9l3 3M36 26l3 3M19 29l3-3M36 12l3-3" />
-              <path
-                d="M10 35h22c5 0 7-3 7-7s-3-7-7-7c-1-6-10-8-14-2-5-1-9 2-9 7-4 0-6 2-6 5s3 4 7 4Z"
-                fill="currentColor"
-                stroke="none"
-              />
-              <path
-                d="M10 35h22c5 0 7-3 7-7s-3-7-7-7c-1-6-10-8-14-2-5-1-9 2-9 7-4 0-6 2-6 5s3 4 7 4Z"
-                stroke="rgba(255,255,255,.55)"
-                strokeWidth="1.4"
-              />
-            </svg>
-          </span>
-          <span className="app-header-title">Mausam</span>
+          <MausamMenuButton onClick={onOpenMenu} expanded={menuOpen} />
           <button
             className={`theme-toggle theme-toggle-${theme}`}
             type="button"
@@ -558,25 +531,7 @@ function HomeTab({
               </svg>
             </span>
             <span className="hero-location-name">{locationLabel}</span>
-            <button
-              type="button"
-              onClick={onChangeLocation}
-              aria-label="Change location"
-              style={{
-                background: "none",
-                border: 0,
-                padding: 0,
-                marginLeft: 8,
-                color: "inherit",
-                opacity: 0.65,
-                fontSize: 11,
-                fontWeight: 700,
-                cursor: "pointer",
-                textDecoration: "underline",
-              }}
-            >
-              Change
-            </button>
+
           </div>
 
           <div
@@ -634,6 +589,9 @@ function HomeTab({
               >
                 Feels {current.feelsLike}° &nbsp;·&nbsp; H:{current.high}° L:
                 {current.low}°
+              </div>
+              <div className="weather-estimate-note" style={{ fontSize: 11, marginTop: 8, opacity: 0.7 }}>
+                {isLiveWeatherEnabled() ? `Area weather estimate · ${weather.updatedAt}` : "Demo preview"}
               </div>
             </div>
             <div
@@ -2615,7 +2573,9 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
 // ── Personal setup ─────────────────────────────────────────────────────────────
 
 type SetupStep = "welcome" | "name" | "body" | "sensitivities" | "routine"
+export type ProfileGender = "Female" | "Male" | "Non-binary" | "Prefer not to say"
 export type Profile = {
+  gender?: ProfileGender
   name: string
   sensitivities: string[]
   concerns: string[]
@@ -3529,6 +3489,7 @@ function loadStoredProfile(): Profile | null {
     // hardcoded `location: "Kolkata"` field when they are next saved.
     return {
       name: profile.name,
+      gender: ["Female", "Male", "Non-binary", "Prefer not to say"].includes(profile.gender ?? "") ? profile.gender : undefined,
       sensitivities: profile.sensitivities,
       concerns: profile.concerns,
       goals: profile.goals,
@@ -3580,7 +3541,7 @@ function Setup({
   const [age, setAge] = useState(29)
   const [height, setHeight] = useState(168)
   const [weight, setWeight] = useState(64)
-  const [sex, setSex] = useState("Prefer not to say")
+  const [sex, setSex] = useState<ProfileGender>("Prefer not to say")
   const [sensitivities, setSensitivities] = useState<string[]>([])
   const [concerns, setConcerns] = useState<string[]>([])
   const [goals, setGoals] = useState<string[]>(["Daily energy"])
@@ -3797,7 +3758,7 @@ function Setup({
               <div>
                 <label className="setup-label">GENDER</label>
                 <div className="gender-options">
-                  {["Female", "Male", "Non-binary", "Prefer not to say"].map(
+                  {(["Female", "Male", "Non-binary", "Prefer not to say"] as const).map(
                     (item) => (
                       <button
                         key={item}
@@ -3918,6 +3879,7 @@ function Setup({
               className="setup-primary"
               onClick={() =>
                 onComplete({
+                  gender: sex,
                   name,
                   sensitivities,
                   concerns,
@@ -4682,12 +4644,31 @@ export default function App() {
     )
   const [tab, setTab] = useState<Tab>("home")
   const [showPersonalized, setShowPersonalized] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useState<"dark" | "light">(() =>
     localStorage.getItem("mausam-theme") === "dark" ? "dark" : "light",
   )
   const prefetchedLocationKey = useRef<string | null>(null)
   const [weatherLocationKey, setWeatherLocationKey] = useState<string | null>(null)
   const [weatherRetry, setWeatherRetry] = useState(0)
+
+  const changeLocation = () => {
+    setMenuOpen(false)
+    clearStoredLocation()
+    setUserLocation(null)
+    setPendingLocation(null)
+    setWeather(null)
+    setWeatherLocationKey(null)
+    prefetchedLocationKey.current = null
+    setTab("home")
+    setShowPersonalized(false)
+  }
+  const logout = () => {
+    changeLocation()
+    localStorage.removeItem(PROFILE_STORAGE_KEY)
+    setProfile(null)
+    setProfileSetupComplete(false)
+  }
 
   const resolveLocation = (
     location: UserLocation,
@@ -4739,11 +4720,14 @@ export default function App() {
     const endpointConfigured = isLiveWeatherEnabled()
     const configuredRefresh = Number(import.meta.env.VITE_WEATHER_REFRESH_MS)
     const refreshMs = Number.isFinite(configuredRefresh) && configuredRefresh >= 10_000
-      ? configuredRefresh : 300_000
+      ? Math.min(configuredRefresh, 300_000) : 300_000
     let disposed = false
     let activeRequest: AbortController | undefined
+    let inFlight = false
     const locationKey = `${userLocation.latitude},${userLocation.longitude}`
     const refreshWeather = async () => {
+      if (inFlight || disposed) return
+      inFlight = true
       activeRequest?.abort()
       const request = new AbortController()
       activeRequest = request
@@ -4764,7 +4748,10 @@ export default function App() {
         if (disposed || activeRequest !== request) return
         setWeather(null)
         setWeatherSource("error")
-      } finally { window.clearTimeout(timeout) }
+      } finally {
+        window.clearTimeout(timeout)
+        if (activeRequest === request) inFlight = false
+      }
     }
     if (prefetchedLocationKey.current === locationKey) {
       prefetchedLocationKey.current = null
@@ -4773,8 +4760,27 @@ export default function App() {
       setWeatherSource("loading")
       void refreshWeather()
     }
+    const refreshOnReturn = () => {
+      if (document.visibilityState !== "visible") return
+      // A sleeping tab can retain yesterday's reading. Clear it before
+      // fetching, even if the browser paused the normal refresh interval.
+      setWeather(value => {
+        if (value && !isCurrentWeatherFresh(value)) return null
+        return value
+      })
+      setWeatherSource("loading")
+      void refreshWeather()
+    }
     const refreshTimer = endpointConfigured ? window.setInterval(refreshWeather, refreshMs) : undefined
+    if (endpointConfigured) {
+      document.addEventListener("visibilitychange", refreshOnReturn)
+      window.addEventListener("focus", refreshOnReturn)
+      window.addEventListener("online", refreshOnReturn)
+    }
     return () => {
+      document.removeEventListener("visibilitychange", refreshOnReturn)
+      window.removeEventListener("focus", refreshOnReturn)
+      window.removeEventListener("online", refreshOnReturn)
       disposed = true
       activeRequest?.abort()
       if (refreshTimer !== undefined) window.clearInterval(refreshTimer)
@@ -4857,6 +4863,7 @@ export default function App() {
           className="no-scrollbar app-scroll"
           style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
         >
+          {(tab !== "home" || showPersonalized) && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
           {showPersonalized ? (
             <PersonalizedWeatherPage
               profile={profile}
@@ -4873,12 +4880,8 @@ export default function App() {
                   theme={theme}
                   setTheme={setTheme}
                   onOpenPersonalized={() => setShowPersonalized(true)}
-                  onChangeLocation={() => {
-                    clearStoredLocation()
-                    setUserLocation(null)
-                    setWeather(null)
-                    setWeatherLocationKey(null)
-                  }}
+                  onOpenMenu={() => setMenuOpen(true)}
+                  menuOpen={menuOpen}
                   weather={weather}
                 />
               )}
@@ -4889,6 +4892,9 @@ export default function App() {
           )}
         </div>
         {!showPersonalized && <BottomNav tab={tab} setTab={setTab} />}
+        <ProfileSidebar open={menuOpen} profile={profile} location={userLocation} theme={theme}
+          onClose={() => setMenuOpen(false)} onChangeLocation={changeLocation} onLogout={logout}
+          onBriefing={() => { setMenuOpen(false); setShowPersonalized(true) }} />
       </div>
     </div>
   )

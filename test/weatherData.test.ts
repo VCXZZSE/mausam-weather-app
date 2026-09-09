@@ -18,6 +18,7 @@ const LOCATION = {
 function minimalLivePayload(overrides: Record<string, unknown> = {}) {
   return {
     updatedAt: "Updated at 3:45 pm",
+    observedAt: new Date().toISOString(),
     current: {
       city: "Kolkata",
       region: "West Bengal",
@@ -256,5 +257,28 @@ describe("getWeatherHeroVariant — day/night presets", () => {
 
   it("uses the sunny preset for a dry daytime condition", () => {
     expect(getWeatherHeroVariant("clear", "Clear sky", true)).toBe("sunny")
+  })
+})
+
+
+describe("live weather freshness", () => {
+  afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
+
+  it.each([undefined, "invalid", new Date(Date.now() - 86400_000).toISOString(), new Date(Date.now() + 3600_000).toISOString()])(
+    "rejects missing, invalid, expired or future timestamps: %s", async observedAt => {
+      vi.stubEnv("VITE_USE_DEMO_WEATHER", "false")
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+        ok: true, json: async () => minimalLivePayload({ observedAt }),
+      }))
+      await expect(fetchWeatherDashboard(LOCATION)).rejects.toThrow("out of date")
+    },
+  )
+
+  it("bypasses HTTP caches for current conditions", async () => {
+    vi.stubEnv("VITE_USE_DEMO_WEATHER", "false")
+    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => minimalLivePayload() })
+    vi.stubGlobal("fetch", fetcher)
+    await fetchWeatherDashboard(LOCATION)
+    expect(fetcher.mock.calls[0][1].cache).toBe("no-store")
   })
 })

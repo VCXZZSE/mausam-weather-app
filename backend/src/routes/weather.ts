@@ -3,6 +3,7 @@ import { z } from "zod"
 import type { Env } from "../config/env.js"
 import {
   fetchOpenMeteoData,
+  assertCurrentForecastFresh,
   type OpenMeteoResponse,
 } from "../providers/openMeteoClient.js"
 import { toDashboardWeatherData } from "../normalizers/toDashboardWeatherData.js"
@@ -48,6 +49,7 @@ export async function weatherRoute(
   const { env, caches } = options
 
   app.get("/api/weather", async (request, reply) => {
+    reply.header("Cache-Control", "no-store")
     const parsedQuery = weatherQuerySchema.safeParse(request.query)
     if (!parsedQuery.success) {
       return reply.status(400).send({ error: "Invalid latitude/longitude" })
@@ -75,9 +77,11 @@ export async function weatherRoute(
 
     // The forecast and CPCB station feed are independent providers. Start
     // both together so AQI latency is not added after weather latency.
-    const forecastPromise = caches.forecast.getOrFetch(cacheKey, () =>
-      fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates }),
-    )
+    const forecastPromise = caches.forecast.getOrFetch(cacheKey, async () => {
+      const data = await fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates })
+      assertCurrentForecastFresh(data)
+      return data
+    }, { allowStale: false })
     const airQualityPromise = resolveAirQuality(
       env,
       caches.airQuality,
@@ -88,6 +92,7 @@ export async function weatherRoute(
     let forecast: OpenMeteoResponse
     try {
       forecast = await forecastPromise
+      assertCurrentForecastFresh(forecast)
     } catch (error) {
       request.log.error(
         { err: error },

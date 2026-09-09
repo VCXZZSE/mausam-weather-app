@@ -10,7 +10,6 @@ import {
   resolveCondition,
   resolveHeroVariant,
 } from "./conditionCode.js"
-import { findClosestTimeIndex } from "./timeIndex.js"
 import { normalizeUv } from "./uv.js"
 import { calculateAstronomy } from "../astronomy/astronomyCalculator.js"
 import {
@@ -110,9 +109,11 @@ export function toDashboardWeatherData(
 // longer picks an AQI source; it embeds the station-derived reading when
 // one is genuinely available.
 : WeatherPayload {
-  const currentHourIndex = findClosestTimeIndex(
-    data.hourly.time,
-    data.current_weather.time,
+  // Use the containing hour, not the nearest future hour (12:45 must
+  // still leave 13:00 in the forecast after the current "Now" reading).
+  const currentHourIndex = data.hourly.time.reduce(
+    (last, time, index) => time <= data.current_weather.time ? index : last,
+    0,
   )
 
   const { conditionCode, condition } = resolveCondition(
@@ -138,16 +139,18 @@ export function toDashboardWeatherData(
     .slice(currentHourIndex, currentHourIndex + 10)
     .map((time, offset) => {
       const index = currentHourIndex + offset
-      const info = resolveCondition(data.hourly.weathercode[index])
+      const info = offset === 0
+        ? { condition, conditionCode }
+        : resolveCondition(data.hourly.weathercode[index])
       return {
         time: formatHourLabel(time, offset),
-        temperature: Math.round(data.hourly.temperature_2m[index]),
+        temperature: Math.round(offset === 0 ? temperature : data.hourly.temperature_2m[index]),
         condition: info.condition,
         conditionCode: info.conditionCode,
         rainChance: Math.round(
           data.hourly.precipitation_probability[index] ?? 0,
         ),
-        isDay: data.hourly.is_day[index] === 1,
+        isDay: offset === 0 ? isDay : data.hourly.is_day[index] === 1,
       }
     })
 
