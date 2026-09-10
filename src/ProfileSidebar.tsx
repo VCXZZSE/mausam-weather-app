@@ -4,13 +4,15 @@ import type { Profile } from "./App"
 import type { UserLocation } from "./location"
 import "./ProfileSidebar.css"
 
-function Icon({ name }: { name: "close" | "pin" | "spark" | "logout" | "arrow" }) {
+function Icon({ name }: { name: "close" | "pin" | "spark" | "logout" | "arrow" | "privacy" | "help" }) {
   const paths = {
     close: "m6 6 12 12M6 18 18 6",
     pin: "M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0ZM15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
     spark: "m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z",
     logout: "M9 4H5v16h4m5-12 4 4-4 4m-5-4h12",
     arrow: "m9 5 7 7-7 7",
+    privacy: "M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Zm-4 9 3 3 5-6",
+    help: "M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3m0 3h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
   }
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
 }
@@ -53,9 +55,11 @@ type Props = {
   onChangeLocation: () => void
   onLogout: () => void
   onBriefing: () => void
+  onPrivacy: () => void
+  onFaq: () => void
 }
 
-export function ProfileSidebar({ open, profile, location, theme, onClose, onChangeLocation, onLogout, onBriefing }: Props) {
+export function ProfileSidebar({ open, profile, location, theme, onClose, onChangeLocation, onLogout, onBriefing, onPrivacy, onFaq }: Props) {
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const element = dialog.current
@@ -95,6 +99,8 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
         <nav className="sidebar-actions" aria-label="Personal settings">
           <button className="sidebar-action" type="button" onClick={onChangeLocation}><span className="sidebar-action-icon"><Icon name="pin" /></span><span><strong>Change location</strong><small>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</small></span><Icon name="arrow" /></button>
           <button className="sidebar-action" type="button" onClick={onBriefing}><span className="sidebar-action-icon sidebar-icon-violet"><Icon name="spark" /></span><span><strong>Your daily briefing</strong><small>Weather, with you in mind</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onPrivacy}><span className="sidebar-action-icon"><Icon name="privacy" /></span><span><strong>Privacy policy</strong><small>Your information, explained</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onFaq}><span className="sidebar-action-icon sidebar-icon-violet"><Icon name="help" /></span><span><strong>FAQs & help</strong><small>A little more clarity</small></span><Icon name="arrow" /></button>
         </nav>
       </div>
       <footer className="sidebar-footer"><button type="button" className="sidebar-logout" onClick={onLogout}><Icon name="logout" /><span>Log out</span><Icon name="arrow" /></button><p>Clears your profile & location from this device.</p><div className="sidebar-signoff"><span aria-hidden="true">✦</span> A little clarity, whatever the weather.</div></footer>

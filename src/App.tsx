@@ -1,4 +1,6 @@
 import { MausamMenuButton, ProfileSidebar } from "./ProfileSidebar"
+import { InfoPage, type InfoPageKind } from "./InfoPages"
+import { BaselineSlider, GenderSelector } from "./BaselineControls"
 import { OfficialAdvisories } from "./OfficialAdvisories"
 import {
   useState,
@@ -3587,65 +3589,6 @@ function Setup({
     setStep(SETUP_STEPS[Math.min(stepIndex + 1, SETUP_STEPS.length - 1)])
   }
   const back = () => setStep(SETUP_STEPS[Math.max(stepIndex - 1, 0)])
-  const slider = (
-    label: string,
-    value: number,
-    min: number,
-    max: number,
-    unit: string,
-    setValue: (value: number) => void,
-  ) => (
-    <div className="setup-slider-row">
-      <div className="setup-slider-heading">
-        <span>
-          <i>◈</i>
-          {label}
-        </span>
-        <strong>
-          {value} <small>{unit}</small>
-        </strong>
-      </div>
-      <div className="slider-console">
-        <div className="slider-ticks">
-          {Array.from({ length: 11 }, (_, index) => (
-            <i key={index} />
-          ))}
-        </div>
-        <input
-          className="vayu-slider setup-range"
-          style={
-            {
-              "--slider-progress": `${((value - min) / (max - min)) * 100}%`,
-            } as React.CSSProperties
-          }
-          type="range"
-          min={min}
-          max={max}
-          value={value}
-          aria-label={label}
-          onChange={(event) => setValue(Number(event.target.value))}
-        />
-        <output
-          className="slider-value-bubble"
-          style={
-            {
-              "--slider-progress": `${((value - min) / (max - min)) * 100}%`,
-            } as React.CSSProperties
-          }
-        >
-          {value}
-        </output>
-      </div>
-      <div className="range-ends">
-        <span>
-          {min} {unit}
-        </span>
-        <span>
-          {max} {unit}
-        </span>
-      </div>
-    </div>
-  )
   return (
     <main className="setup-shell">
       <div className="setup-noise" />
@@ -3741,49 +3684,31 @@ function Setup({
           </section>
         )}
         {step === "body" && (
-          <section className="setup-panel setup-animate">
+          <section className="setup-panel baseline-panel setup-animate">
             <div className="setup-eyebrow">02 / YOUR BASELINE</div>
             <h2>
-              A little context
+              Made for
               <br />
-              <em>goes a long way.</em>
+              <em>your everyday.</em>
             </h2>
-            <p className="setup-copy">
-              These numbers help us make hydration, heat and activity guidance
-              more personal.
+            <p className="setup-copy baseline-intro">
+              A few details for weather guidance that feels more like you.
+              Slide to adjust, or tap + and − to fine-tune.
             </p>
-            <div className="setup-body-stack">
-              <div>
-                <label className="setup-label">AGE</label>
-                {slider("Age", age, 13, 90, "yrs", setAge)}
-              </div>
-              <div>
-                <label className="setup-label">GENDER</label>
-                <div className="gender-options">
-                  {(["Female", "Male", "Non-binary", "Prefer not to say"] as const).map(
-                    (item) => (
-                      <button
-                        key={item}
-                        className={sex === item ? "active" : ""}
-                        onClick={() => setSex(item)}
-                        type="button"
-                      >
-                        {item}
-                      </button>
-                    ),
-                  )}
-                </div>
-              </div>
-              {slider("Height", height, 120, 220, "cm", setHeight)}
-              {slider("Weight", weight, 35, 180, "kg", setWeight)}
+            <div className="baseline-stack">
+              <BaselineSlider label="Age" value={age} min={13} max={90} unit="yrs" onChange={setAge} />
+              <GenderSelector value={sex} onChange={setSex} />
+              <BaselineSlider label="Height" value={height} min={120} max={220} unit="cm" onChange={setHeight} />
+              <BaselineSlider label="Weight" value={weight} min={35} max={180} unit="kg" onChange={setWeight} />
             </div>
             <button
-              className="setup-primary"
+              className="setup-primary baseline-save"
               onClick={() => setStep("sensitivities")}
               type="button"
             >
               Save baseline <span>→</span>
             </button>
+            <p className="baseline-footnote">A little context. A more personal forecast.</p>
           </section>
         )}
         {step === "sensitivities" && (
@@ -4647,6 +4572,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("home")
   const [showPersonalized, setShowPersonalized] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [infoPage, setInfoPage] = useState<InfoPageKind | null>(null)
   const [theme, setTheme] = useState<"dark" | "light">(() =>
     localStorage.getItem("mausam-theme") === "dark" ? "dark" : "light",
   )
@@ -4655,6 +4581,7 @@ export default function App() {
   const [weatherRetry, setWeatherRetry] = useState(0)
 
   const changeLocation = () => {
+    setInfoPage(null)
     setMenuOpen(false)
     clearStoredLocation()
     setUserLocation(null)
@@ -4791,7 +4718,7 @@ export default function App() {
 
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
-  }, [tab, showPersonalized])
+  }, [tab, showPersonalized, infoPage])
 
   if (!profile || !profileSetupComplete)
     return <Setup weather={isLiveWeatherEnabled() ? null : weather} onComplete={(nextProfile) => {
@@ -4865,8 +4792,8 @@ export default function App() {
           className="no-scrollbar app-scroll"
           style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
         >
-          {(tab !== "home" || showPersonalized) && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
-          {showPersonalized ? (
+          {(tab !== "home" || showPersonalized || infoPage) && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
+          {infoPage ? <InfoPage kind={infoPage} onBack={() => setInfoPage(null)} onNavigate={setInfoPage} /> : showPersonalized ? (
             <PersonalizedWeatherPage
               profile={profile}
               location={userLocation}
@@ -4893,10 +4820,12 @@ export default function App() {
             </>
           )}
         </div>
-        {!showPersonalized && <BottomNav tab={tab} setTab={setTab} />}
+        {!showPersonalized && !infoPage && <BottomNav tab={tab} setTab={setTab} />}
         <ProfileSidebar open={menuOpen} profile={profile} location={userLocation} theme={theme}
           onClose={() => setMenuOpen(false)} onChangeLocation={changeLocation} onLogout={logout}
-          onBriefing={() => { setMenuOpen(false); setShowPersonalized(true) }} />
+          onPrivacy={() => { setMenuOpen(false); setInfoPage("privacy") }}
+          onFaq={() => { setMenuOpen(false); setInfoPage("faq") }}
+          onBriefing={() => { setMenuOpen(false); setInfoPage(null); setShowPersonalized(true) }} />
       </div>
     </div>
   )

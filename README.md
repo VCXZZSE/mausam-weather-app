@@ -76,6 +76,8 @@ Location changes now start from the sidebar rather than the main weather tile. T
 
 The official advisory card remains in its safe unavailable state. Farming and fishing feeds are not connected until verified IMD agrometeorological and fisheries sources are available, so the UI does not claim an all-clear.
 
+The sidebar also opens matching light/dark Privacy Policy and FAQ pages. The privacy page explains onboarding fields, device storage, location and provider requests, optional backend briefing data, and deletion controls. Grouped, expandable FAQs cover forecast accuracy, rainfall, running windows, unavailable advisories, location permissions and local profiles. Both pages provide a return control and links to one another.
+
 ## Run locally
 
 The repository pins Node.js 22 and pnpm 10.34.3 in `.mise.toml`. Install the frontend and backend dependencies separately:
