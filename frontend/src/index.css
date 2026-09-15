@@ -205,11 +205,84 @@ input:-webkit-autofill {
 .mausam-nav-button { position: relative; color: rgba(255,255,255,.62); border-radius: 14px !important; transition: color .25s, background .25s, transform .25s; }.mausam-nav-button::before { content: ''; position: absolute; inset: 7px 10px; z-index: -1; border-radius: 20px; background: transparent; transition: background .25s, box-shadow .25s; }.mausam-nav-button.active { color: #fff; transform: translateY(-1px); }.mausam-nav-button.active::before { background: linear-gradient(135deg, rgba(255,255,255,.3), rgba(83,204,255,.17)); box-shadow: inset 0 1px rgba(255,255,255,.35), 0 0 20px rgba(52,184,255,.18); }.mausam-nav-button svg { position: relative; z-index: 1; }
 .welcome-glass { width: 100%; min-height: calc(100vh - 74px); box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; padding: 34px max(24px, calc((100% - 440px) / 2)); border: 0; border-radius: 0; background: linear-gradient(150deg, rgba(241,225,215,.73) 0%, rgba(89,202,232,.72) 43%, rgba(33,112,236,.82) 72%, rgba(201,106,185,.55) 100%); box-shadow: inset 0 1px rgba(255,255,255,.62), inset 0 -30px 70px rgba(34,74,169,.28); color: #fff; }.welcome-glass::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 54% 54%, rgba(118,250,255,.75), transparent 28%), radial-gradient(circle at 95% 88%, rgba(255,193,233,.6), transparent 28%); mix-blend-mode: screen; pointer-events: none; }.welcome-glass > * { position: relative; z-index: 1; }.welcome-glass .setup-eyebrow { color: rgba(255,255,255,.68); }.welcome-glass h1 { margin: 18px 0 12px; font-size: clamp(56px, 16vw, 82px); line-height: .87; letter-spacing: -.08em; text-shadow: 0 2px 25px rgba(0,65,150,.2); }.welcome-glass h1 em { color: rgba(255,255,255,.54); text-shadow: none; }.welcome-glass p { max-width: 330px; color: rgba(255,255,255,.82); font-size: 13px; line-height: 1.55; }.welcome-menu { position: absolute; top: 22px; left: max(24px, calc((100% - 440px) / 2)); right: max(24px, calc((100% - 440px) / 2)); display: flex; gap: 20px; overflow: hidden; color: rgba(255,255,255,.6); font: 10px 'DM Mono', monospace; white-space: nowrap; }.welcome-menu-active { color: #fff; }.welcome-reading { display: flex; align-items: center; gap: 10px; margin: 22px 0 15px; padding: 11px 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 14px; background: rgba(255,255,255,.17); backdrop-filter: blur(18px); }.reading-dot { width: 8px; height: 8px; border-radius: 50%; background: #c9ff71; box-shadow: 0 0 12px #c9ff71; }.welcome-reading div { flex: 1; }.welcome-reading small, .welcome-reading strong { display: block; }.welcome-reading small { color: rgba(255,255,255,.6); font: 8px 'DM Mono', monospace; }.welcome-reading strong { margin-top: 3px; font-size: 11px; }.welcome-reading b { font: 500 25px 'DM Mono', monospace; }.welcome-start { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 9px 8px 17px; border: 1px solid rgba(255,255,255,.5); border-radius: 24px; background: rgba(255,255,255,.88); color: #14264f; box-shadow: 0 8px 24px rgba(0,58,160,.2); font: 700 12px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }.welcome-start b { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: rgba(26,85,179,.1); font-size: 20px; font-weight: 400; }
 .setup-content:has(.welcome-glass) { padding: 0; min-height: calc(100vh - 74px); }
-.setup-shell:has(.welcome-glass) { background: radial-gradient(circle at 52% 58%, rgba(116,244,255,.92) 0, rgba(62,156,246,.84) 23%, transparent 48%), radial-gradient(circle at 100% 100%, rgba(231,154,226,.72), transparent 28%), linear-gradient(150deg, #f2e5dc 0%, #71d7e9 33%, #266dde 69%, #a968c7 100%); }
+.setup-shell:has(.welcome-glass) { background: radial-gradient(ellipse 34% 28% at 112% 112%, rgba(188,118,221,.5), transparent 72%), radial-gradient(circle at 50% 42%, rgba(116,244,255,.72), transparent 34%), linear-gradient(150deg, #bfe9e8 0%, #4db9df 42%, #2d78dc 100%); }
 .setup-shell:has(.welcome-glass)::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 45% 56%, rgba(255,255,255,.22), transparent 23%); pointer-events: none; }
 .setup-shell:has(.welcome-glass) .setup-noise { opacity: .23; }
 .setup-shell:has(.welcome-glass) .welcome-glass { background: transparent; box-shadow: none; }
 .setup-shell:has(.welcome-glass) .setup-topbar .brand-mark { visibility: hidden; }
+
+/* Keep onboarding inside the phone viewport so the controls and current step
+   stay visible together instead of creating a second page scroll. */
+.setup-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+.setup-topbar {
+  flex: 0 0 auto;
+  width: min(100%, 530px);
+  box-sizing: border-box;
+  padding: max(30px, calc(env(safe-area-inset-top) + 14px)) 20px 0;
+}
+.setup-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 20px 18px;
+  overflow: hidden;
+}
+.setup-panel,
+.setup-hero {
+  max-height: 100%;
+  box-sizing: border-box;
+}
+.setup-step-count {
+  flex: 0 0 auto;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
+.setup-shell:has(.welcome-glass) .setup-content {
+  min-height: 0;
+  padding: 0 20px 12px;
+  align-items: stretch;
+}
+.setup-shell:has(.welcome-glass) .welcome-glass {
+  min-height: 0;
+  height: 100%;
+  padding: 24px 4px 18px;
+  justify-content: center;
+}
+.setup-shell:has(.welcome-glass) .welcome-brand {
+  top: 20px;
+}
+.setup-shell:not(:has(.welcome-glass)) .setup-content {
+  align-items: flex-start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.setup-shell:not(:has(.welcome-glass)) .setup-content::-webkit-scrollbar {
+  display: none;
+}
+.setup-shell:not(:has(.welcome-glass)) .setup-panel {
+  max-height: none;
+  overflow: visible;
+  margin-block: auto;
+}
+
+@media (max-width: 600px) {
+  .setup-topbar {
+    padding-top: max(30px, calc(env(safe-area-inset-top) + 14px));
+  }
+  .setup-content {
+    padding-inline: 20px;
+  }
+  .setup-shell:has(.welcome-glass) .welcome-glass {
+    padding-top: 62px;
+  }
+}
 .welcome-brand { align-self: flex-start; margin: 0 0 auto; padding-top: 64px; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: .3em; text-shadow: 0 0 24px rgba(40,102,255,.65); }.welcome-brand span { color: #73f1ff; font-size: 22px; margin-right: 8px; text-shadow: 0 0 18px #3e8fff; }
 .setup-error { margin-top: 7px; color: #ffd0d0; font-size: 10px; }
 .setup-input.input-error { border-bottom-color: #ff9d9d; }
@@ -235,7 +308,7 @@ input:-webkit-autofill {
   background: linear-gradient(115deg, rgba(255,255,255,.08), transparent 38%, rgba(255,255,255,.1));
 }
 .setup-noise { opacity: .12; mix-blend-mode: overlay; }
-.setup-topbar { padding-top: 22px; }
+.setup-topbar { padding-top: max(30px, calc(env(safe-area-inset-top) + 14px)); }
 .brand-mark { color: rgba(255,255,255,.9); text-shadow: 0 4px 18px rgba(0,30,100,.25); }
 .setup-progress { height: 3px; border-radius: 10px; background: rgba(255,255,255,.2); overflow: hidden; }
 .setup-progress span { background: #fff; box-shadow: 0 0 12px rgba(255,255,255,.8); }
@@ -1064,8 +1137,8 @@ input:-webkit-autofill {
   .setup-shell:has(.welcome-glass) {
     background:
       radial-gradient(circle at 50% 42%, rgba(81, 222, 235, .66), transparent 27%),
-      radial-gradient(circle at 100% 88%, rgba(188, 118, 221, .48), transparent 33%),
-      linear-gradient(160deg, #bfe9e8 0%, #4db9df 39%, #2d78dc 72%, #8662cb 100%);
+      radial-gradient(ellipse at 145% 128%, rgba(188, 118, 221, .34), transparent 32%),
+      linear-gradient(160deg, #bfe9e8 0%, #4db9df 46%, #2d78dc 82%, #8662cb 100%);
   }
   .setup-content:has(.welcome-glass) {
     min-height: calc(100dvh - 20px);
@@ -1168,7 +1241,7 @@ input:-webkit-autofill {
     padding-top: 12px !important;
   }
   .home-screen {
-    padding-top: 14px !important;
+    padding-top: max(34px, calc(env(safe-area-inset-top) + 18px)) !important;
   }
   .home-screen .app-top-header {
     position: relative;
@@ -1821,7 +1894,7 @@ input:-webkit-autofill {
 /* Keep the header measured from the page edge instead of inherited scroll padding. */
 #root .mausam-app > div > .no-scrollbar { padding: 0 !important; }
 #root .mausam-app .home-screen {
-  padding: 20px clamp(24px, 6.2vw, 40px) 24px !important;
+  padding: max(44px, calc(env(safe-area-inset-top) + 20px)) clamp(24px, 6.2vw, 40px) 24px !important;
 }
 #root .mausam-app .home-screen .app-top-header {
   padding: 0 !important;
@@ -1863,6 +1936,51 @@ input:-webkit-autofill {
 #root .mausam-app .home-screen .theme-toggle:focus-visible {
   outline: 3px solid rgba(69, 166, 211, .62);
   outline-offset: 3px;
+}
+
+/* The dock already lives outside .app-scroll; sticky positioning made it
+   overlap the last card and repaint while the page was scrolling. */
+#root .mausam-app > div > nav {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 12;
+  margin: 0 16px max(12px, env(safe-area-inset-bottom)) !important;
+  min-height: 64px;
+  padding: 6px !important;
+  border: 1px solid rgba(219, 248, 255, .24) !important;
+  border-radius: 999px !important;
+  background: rgba(24, 34, 42, .72) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.2), 0 14px 30px rgba(0,0,0,.34) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  transform: translateZ(0);
+}
+#root .mausam-app > div > nav button {
+  min-height: 52px !important;
+  border-radius: 999px !important;
+}
+#root .mausam-app.theme-light > div > nav {
+  background: rgba(239, 252, 255, .78) !important;
+  border-color: rgba(64, 139, 177, .25) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.86), 0 14px 30px rgba(46,116,155,.2) !important;
+}
+#root .mausam-app.theme-light > div > nav .mausam-nav-button {
+  color: rgba(28, 79, 113, .62) !important;
+}
+#root .mausam-app.theme-light > div > nav .mausam-nav-button.active {
+  color: #174d78 !important;
+}
+#root .mausam-app.theme-light > div > nav .mausam-nav-button.active::before {
+  background: rgba(77, 157, 199, .25) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.72), 0 4px 14px rgba(46,116,155,.16) !important;
+}
+
+@media (max-width: 600px) {
+  .setup-shell:has(.welcome-glass) {
+    background:
+      radial-gradient(ellipse 42% 32% at 118% 116%, rgba(188, 118, 221, .58), transparent 72%),
+      linear-gradient(160deg, #bfe9e8 0%, #4db9df 48%, #2d78dc 100%) !important;
+  }
 }
 
 /* The dark weather card is intentionally retained as a contrast anchor. */

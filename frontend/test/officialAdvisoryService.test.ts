@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { advisoryQuerySchema, matchArea, parseOfficialCap, unavailableAdvisories } from "../lib/advisories/service"
+import { advisoryQuerySchema, matchArea, parseOfficialCap, unavailableAdvisories } from "../../lib/advisories/service"
 
 const now = Date.parse("2026-09-06T12:00:00Z")
 const cap = (changes = "") => `<cap:alert xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">

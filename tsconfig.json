@@ -8,7 +8,7 @@
     "moduleResolution": "bundler",
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./frontend/src/*"]
     },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -19,5 +19,5 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "test", "vite.config.ts", "vitest.config.ts", "capacitor.config.ts"]
+  "include": ["frontend/src", "frontend/test", "vite.config.ts", "vitest.config.ts", "capacitor.config.ts"]
 }

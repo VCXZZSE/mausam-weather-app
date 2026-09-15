@@ -38,7 +38,7 @@ describe("serverless current weather freshness", () => {
     let now = Date.now()
     vi.spyOn(Date, "now").mockImplementation(() => now)
     vi.spyOn(console, "error").mockImplementation(() => {})
-    const { default: handler } = await import("../api/weather")
+    const { default: handler } = await import("../../api/weather")
     const req = { method: "GET", query: { latitude: "22.5", longitude: "88.3" } }
     fetchForecast.mockResolvedValueOnce(forecast())
     const first = response()
@@ -58,7 +58,7 @@ describe("serverless current weather freshness", () => {
 
   it("rejects yesterday's provider timestamp even when the HTTP request succeeds", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    const { default: handler } = await import("../api/weather")
+    const { default: handler } = await import("../../api/weather")
     fetchForecast.mockResolvedValueOnce(forecast(95, 1440))
     const res = response()
     await handler({ method: "GET", query: { latitude: "22.5", longitude: "88.3" } }, res)

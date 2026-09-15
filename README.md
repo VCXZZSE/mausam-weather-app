@@ -154,9 +154,10 @@ Configure an API endpoint reachable from the device before building; the local d
 ├── api/                Vercel weather and location endpoints
 ├── lib/                Supporting transformation modules for Vercel
 ├── backend/            Fastify server, providers, rules, and backend tests
-├── src/                React screens, styles, location and API clients
-├── public/             Public assets
-├── test/               Frontend tests
+├── frontend/           React screens, browser assets, and frontend tests
+│   ├── src/
+│   ├── public/
+│   └── test/
 ├── android/            Capacitor Android project
 ├── docs/               Historical implementation notes and design reference
 ├── .env.example        Local frontend and serverless configuration reference

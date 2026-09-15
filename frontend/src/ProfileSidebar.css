@@ -91,3 +91,14 @@
 .sidebar-wordmark .app-weather-mark svg { width: 25px; height: 25px; }
 .app-weather-mark .app-weather-cloud,
 #root .mausam-app .app-weather-mark .app-weather-cloud { fill: #fff !important; stroke: #fff !important; }
+
+@media (max-width: 700px) {
+  .profile-sidebar {
+    inset: max(32px, calc(env(safe-area-inset-top) + 16px)) auto 16px max(12px, calc((100vw - 630px) / 2 + 12px));
+    height: auto;
+    max-height: calc(100dvh - max(48px, calc(env(safe-area-inset-top) + 32px)));
+  }
+  .sidebar-header {
+    padding-top: 16px;
+  }
+}
