@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: io.ionic.libs:iongeolocation-android:2.2.2@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/8.14.3/transforms/77a6938b13dbc48cfc29029067c6a470/transformed/iongeolocation-android-2.2.2/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/8.14.3/transforms/77a6938b13dbc48cfc29029067c6a470/transformed/iongeolocation-android-2.2.2/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
