@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 const { fetchForecast } = vi.hoisted(() => ({ fetchForecast: vi.fn() }))
-vi.mock("../lib/providers/openMeteoClient.js", async importOriginal => ({
+vi.mock("../../lib/providers/openMeteoClient.js", async importOriginal => ({
   ...await importOriginal<object>(), fetchOpenMeteoData: fetchForecast,
 }))
-vi.mock("../lib/aqi/resolveAirQuality.js", () => ({
+vi.mock("../../lib/aqi/resolveAirQuality.js", () => ({
   createAirQualityCaches: () => ({}), resolveAirQuality: async () => undefined,
 }))
-vi.mock("../lib/normalizers/toDashboardWeatherData.js", () => ({
+vi.mock("../../lib/normalizers/toDashboardWeatherData.js", () => ({
   toDashboardWeatherData: (data: any) => ({ code: data.current_weather.weathercode }),
 }))
 

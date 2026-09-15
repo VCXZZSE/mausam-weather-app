@@ -11,9 +11,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "android": "npm run build && npx cap sync android && npx cap open android",
-    "android:sync": "npm run build && npx cap sync android",
-    "android:run": "npx cap run android",
+    "build:android": "vite build --mode android && node scripts/verify-android-bundle.mjs",
+    "android": "npm run android:sync && npx cap open android",
+    "android:sync": "npm run build:android && npx cap sync android",
+    "android:run": "npm run android:sync && npx cap run android",
     "format": "oxfmt"
   },
   "dependencies": {

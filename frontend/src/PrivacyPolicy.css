@@ -1,0 +1,70 @@
+/* Privacy policy page — the pieces unique to this document.
+   The shared document chrome (toolbar, collapsible sections, prose, mail
+   links, return button, briefing entry cards, 360px and reduced-motion
+   handling) lives in documentPage.css, which markdownView.tsx imports. */
+
+#root .mausam-app .privacy-intro { margin-bottom: 18px; }
+
+/* ── Summary card (everything above the first numbered heading) ───────── */
+#root .mausam-app .privacy-summary {
+  margin-bottom: 22px;
+  padding: 16px 16px 4px;
+  border-radius: 22px;
+}
+#root .mausam-app .privacy-summary p { margin: 0 0 12px; font-size: 10px; line-height: 1.6; }
+
+/* ── Footer: contact shortcut and last-updated stamp ─────────────────── */
+#root .mausam-app .privacy-footer { margin-top: 16px; }
+#root .mausam-app .privacy-contact {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 15px;
+  border: 1px solid var(--pw-border);
+  border-radius: 18px;
+  background: var(--pw-soft-surface);
+  color: var(--pw-text) !important;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: transform .2s ease, border-color .2s ease;
+}
+#root .mausam-app .privacy-contact:hover { border-color: var(--pw-accent); }
+#root .mausam-app .privacy-contact:active { transform: scale(.99); }
+#root .mausam-app .privacy-contact:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: 3px; }
+#root .mausam-app .privacy-contact > span:first-child {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+}
+#root .mausam-app .privacy-contact > span:first-child svg { width: 15px; height: 15px; }
+#root .mausam-app .privacy-contact > span:nth-child(2) { min-width: 0; flex: 1; }
+#root .mausam-app .privacy-contact strong { display: block; font-size: 11px; font-weight: 800; }
+#root .mausam-app .privacy-contact small {
+  display: block;
+  margin-top: 3px;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+#root .mausam-app .privacy-contact > svg { width: 14px; height: 14px; color: var(--pw-muted) !important; }
+#root .mausam-app .privacy-version {
+  margin: 11px 4px 0;
+  color: var(--pw-faint) !important;
+  font-size: 8px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 390px) {
+  #root .mausam-app .privacy-summary { padding: 15px 14px 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .mausam-app .privacy-contact { transition: none; }
+}

@@ -1,8 +1,8 @@
 # Mausam Privacy Policy
 
-**Effective date:** [Insert date]  
-**Publisher:** [Insert legal/business name]  
-**Contact:** [Insert privacy email]
+**Effective date:** 15 September 2026  
+**Publisher:** Oryza  
+**Contact:** repome_maiml2024@msit.edu.in
 
 Mausam collects only the information needed to provide weather, environmental information and personalized recommendations.
 
@@ -88,7 +88,7 @@ Depending on applicable law, you may have rights to access, correct, delete or r
 
 You can deny or revoke location permission through your device settings and use manual location selection where available.
 
-Contact **[Insert privacy email]** for privacy requests.
+Contact **repome_maiml2024@msit.edu.in** for privacy requests.
 
 ## 10. Children
 
@@ -104,6 +104,6 @@ This policy may be updated when Mausam's features, providers, data practices or 
 
 ## 13. Contact
 
-**Publisher:** [Insert legal/business name]  
-**Email:** [Insert privacy email]  
+**Publisher:** Oryza  
+**Email:** repome_maiml2024@msit.edu.in  
 **Address:** [Insert address, if required]

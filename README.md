@@ -138,15 +138,41 @@ See [the API deployment guide](api/README.md) for station selection, caching, an
 
 ## Android
 
-With Android Studio and the Android SDK configured:
+The Android app is a Capacitor wrapper around this same web application. Full
+instructions, requirements, and troubleshooting are in
+**[the Android build guide](docs/ANDROID_BUILD.md)** — read that before opening
+`android/` in Android Studio.
+
+The short version, run from the project root:
 
 ```bash
-npm run android        # Build, sync, and open Android Studio
-npm run android:sync   # Build and sync web assets
-npm run android:run    # Run through Capacitor
+npm install
+npm run android        # Build web app, copy into android/, open Android Studio
 ```
 
-Configure an API endpoint reachable from the device before building; the local development `localhost:3000` URL refers to the device itself when packaged. Physical-device GPS and a signed native release still require verification. Keep signing credentials outside Git.
+| Command | Purpose |
+| --- | --- |
+| `npm run android` | Build, sync, and open Android Studio |
+| `npm run android:sync` | Build and copy web assets into `android/` |
+| `npm run android:run` | Sync, then build and install on a connected device |
+
+Three things are worth knowing up front:
+
+- `android/` is **not** a standalone Android project. Its Gradle modules come
+  from `node_modules/`, and the UI is copied in from `dist/`; neither is
+  committed. Opening `android/` in Android Studio before running the npm
+  commands fails the Gradle sync with instructions on what to run.
+- **Editing `frontend/` and pressing Run in Android Studio changes nothing on
+  the device.** Run `npm run android:sync` first, every time.
+- The packaged app is served from `https://localhost` on the phone, so relative
+  API paths and `localhost:3000` both resolve to the device. `.env.android`
+  (committed, no secrets) points the build at the deployed Vercel API instead,
+  and `scripts/verify-android-bundle.mjs` fails the build if a development URL
+  survives into the bundle.
+
+Requires Android Studio Narwhal or newer, JDK 21, and Android SDK API 36.
+Physical-device GPS and a signed native release still require verification. Keep
+signing credentials outside Git.
 
 ## Project structure
 
@@ -159,8 +185,11 @@ Configure an API endpoint reachable from the device before building; the local d
 │   ├── public/
 │   └── test/
 ├── android/            Capacitor Android project
+├── scripts/            Build guards (Android bundle verification)
 ├── docs/               Historical implementation notes and design reference
+│   └── ANDROID_BUILD.md Android build, run, and troubleshooting guide
 ├── .env.example        Local frontend and serverless configuration reference
+├── .env.android        Android build configuration (committed, no secrets)
 ├── capacitor.config.ts Android wrapper configuration
 ├── vercel.json         Deployment headers and API routing
 └── package.json        Frontend dependencies and development commands

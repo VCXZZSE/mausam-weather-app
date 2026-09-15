@@ -1,3 +1,52 @@
+// ---------------------------------------------------------------------------
+// Preflight: this is a Capacitor project, not a standalone Android project.
+//
+// The Gradle modules below live inside ../node_modules, and the web app that
+// the WebView loads is generated into app/src/main/assets. Neither is committed
+// to Git, so opening this folder in Android Studio straight after a clone gives
+// a sync error that says nothing about the real cause. These checks turn that
+// into an instruction.
+//
+// Run from the PROJECT ROOT (the folder above this one), not from android/.
+// ---------------------------------------------------------------------------
+def projectRoot = settingsDir.parentFile
+def missing = []
+
+if (!new File(projectRoot, "node_modules/@capacitor/android/capacitor").exists()) {
+    missing << "  * JavaScript dependencies are not installed.\n" +
+               "    The ':capacitor-android' and ':capacitor-geolocation' Gradle modules are\n" +
+               "    read from node_modules, so Gradle cannot resolve them yet."
+}
+
+if (!new File(settingsDir, "capacitor-cordova-android-plugins").exists()) {
+    missing << "  * The generated 'capacitor-cordova-android-plugins' module is absent.\n" +
+               "    Capacitor creates it during a sync."
+}
+
+if (!new File(settingsDir, "app/src/main/assets/public/index.html").exists()) {
+    missing << "  * The web app has not been copied into app/src/main/assets/public.\n" +
+               "    Without it the app installs and launches to a blank screen."
+}
+
+if (!missing.isEmpty()) {
+    throw new GradleException(
+        "\n\n" +
+        "==============================================================\n" +
+        " Mausam: the Android project is not ready to build yet.\n" +
+        "==============================================================\n\n" +
+        missing.join("\n\n") + "\n\n" +
+        "--------------------------------------------------------------\n" +
+        " Fix - run these in the PROJECT ROOT (" + projectRoot.name + "/),\n" +
+        " not in android/:\n\n" +
+        "     npm install\n" +
+        "     npm run android:sync\n\n" +
+        " Then press 'Sync Project with Gradle Files' in Android Studio.\n\n" +
+        " Re-run 'npm run android:sync' after every change to the web app\n" +
+        " (frontend/), otherwise the phone keeps showing the previous build.\n" +
+        "--------------------------------------------------------------\n"
+    )
+}
+
 include ':app'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')

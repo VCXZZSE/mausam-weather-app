@@ -5,7 +5,7 @@ import type { Profile } from "../src/App"
 
 const profile: Profile = { name: "Aditi Roy", gender: "Female", age: 29, height: 168, weight: 64, activity: "Moderate", goals: ["Fitness"], sensitivities: ["Heat"], concerns: ["Allergies"] }
 const location = { latitude: 22.5, longitude: 88.3, locality: "Kolkata", region: "West Bengal", country: "India", timezone: "Asia/Kolkata", postalCode: "700150", source: "manual" as const }
-function props() { return { open: true, profile, location, theme: "light" as const, onClose: vi.fn(), onChangeLocation: vi.fn(), onLogout: vi.fn(), onBriefing: vi.fn() } }
+function props() { return { open: true, profile, location, theme: "light" as const, onClose: vi.fn(), onChangeLocation: vi.fn(), onLogout: vi.fn(), onBriefing: vi.fn(), onPrivacy: vi.fn(), onFAQ: vi.fn() } }
 afterEach(cleanup)
 
 describe("profile sidebar", () => {
@@ -19,14 +19,18 @@ describe("profile sidebar", () => {
     expect(screen.getByText("Kolkata · 700150")).toBeInTheDocument()
   })
 
-  it("connects location, briefing and logout controls", () => {
+  it("connects location, briefing, privacy, FAQ and logout controls", () => {
     const handlers = props()
     render(<ProfileSidebar {...handlers} />)
     fireEvent.click(screen.getByRole("button", { name: /Change location/ }))
     fireEvent.click(screen.getByRole("button", { name: /Your daily briefing/ }))
+    fireEvent.click(screen.getByRole("button", { name: /Privacy policy/ }))
+    fireEvent.click(screen.getByRole("button", { name: /FAQs/ }))
     fireEvent.click(screen.getByRole("button", { name: "Log out" }))
     expect(handlers.onChangeLocation).toHaveBeenCalledOnce()
     expect(handlers.onBriefing).toHaveBeenCalledOnce()
+    expect(handlers.onPrivacy).toHaveBeenCalledOnce()
+    expect(handlers.onFAQ).toHaveBeenCalledOnce()
     expect(handlers.onLogout).toHaveBeenCalledOnce()
   })
 

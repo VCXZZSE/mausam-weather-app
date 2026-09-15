@@ -364,6 +364,22 @@ type ReverseGeocodeResponse={
 }
 
 /**
+ * True only for a real local-development page served by the Vite dev server,
+ * where the Fastify backend on :3000 is actually reachable.
+ *
+ * `window.location.hostname` alone is NOT enough to decide this. Capacitor
+ * serves the packaged Android app from `https://localhost`, so inside the APK
+ * the hostname is literally "localhost" while there is no dev backend anywhere
+ * — routing there would point every request at the phone itself. Checking the
+ * native platform first is what keeps the packaged app on its direct-provider
+ * fallbacks.
+ */
+function isLocalDevHost(): boolean {
+  if (Capacitor.isNativePlatform()) return false
+  return window.location.hostname === "localhost"
+}
+
+/**
  * Resolves device coordinates into a place name via the backend's
  * reverse-geocoding endpoint (which proxies Nominatim server-side, with
  * rate limiting and caching — never called directly from the browser,
@@ -450,7 +466,7 @@ export async function reverseGeocodeCoordinates(
   const endpoint=import.meta.env.VITE_LOCATION_REVERSE_API_URL?.trim()
   
   // If no endpoint configured or not on localhost, use direct Nominatim fallback
-  if(!endpoint || window.location.hostname !== "localhost") {
+  if(!endpoint || !isLocalDevHost()) {
     return clientSideReverseGeocodeFallback(latitude, longitude, signal)
   }
 
@@ -498,7 +514,7 @@ export async function searchLocations(
   if(!query.trim()) return []
   
   // If no endpoint configured or not on localhost, use direct Nominatim fallback
-  if(!endpoint || window.location.hostname !== "localhost") {
+  if(!endpoint || !isLocalDevHost()) {
     return clientSideSearchFallback(query, signal)
   }
 

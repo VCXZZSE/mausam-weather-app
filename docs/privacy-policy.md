@@ -1,12 +1,12 @@
 # Mausam Privacy Policy
 
-**Effective date:** [Insert effective date]
+**Effective date:** 15 September 2026
 
 **App:** Mausam
 
-**Publisher:** [Insert legal name or business name]
+**Publisher:** Oryza
 
-**Contact:** [Insert privacy contact email]
+**Contact:** repome_maiml2024@msit.edu.in
 
 This Privacy Policy explains what information Mausam collects, why it is needed, how it is used, where it is stored or shared, and the choices available to you. It describes the current implementation of the Mausam web app and Android app.
 
@@ -201,7 +201,7 @@ Depending on where you live, you may have rights to:
 - Opt out of certain communications or processing, if introduced later
 - Complain to a data-protection authority
 
-To make a request, contact **[Insert privacy contact email]**. We may need enough information to verify and respond to the request without exposing another person’s data.
+To make a request, contact **repome_maiml2024@msit.edu.in**. We may need enough information to verify and respond to the request without exposing another person’s data.
 
 ## 11. International Processing
 
@@ -215,8 +215,8 @@ This policy may be updated when Mausam’s features, providers, legal requiremen
 
 For privacy questions or requests:
 
-**Publisher:** [Insert legal name or business name]
+**Publisher:** Oryza
 
-**Email:** [Insert privacy contact email]
+**Email:** repome_maiml2024@msit.edu.in
 
 **Postal address:** [Insert business address, if required]
