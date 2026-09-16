@@ -13,7 +13,7 @@ describe("profile sidebar", () => {
     render(<ProfileSidebar {...props()} profile={{ ...profile, gender }} />)
     const drawer = screen.getByRole("dialog", { name: "Aditi Roy" })
     expect(within(drawer).getByRole("img", { name: gender ? `${gender} profile avatar` : "Neutral profile avatar" })).toBeInTheDocument()
-    for (const value of ["29", "168", "64", "Moderate", gender ?? "Not shared"]) expect(within(drawer).getByText(value)).toBeInTheDocument()
+    for (const value of ["29", "Moderate", gender ?? "Not shared"]) expect(within(drawer).getByText(value)).toBeInTheDocument()
     fireEvent.click(screen.getByText("Your preferences"))
     for (const value of ["Fitness", "Heat", "Allergies"]) expect(within(drawer).getByText(value)).toBeVisible()
     expect(screen.getByText("Kolkata · 700150")).toBeInTheDocument()

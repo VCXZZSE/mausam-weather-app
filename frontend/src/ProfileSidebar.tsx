@@ -88,7 +88,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
 
         <section className="sidebar-profile-card" aria-label="Your profile">
           <div className="sidebar-section-heading"><h3>Your profile</h3><span>PERSONALISED</span></div>
-          <dl className="sidebar-metrics"><div><dt>Age</dt><dd>{profile.age}<small>years</small></dd></div><div><dt>Height</dt><dd>{profile.height}<small>cm</small></dd></div><div><dt>Weight</dt><dd>{profile.weight}<small>kg</small></dd></div></dl>
+          <dl className="sidebar-metrics"><div><dt>Age</dt><dd>{profile.age}<small>years</small></dd></div></dl>
           <dl className="sidebar-baseline"><div><dt>Gender</dt><dd>{profile.gender ?? "Not shared"}</dd></div><div><dt>Activity</dt><dd>{profile.activity}</dd></div></dl>
           <details className="sidebar-preferences"><summary>Your preferences <span>Goals, sensitivities & health</span><Icon name="arrow" /></summary><div className="sidebar-preference-content">{([
             ["Goals", profile.goals], ["Weather sensitivities", profile.sensitivities], ["Health considerations", profile.concerns],

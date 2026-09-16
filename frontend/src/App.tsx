@@ -2581,15 +2581,34 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
 type SetupStep = "welcome" | "name" | "body" | "sensitivities" | "routine"
 export type ProfileGender = "Female" | "Male" | "Non-binary" | "Prefer not to say"
 export type Profile = {
+  dob?: string
   gender?: ProfileGender
   name: string
   sensitivities: string[]
   concerns: string[]
   goals: string[]
   age: number
-  height: number
-  weight: number
+  height?: number
+  weight?: number
   activity: string
+}
+
+export function calculateAge(dobStr?: string): number {
+  if (!dobStr) return 29
+  const parts = dobStr.split("-")
+  if (parts.length < 3) return 29
+  const y = parseInt(parts[0], 10)
+  const m = parseInt(parts[1], 10) - 1
+  const d = parseInt(parts[2], 10)
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return 29
+  const birth = new Date(y, m, d)
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return Math.max(13, Math.min(100, age))
 }
 type PersonalizationVariant = "skin-sun" | "uv-heat" | "uv-sun" | "air-quality" | "cold" | "general"
 export type PersonalizedIcon = "sun" | "outdoor" | "comfort" | "shield" | "cold" | "temperature" | "evening" | "air" | "indoor" | "rain" | "wind"
@@ -3483,27 +3502,23 @@ function loadStoredProfile(): Profile | null {
       typeof profile.name !== "string" ||
       !Array.isArray(profile.sensitivities) ||
       !Array.isArray(profile.concerns) ||
-      !Array.isArray(profile.goals)
-    )
-      return null
-    if (
-      typeof profile.age !== "number" ||
-      typeof profile.height !== "number" ||
-      typeof profile.weight !== "number" ||
+      !Array.isArray(profile.goals) ||
       typeof profile.activity !== "string"
     )
       return null
-    // Rebuild the object explicitly so legacy profiles lose the old
-    // hardcoded `location: "Kolkata"` field when they are next saved.
+    const dob = typeof profile.dob === "string" ? profile.dob : undefined
+    const age = dob ? calculateAge(dob) : (typeof profile.age === "number" ? profile.age : 29)
+    // Rebuild the object explicitly
     return {
       name: profile.name,
+      dob,
       gender: ["Female", "Male", "Non-binary", "Prefer not to say"].includes(profile.gender ?? "") ? profile.gender : undefined,
       sensitivities: profile.sensitivities,
       concerns: profile.concerns,
       goals: profile.goals,
-      age: profile.age,
-      height: profile.height,
-      weight: profile.weight,
+      age,
+      height: typeof profile.height === "number" ? profile.height : undefined,
+      weight: typeof profile.weight === "number" ? profile.weight : undefined,
       activity: profile.activity,
     }
   } catch {
@@ -3537,6 +3552,170 @@ function SetupChip({
   )
 }
 
+function ScrollWheelColumn<T extends string | number>({
+  items,
+  value,
+  onChange,
+  itemHeight = 44,
+}: {
+  items: T[]
+  value: T
+  onChange: (val: T) => void
+  itemHeight?: number
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isScrollingRef = useRef(false)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const index = items.indexOf(value)
+    if (index !== -1 && containerRef.current && !isScrollingRef.current) {
+      containerRef.current.scrollTop = index * itemHeight
+    }
+  }, [value, items, itemHeight])
+
+  const handleScroll = () => {
+    if (!containerRef.current) return
+    isScrollingRef.current = true
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (!containerRef.current) return
+      const scrollTop = containerRef.current.scrollTop
+      const index = Math.round(scrollTop / itemHeight)
+      const clampedIndex = Math.max(0, Math.min(items.length - 1, index))
+      if (items[clampedIndex] !== undefined && items[clampedIndex] !== value) {
+        onChange(items[clampedIndex])
+      }
+      isScrollingRef.current = false
+    }, 80)
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="dob-wheel-scroll-col"
+      onScroll={handleScroll}
+      style={{ height: itemHeight * 5 }}
+    >
+      <div style={{ height: itemHeight * 2, flexShrink: 0 }} />
+      {items.map((item) => {
+        const isSelected = item === value
+        return (
+          <div
+            key={String(item)}
+            className={`dob-wheel-item${isSelected ? " is-selected" : ""}`}
+            style={{ height: itemHeight, lineHeight: `${itemHeight}px` }}
+            onClick={() => {
+              const idx = items.indexOf(item)
+              if (containerRef.current) {
+                containerRef.current.scrollTo({ top: idx * itemHeight, behavior: "smooth" })
+              }
+              onChange(item)
+            }}
+          >
+            {item}
+          </div>
+        )
+      })}
+      <div style={{ height: itemHeight * 2, flexShrink: 0 }} />
+    </div>
+  )
+}
+
+export function DobPicker({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (dateStr: string) => void
+}) {
+  const parts = value.split("-")
+  const yearVal = parseInt(parts[0] || "1995", 10)
+  const monthVal = Math.max(0, Math.min(11, parseInt(parts[1] || "02", 10) - 1))
+  const dayVal = parseInt(parts[2] || "18", 10)
+
+  const MONTH_NAMES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ]
+
+  const maxDaysInMonth = new Date(yearVal, monthVal + 1, 0).getDate()
+  const currentDay = Math.min(dayVal, maxDaysInMonth)
+  const currentMonthName = MONTH_NAMES[monthVal] || "February"
+
+  const handleMonthChange = (selectedMonthName: string) => {
+    const mIndex = MONTH_NAMES.indexOf(selectedMonthName)
+    if (mIndex === -1) return
+    const newMax = new Date(yearVal, mIndex + 1, 0).getDate()
+    const newDay = Math.min(currentDay, newMax)
+    const mStr = String(mIndex + 1).padStart(2, "0")
+    const dStr = String(newDay).padStart(2, "0")
+    onChange(`${yearVal}-${mStr}-${dStr}`)
+  }
+
+  const handleDayChange = (d: number) => {
+    const mStr = String(monthVal + 1).padStart(2, "0")
+    const dStr = String(d).padStart(2, "0")
+    onChange(`${yearVal}-${mStr}-${dStr}`)
+  }
+
+  const handleYearChange = (y: number) => {
+    const newMax = new Date(y, monthVal + 1, 0).getDate()
+    const newDay = Math.min(currentDay, newMax)
+    const mStr = String(monthVal + 1).padStart(2, "0")
+    const dStr = String(newDay).padStart(2, "0")
+    onChange(`${y}-${mStr}-${dStr}`)
+  }
+
+  const years = Array.from({ length: 2014 - 1930 }, (_, i) => 1930 + i)
+  const days = Array.from({ length: maxDaysInMonth }, (_, i) => i + 1)
+
+  const calculatedAge = calculateAge(value)
+
+  return (
+    <div className="dob-picker-card">
+      <div className="dob-picker-header">
+        <span className="setup-label">SELECT YOUR DATE OF BIRTH</span>
+        <span className="dob-age-badge">{calculatedAge} yrs</span>
+      </div>
+
+      <div className="dob-wheels-frame">
+        <div className="dob-wheel-lens" />
+        <ScrollWheelColumn
+          items={MONTH_NAMES}
+          value={currentMonthName}
+          onChange={handleMonthChange}
+        />
+        <ScrollWheelColumn
+          items={days}
+          value={currentDay}
+          onChange={handleDayChange}
+        />
+        <ScrollWheelColumn
+          items={years}
+          value={yearVal}
+          onChange={handleYearChange}
+        />
+      </div>
+
+      <p className="dob-notice-text">
+        Please refer to our <strong>Privacy notice</strong> for further information on how we process this data.
+      </p>
+    </div>
+  )
+}
+
 function Setup({
   weather,
   onComplete,
@@ -3546,9 +3725,7 @@ function Setup({
 }) {
   const [step, setStep] = useState<SetupStep>("welcome")
   const [name, setName] = useState("")
-  const [age, setAge] = useState(29)
-  const [height, setHeight] = useState(168)
-  const [weight, setWeight] = useState(64)
+  const [dob, setDob] = useState("1995-02-18")
   const [sex, setSex] = useState<ProfileGender>("Prefer not to say")
   const [sensitivities, setSensitivities] = useState<string[]>([])
   const [concerns, setConcerns] = useState<string[]>([])
@@ -3593,65 +3770,7 @@ function Setup({
     setStep(SETUP_STEPS[Math.min(stepIndex + 1, SETUP_STEPS.length - 1)])
   }
   const back = () => setStep(SETUP_STEPS[Math.max(stepIndex - 1, 0)])
-  const slider = (
-    label: string,
-    value: number,
-    min: number,
-    max: number,
-    unit: string,
-    setValue: (value: number) => void,
-  ) => (
-    <div className="setup-slider-row">
-      <div className="setup-slider-heading">
-        <span>
-          <i>◈</i>
-          {label}
-        </span>
-        <strong>
-          {value} <small>{unit}</small>
-        </strong>
-      </div>
-      <div className="slider-console">
-        <div className="slider-ticks">
-          {Array.from({ length: 11 }, (_, index) => (
-            <i key={index} />
-          ))}
-        </div>
-        <input
-          className="vayu-slider setup-range"
-          style={
-            {
-              "--slider-progress": `${((value - min) / (max - min)) * 100}%`,
-            } as React.CSSProperties
-          }
-          type="range"
-          min={min}
-          max={max}
-          value={value}
-          aria-label={label}
-          onChange={(event) => setValue(Number(event.target.value))}
-        />
-        <output
-          className="slider-value-bubble"
-          style={
-            {
-              "--slider-progress": `${((value - min) / (max - min)) * 100}%`,
-            } as React.CSSProperties
-          }
-        >
-          {value}
-        </output>
-      </div>
-      <div className="range-ends">
-        <span>
-          {min} {unit}
-        </span>
-        <span>
-          {max} {unit}
-        </span>
-      </div>
-    </div>
-  )
+
   return (
     <main className="setup-shell">
       <div className="setup-noise" />
@@ -3750,19 +3869,15 @@ function Setup({
           <section className="setup-panel setup-animate">
             <div className="setup-eyebrow">02 / YOUR BASELINE</div>
             <h2>
-              A little context
+              Select your
               <br />
-              <em>goes a long way.</em>
+              <em>date of birth.</em>
             </h2>
             <p className="setup-copy">
-              These numbers help us make hydration, heat and activity guidance
-              more personal.
+              Your date of birth and gender help us make hydration, heat and activity guidance more personal.
             </p>
             <div className="setup-body-stack">
-              <div>
-                <label className="setup-label">AGE</label>
-                {slider("Age", age, 13, 90, "yrs", setAge)}
-              </div>
+              <DobPicker value={dob} onChange={setDob} />
               <div>
                 <label className="setup-label">GENDER</label>
                 <div className="gender-options">
@@ -3780,8 +3895,6 @@ function Setup({
                   )}
                 </div>
               </div>
-              {slider("Height", height, 120, 220, "cm", setHeight)}
-              {slider("Weight", weight, 35, 180, "kg", setWeight)}
             </div>
             <button
               className="setup-primary"
@@ -3887,14 +4000,13 @@ function Setup({
               className="setup-primary"
               onClick={() =>
                 onComplete({
+                  dob,
                   gender: sex,
                   name,
                   sensitivities,
                   concerns,
                   goals,
-                  age,
-                  height,
-                  weight,
+                  age: calculateAge(dob),
                   activity,
                 })
               }
