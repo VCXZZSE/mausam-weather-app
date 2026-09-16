@@ -3886,10 +3886,10 @@ export function SemiCircleCrownWheel({
   selectedIndex: number
   onSelect: (index: number) => void
 }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const itemHeight = 58
-  const stageHeight = 350
-  const spacerHeight = (stageHeight - itemHeight) / 2
+  const stageRef = useRef<HTMLDivElement>(null)
+  const itemHeight = 60
+  const stageHeight = 360
+  const centerY = stageHeight / 2 // 180px
 
   const [scrollTop, setScrollTop] = useState(selectedIndex * itemHeight)
   const isDraggingRef = useRef(false)
@@ -3897,18 +3897,18 @@ export function SemiCircleCrownWheel({
   const startScrollTopRef = useRef(0)
 
   const smoothScrollTo = (targetTop: number) => {
-    if (containerRef.current) {
-      if (typeof containerRef.current.scrollTo === "function") {
-        containerRef.current.scrollTo({ top: targetTop, behavior: "smooth" })
+    if (stageRef.current) {
+      if (typeof stageRef.current.scrollTo === "function") {
+        stageRef.current.scrollTo({ top: targetTop, behavior: "smooth" })
       } else {
-        containerRef.current.scrollTop = targetTop
+        stageRef.current.scrollTop = targetTop
       }
     }
+    setScrollTop(targetTop)
   }
 
   useEffect(() => {
     smoothScrollTo(selectedIndex * itemHeight)
-    setScrollTop(selectedIndex * itemHeight)
   }, [selectedIndex])
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -3923,30 +3923,30 @@ export function SemiCircleCrownWheel({
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     isDraggingRef.current = true
     startYRef.current = e.clientY
-    startScrollTopRef.current = containerRef.current?.scrollTop || 0
-    if (containerRef.current) {
-      containerRef.current.setPointerCapture(e.pointerId)
+    startScrollTopRef.current = stageRef.current?.scrollTop || scrollTop
+    if (stageRef.current) {
+      stageRef.current.setPointerCapture(e.pointerId)
     }
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current || !containerRef.current) return
+    if (!isDraggingRef.current || !stageRef.current) return
     const dy = e.clientY - startYRef.current
     const newScroll = Math.max(
       0,
       Math.min((personas.length - 1) * itemHeight, startScrollTopRef.current - dy),
     )
-    containerRef.current.scrollTop = newScroll
+    stageRef.current.scrollTop = newScroll
     setScrollTop(newScroll)
   }
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return
     isDraggingRef.current = false
-    if (containerRef.current && containerRef.current.hasPointerCapture(e.pointerId)) {
-      containerRef.current.releasePointerCapture(e.pointerId)
+    if (stageRef.current && stageRef.current.hasPointerCapture(e.pointerId)) {
+      stageRef.current.releasePointerCapture(e.pointerId)
     }
-    const currentTop = containerRef.current?.scrollTop || 0
+    const currentTop = stageRef.current?.scrollTop ?? scrollTop
     const finalIdx = Math.max(0, Math.min(personas.length - 1, Math.round(currentTop / itemHeight)))
     smoothScrollTo(finalIdx * itemHeight)
     onSelect(finalIdx)
@@ -3968,25 +3968,31 @@ export function SemiCircleCrownWheel({
 
   return (
     <div
+      ref={stageRef}
       className="crown-minimal-stage"
       tabIndex={0}
       role="listbox"
       aria-label="User Profile Crown Wheel"
       onKeyDown={handleKeyDown}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onScroll={handleScroll}
       style={{ height: stageHeight }}
     >
-      <svg className="crown-minimal-arc-svg" viewBox="0 0 140 350" preserveAspectRatio="none">
+      <svg className="crown-minimal-arc-svg" viewBox="0 0 140 360" preserveAspectRatio="none">
         <defs>
           <linearGradient id="crownMinimalArcGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
             <stop offset="25%" stopColor="rgba(255,255,255,0.3)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.75)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.8)" />
             <stop offset="75%" stopColor="rgba(255,255,255,0.3)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
           </linearGradient>
         </defs>
         <path
-          d="M 130 15 Q 35 175 130 335"
+          d="M 130 20 Q 34 180 130 340"
           fill="none"
           stroke="url(#crownMinimalArcGrad)"
           strokeWidth="2.2"
@@ -3995,66 +4001,70 @@ export function SemiCircleCrownWheel({
 
       <div className="crown-minimal-pointer" aria-hidden="true" />
 
+      {/* Invisible scroll track spacer */}
       <div
-        ref={containerRef}
-        className="crown-minimal-scroll"
-        onScroll={handleScroll}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        style={{ height: stageHeight }}
-      >
-        <div style={{ height: spacerHeight, flexShrink: 0 }} />
-        {personas.map((persona, index) => {
-          const distFromCenter = index * itemHeight - scrollTop
-          const delta = distFromCenter / itemHeight
-          const absDelta = Math.abs(delta)
-          const isSelected = index === selectedIndex
+        style={{
+          height: (personas.length - 1) * itemHeight + stageHeight,
+          width: 1,
+          pointerEvents: "none",
+          opacity: 0,
+        }}
+      />
 
-          // Curved circular trajectory: x offsets smoothly to the right away from center
-          const angleDeg = delta * 23
-          const angleRad = (angleDeg * Math.PI) / 180
-          const x = (1 - Math.cos(angleRad)) * 185
-          const rotateDeg = delta * 12
+      {/* Absolutely positioned items along true semi-circle trajectory */}
+      {personas.map((persona, index) => {
+        const distFromCenter = index * itemHeight - scrollTop
+        const delta = distFromCenter / itemHeight
+        const absDelta = Math.abs(delta)
+        const isSelected = index === selectedIndex
 
-          const scale = Math.max(0.74, 1 - absDelta * 0.08)
-          const opacity = Math.max(0.2, 1 - absDelta * 0.28)
+        // Pure circular arc trajectory along circle radius R=260px (step = 21 degrees per item)
+        const angleDeg = delta * 21
+        const angleRad = (angleDeg * Math.PI) / 180
+        const y = centerY + Math.sin(angleRad) * 260
+        const x = (1 - Math.cos(angleRad)) * 140
 
-          return (
+        const isVisible = absDelta < 3.2
+        const scale = isVisible ? Math.max(0.78, 1 - absDelta * 0.08) : 0.75
+        const opacity = isVisible ? Math.max(0.2, 1 - absDelta * 0.3) : 0
+
+        return (
+          <div
+            key={persona.id}
+            role="option"
+            aria-selected={isSelected}
+            aria-label={persona.title}
+            className={`crown-minimal-item${isSelected ? " is-selected" : ""}`}
+            style={{
+              position: "absolute",
+              top: `${y}px`,
+              right: 0,
+              transform: `translate3d(${x}px, -50%, 0) scale(${scale})`,
+              opacity,
+              pointerEvents: isVisible ? "auto" : "none",
+              zIndex: isSelected ? 6 : 4,
+              "--item-accent": persona.accentColor,
+            } as React.CSSProperties}
+            onClick={() => {
+              smoothScrollTo(index * itemHeight)
+              onSelect(index)
+            }}
+          >
+            <span className="crown-item-title">{persona.title}</span>
             <div
-              key={persona.id}
-              role="option"
-              aria-selected={isSelected}
-              className={`crown-minimal-item${isSelected ? " is-selected" : ""}`}
+              className="crown-item-bubble"
               style={{
-                height: itemHeight,
-                transform: `translate3d(${x}px, 0, 0) rotate(${rotateDeg}deg) scale(${scale})`,
-                opacity,
-                "--item-accent": persona.accentColor,
-              } as React.CSSProperties}
-              onClick={() => {
-                smoothScrollTo(index * itemHeight)
-                onSelect(index)
+                borderColor: isSelected ? persona.accentColor : "rgba(255,255,255,0.18)",
+                boxShadow: isSelected
+                  ? `0 0 18px ${persona.accentColor}55, inset 0 0 8px ${persona.accentColor}33`
+                  : "none",
               }}
             >
-              <span className="crown-item-title">{persona.title}</span>
-              <div
-                className="crown-item-bubble"
-                style={{
-                  borderColor: isSelected ? persona.accentColor : "rgba(255,255,255,0.18)",
-                  boxShadow: isSelected
-                    ? `0 0 18px ${persona.accentColor}55, inset 0 0 8px ${persona.accentColor}33`
-                    : "none",
-                }}
-              >
-                <span className="crown-item-emoji">{persona.icon}</span>
-              </div>
+              <span className="crown-item-emoji">{persona.icon}</span>
             </div>
-          )
-        })}
-        <div style={{ height: spacerHeight, flexShrink: 0 }} />
-      </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

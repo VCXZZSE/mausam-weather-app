@@ -3423,12 +3423,17 @@ input:-webkit-autofill {
 .crown-minimal-stage {
   position: relative;
   width: 100%;
-  height: 350px;
+  height: 360px;
   overflow: hidden;
   user-select: none;
   touch-action: pan-y;
   outline: none;
   background: transparent;
+  cursor: grab;
+}
+
+.crown-minimal-stage:active {
+  cursor: grabbing;
 }
 
 /* Subtle Curved Arc Line on the right */
@@ -3447,10 +3452,10 @@ input:-webkit-autofill {
 .crown-minimal-pointer {
   position: absolute;
   top: 50%;
-  right: 46px;
+  right: 48px;
   transform: translateY(-50%);
-  width: 23px;
-  height: 7px;
+  width: 22px;
+  height: 6px;
   border-radius: 99px;
   background: #ffffff !important;
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.95), 0 0 6px #ffffff, 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -3458,36 +3463,13 @@ input:-webkit-autofill {
   pointer-events: none;
 }
 
-/* Scroll / Swipe Column */
-.crown-minimal-scroll {
-  position: relative;
-  z-index: 3;
-  width: 100%;
-  height: 350px;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-  cursor: grab;
-}
-
-.crown-minimal-scroll:active {
-  cursor: grabbing;
-}
-
-.crown-minimal-scroll::-webkit-scrollbar {
-  display: none;
-}
-
 /* Each profile row: Text on left, Icon bubble on right */
 .crown-minimal-item {
-  scroll-snap-align: center;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  padding-right: 70px;
+  padding-right: 72px;
   cursor: pointer;
   transform-origin: right center;
   will-change: transform, opacity;
@@ -3498,21 +3480,21 @@ input:-webkit-autofill {
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
   font-size: 13px;
   font-weight: 550;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.6);
   text-align: right;
   letter-spacing: -0.01em;
   line-height: 1.25;
   white-space: normal;
-  max-width: 175px;
+  max-width: 170px;
   word-break: break-word;
   transition: color 0.15s ease, font-size 0.15s ease, font-weight 0.15s ease;
 }
 
 .crown-minimal-item.is-selected .crown-item-title {
   color: #ffffff;
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 750;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.65);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.7);
 }
 
 .crown-item-bubble {
