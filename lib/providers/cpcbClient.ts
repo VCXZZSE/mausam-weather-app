@@ -55,11 +55,10 @@ export async function fetchCpcbRecords(
   const {
     baseUrl,
     apiKey,
-    limit=5000,
+    limit=1000,
     // Per page, not for the whole pagination. A bulk page from data.gov.in
-    // is several MB and the portal is not fast; the weather route awaits
-    // this, so it stays bounded rather than generous.
-    timeoutMs=8000,
+    // is several MB and the portal is not fast; timeout allows up to 15s.
+    timeoutMs=15000,
     fetchImpl=fetch,
   }=options
   if(!apiKey) {
