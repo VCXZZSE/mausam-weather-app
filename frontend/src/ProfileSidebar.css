@@ -3,7 +3,9 @@
 .mausam-menu-hint { display: flex; flex-direction: column; gap: 4px; margin: 5px 0 0 1px; opacity: .5; }
 .mausam-menu-hint i { width: 12px; height: 1.5px; border-radius: 2px; background: currentColor; }
 .mausam-menu-hint i:last-child { width: 8px; }
-.secondary-menu-header { padding: 24px 24px 0; }
+.secondary-menu-header {
+  padding: max(44px, calc(env(safe-area-inset-top) + 20px)) clamp(24px, 6.2vw, 40px) 0;
+}
 .secondary-menu-header .app-header-title { font-size: 25px; letter-spacing: -.06em; }
 .secondary-menu-header .app-weather-mark { margin: 0; }
 

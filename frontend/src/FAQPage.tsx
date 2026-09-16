@@ -97,7 +97,13 @@ function Highlight({ text, needle }: { text: string; needle: string }) {
   return <>{parts}</>
 }
 
-export function FAQPage({ onBack }: { onBack: () => void }) {
+export function FAQPage({
+  onBack,
+  onHome,
+}: {
+  onBack: () => void
+  onHome?: () => void
+}) {
   const [query, setQuery] = useState("")
   const [toast, setToast] = useState("")
   const [copied, setCopied] = useState("")
@@ -276,8 +282,8 @@ export function FAQPage({ onBack }: { onBack: () => void }) {
         <button
           className="personalized-back"
           type="button"
-          onClick={onBack}
-          aria-label="Back to briefing"
+          onClick={onHome ?? onBack}
+          aria-label="Back to home"
         >
           <BackChevron />
         </button>

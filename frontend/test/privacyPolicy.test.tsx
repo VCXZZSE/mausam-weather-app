@@ -186,12 +186,24 @@ describe("privacy policy page", () => {
     expect(page.textContent).not.toMatch(/\[Insert privacy email\]/)
   })
 
-  it("offers a way back to the briefing at the top and the foot of the page", () => {
+  it("offers a way back to home at the top and to the briefing at the foot of the page", () => {
+    const onBack = vi.fn()
+    const onHome = vi.fn()
+    render(<PrivacyPolicyPage onBack={onBack} onHome={onHome} />)
+    const homeButton = screen.getByRole("button", { name: "Back to home" })
+    const briefingButton = screen.getByRole("button", { name: "Back to briefing" })
+    fireEvent.click(homeButton)
+    expect(onHome).toHaveBeenCalledTimes(1)
+    fireEvent.click(briefingButton)
+    expect(onBack).toHaveBeenCalledTimes(1)
+  })
+
+  it("falls back to onBack when onHome is not provided", () => {
     const onBack = vi.fn()
     render(<PrivacyPolicyPage onBack={onBack} />)
-    const back = screen.getAllByRole("button", { name: "Back to briefing" })
-    expect(back).toHaveLength(2)
-    for (const button of back) fireEvent.click(button)
+    fireEvent.click(screen.getByRole("button", { name: "Back to home" }))
+    expect(onBack).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole("button", { name: "Back to briefing" }))
     expect(onBack).toHaveBeenCalledTimes(2)
   })
 })

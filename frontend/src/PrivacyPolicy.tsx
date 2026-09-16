@@ -21,7 +21,13 @@ const EFFECTIVE_DATE = findMetaValue(POLICY.intro, "Effective date")
 const PUBLISHER = findMetaValue(POLICY.intro, "Publisher")
 const CONTACT_EMAIL = findMetaValue(POLICY.intro, "Contact")
 
-export function PrivacyPolicyPage({ onBack }: { onBack: () => void }) {
+export function PrivacyPolicyPage({
+  onBack,
+  onHome,
+}: {
+  onBack: () => void
+  onHome?: () => void
+}) {
   const ids = useMemo(() => POLICY.sections.map((section) => section.id), [])
   const { isOpen, toggle, allOpen, toggleAll } = useDisclosure(ids)
 
@@ -34,8 +40,8 @@ export function PrivacyPolicyPage({ onBack }: { onBack: () => void }) {
         <button
           className="personalized-back"
           type="button"
-          onClick={onBack}
-          aria-label="Back to briefing"
+          onClick={onHome ?? onBack}
+          aria-label="Back to home"
         >
           <BackChevron />
         </button>

@@ -1896,6 +1896,9 @@ input:-webkit-autofill {
 #root .mausam-app .home-screen {
   padding: max(44px, calc(env(safe-area-inset-top) + 20px)) clamp(24px, 6.2vw, 40px) 24px !important;
 }
+#root .mausam-app .secondary-menu-header {
+  padding: max(44px, calc(env(safe-area-inset-top) + 20px)) clamp(24px, 6.2vw, 40px) 0 !important;
+}
 #root .mausam-app .home-screen .app-top-header {
   padding: 0 !important;
   margin: 0 0 68px !important;
@@ -2001,6 +2004,7 @@ input:-webkit-autofill {
 
 @media (max-width: 390px) {
   #root .mausam-app .home-screen { padding-inline: 20px !important; }
+  #root .mausam-app .secondary-menu-header { padding-inline: 20px !important; }
   #root .mausam-app .home-screen .app-top-header { margin-bottom: 40px !important; }
   #root .mausam-app .home-screen .app-header-group { min-height: 42px; gap: 12px; }
   #root .mausam-app .home-screen .app-weather-mark { width: 42px; height: 42px; flex-basis: 42px; border-radius: 13px; }

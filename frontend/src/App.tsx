@@ -4917,9 +4917,21 @@ export default function App() {
         >
           {(tab !== "home" || overlay !== "none") && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
           {overlay === "privacy" ? (
-            <PrivacyPolicyPage onBack={() => setOverlay("briefing")} />
+            <PrivacyPolicyPage
+              onBack={() => setOverlay("briefing")}
+              onHome={() => {
+                setTab("home")
+                setOverlay("none")
+              }}
+            />
           ) : overlay === "faq" ? (
-            <FAQPage onBack={() => setOverlay("briefing")} />
+            <FAQPage
+              onBack={() => setOverlay("briefing")}
+              onHome={() => {
+                setTab("home")
+                setOverlay("none")
+              }}
+            />
           ) : overlay === "briefing" ? (
             <PersonalizedWeatherPage
               profile={profile}

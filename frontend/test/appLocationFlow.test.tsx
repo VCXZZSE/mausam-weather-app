@@ -943,7 +943,7 @@ describe("App — location-first state machine", () => {
     ).toBeInTheDocument()
 
     // Back lands on the briefing it was opened from, not the home tab.
-    await user.click(screen.getAllByRole("button", { name: "Back to briefing" })[0])
+    await user.click(screen.getByRole("button", { name: "Back to briefing" }))
     expect(
       await screen.findByRole("heading", { name: /made personal/i }),
     ).toBeInTheDocument()
@@ -974,7 +974,7 @@ describe("App — location-first state machine", () => {
       await user.click(within(page).getByRole("button", { name }))
     }
     const goBack = async () =>
-      user.click(screen.getAllByRole("button", { name: "Back to briefing" })[0])
+      user.click(screen.getByRole("button", { name: "Back to briefing" }))
 
     await user.click(
       await screen.findByRole("button", {
@@ -1009,5 +1009,60 @@ describe("App — location-first state machine", () => {
     // briefing → FAQs again
     await openFrom(/FAQs/i)
     expect(await screen.findByRole("heading", { name: /answered/i })).toBeInTheDocument()
+  })
+
+  it("redirects directly to the home screen when clicking the top back button from privacy policy or FAQs", async () => {
+    seedProfile()
+    localStorage.setItem(
+      LOCATION_STORAGE_KEY,
+      JSON.stringify({
+        latitude: 22.5726,
+        longitude: 88.3639,
+        locality: "Kolkata",
+        region: "West Bengal",
+        country: "India",
+        timezone: "Asia/Kolkata",
+        source: "device",
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderAtLocationStep()
+
+    // Open briefing then privacy policy
+    await user.click(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    )
+    const page = document.querySelector(".personalized-page") as HTMLElement
+    await user.click(within(page).getByRole("button", { name: /Privacy policy/i }))
+    expect(await screen.findByRole("heading", { name: /in plain words/i })).toBeInTheDocument()
+
+    // Top back button redirects directly to home
+    await user.click(screen.getByRole("button", { name: "Back to home" }))
+    expect(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    ).toBeInTheDocument()
+
+    // Now open briefing then FAQs
+    await user.click(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    )
+    const briefingPage = document.querySelector(".personalized-page") as HTMLElement
+    await user.click(within(briefingPage).getByRole("button", { name: /FAQs/i }))
+    expect(await screen.findByRole("heading", { name: /answered/i })).toBeInTheDocument()
+
+    // Top back button on FAQs redirects directly to home
+    await user.click(screen.getByRole("button", { name: "Back to home" }))
+    expect(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    ).toBeInTheDocument()
   })
 })
