@@ -37,16 +37,9 @@ const anchorOf = (id: string) => `faq-${numberOf(id)}`
 const TOAST_MS = 2000
 const CHECK_MS = 1400
 
-const SHORTCUTS: [string, string][] = [
-  ["Ctrl / ⌘ + K, or /", "Focus search"],
-  ["Esc", "Clear search and collapse all"],
-  ["↑ / ↓", "Move between questions"],
-  ["Enter", "Open a question"],
-  ["#", "Copy a link to the focused question"],
-  ["?", "Show this list"],
-]
 
-function Icon({ name }: { name: "copy" | "check" | "link" | "search" | "close" | "help" }) {
+
+function Icon({ name }: { name: "copy" | "check" | "link" | "search" | "close" }) {
   const paths = {
     copy: "M9 9V5.5A1.5 1.5 0 0 1 10.5 4h8A1.5 1.5 0 0 1 20 5.5v8a1.5 1.5 0 0 1-1.5 1.5H15M5.5 9h8A1.5 1.5 0 0 1 15 10.5v8A1.5 1.5 0 0 1 13.5 20h-8A1.5 1.5 0 0 1 4 18.5v-8A1.5 1.5 0 0 1 5.5 9Z",
     check: "m5 13 4.5 4.5L19 7",
@@ -107,7 +100,6 @@ export function FAQPage({
   const [query, setQuery] = useState("")
   const [toast, setToast] = useState("")
   const [copied, setCopied] = useState("")
-  const [helpOpen, setHelpOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const sectionsRef = useRef<HTMLDivElement>(null)
   const toastTimer = useRef<number | undefined>(undefined)
@@ -124,7 +116,7 @@ export function FAQPage({
     [needle],
   )
   const visibleIds = useMemo(() => visible.map((section) => section.id), [visible])
-  const { isOpen, toggle, open, closeAll, allOpen, toggleAll } =
+  const { isOpen, toggle, open, closeAll } =
     useDisclosure(visibleIds)
 
   useEffect(
@@ -212,16 +204,9 @@ export function FAQPage({
       if (event.key === "Escape") {
         setQuery("")
         closeAll()
-        setHelpOpen(false)
         return
       }
       if (typing || event.metaKey || event.ctrlKey || event.altKey) return
-      // "?" is Shift+/ on most layouts, so it has to be tested first.
-      if (event.key === "?") {
-        event.preventDefault()
-        setHelpOpen((current) => !current)
-        return
-      }
       if (event.key === "/") {
         event.preventDefault()
         focusSearch()
@@ -340,40 +325,7 @@ export function FAQPage({
         )}
       </div>
 
-      <div className="doc-toolbar">
-        <button
-          type="button"
-          className="faq-help-trigger"
-          onClick={() => setHelpOpen((current) => !current)}
-          aria-expanded={helpOpen}
-          aria-controls="faq-shortcuts"
-          aria-label="Keyboard shortcuts"
-        >
-          <Icon name="help" />
-          <span aria-hidden="true">Shortcuts</span>
-        </button>
-        <button
-          type="button"
-          className="doc-toggle-all"
-          onClick={toggleAll}
-          disabled={visible.length === 0}
-        >
-          {allOpen ? "Collapse all" : "Expand all"}
-        </button>
-      </div>
 
-      {helpOpen && (
-        <dl className="faq-shortcuts personalized-glass" id="faq-shortcuts">
-          {SHORTCUTS.map(([keys, description]) => (
-            <div key={keys + description}>
-              <dt>
-                <kbd>{keys}</kbd>
-              </dt>
-              <dd>{description}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
 
       {visible.length === 0 ? (
         <div className="faq-empty personalized-glass">

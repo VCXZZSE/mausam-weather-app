@@ -70,16 +70,6 @@ describe("FAQ page", () => {
     expect(heading).toHaveAttribute("aria-expanded", "false")
   })
 
-  it("expands and collapses every question from the toolbar", () => {
-    render(<FAQPage onBack={vi.fn()} />)
-    fireEvent.click(screen.getByRole("button", { name: "Expand all" }))
-    expect(closedQuestions()).toHaveLength(0)
-    expect(openQuestions()).toHaveLength(18)
-
-    fireEvent.click(screen.getByRole("button", { name: "Collapse all" }))
-    expect(openQuestions()).toHaveLength(0)
-  })
-
   it("makes the contact address in question 18 a mail link", () => {
     render(<FAQPage onBack={vi.fn()} />)
     fireEvent.click(screen.getByRole("button", { name: /Who can I contact about privacy\?/ }))
@@ -90,7 +80,7 @@ describe("FAQ page", () => {
 
   it("renders no raw markdown syntax anywhere in the document", () => {
     render(<FAQPage onBack={vi.fn()} />)
-    fireEvent.click(screen.getByRole("button", { name: "Expand all" }))
+    fireEvent.click(screen.getByRole("button", { name: /What is Mausam\?/ }))
     const text = (document.querySelector(".faq-page") as HTMLElement).textContent ?? ""
     expect(text).not.toContain("###")
     expect(text).not.toContain("**")
@@ -145,23 +135,11 @@ describe("FAQ search", () => {
     expect(breadcrumb.textContent).toMatch(/\(Q17\)/)
   })
 
-  it("expand all applies only to the questions the filter left on screen", () => {
-    render(<FAQPage onBack={vi.fn()} />)
-    type("account")
-    fireEvent.click(screen.getByRole("button", { name: "Expand all" }))
-    expect(openQuestions()).toHaveLength(1)
-
-    type("")
-    expect(openQuestions()).toHaveLength(1)
-    expect(closedQuestions()).toHaveLength(17)
-  })
-
   it("shows a no-results message with a working reset", () => {
     render(<FAQPage onBack={vi.fn()} />)
     type("thunderstorm on mars")
     expect(screen.getByText(/No questions match/)).toBeInTheDocument()
     expect(screen.queryAllByRole("region")).toHaveLength(0)
-    expect(screen.getByRole("button", { name: "Expand all" })).toBeDisabled()
 
     fireEvent.click(screen.getByRole("button", { name: "Show all questions" }))
     expect(closedQuestions()).toHaveLength(18)
@@ -226,26 +204,13 @@ describe("FAQ keyboard shortcuts", () => {
   it("clears the search and collapses everything on Escape", () => {
     render(<FAQPage onBack={vi.fn()} />)
     type("location")
-    fireEvent.click(screen.getByRole("button", { name: "Expand all" }))
+    fireEvent.click(screen.getByRole("button", { name: /Does Mausam work without location permission\?/ }))
     expect(openQuestions().length).toBeGreaterThan(0)
 
     fireEvent.keyDown(document, { key: "Escape" })
     expect(search()).toHaveValue("")
     expect(openQuestions()).toHaveLength(0)
     expect(closedQuestions()).toHaveLength(18)
-  })
-
-  it("toggles the shortcut list with ? and with the button", () => {
-    render(<FAQPage onBack={vi.fn()} />)
-    const trigger = screen.getByRole("button", { name: "Keyboard shortcuts" })
-    expect(trigger).toHaveAttribute("aria-expanded", "false")
-
-    fireEvent.keyDown(document, { key: "?" })
-    expect(trigger).toHaveAttribute("aria-expanded", "true")
-    expect(screen.getByText("Focus search")).toBeInTheDocument()
-
-    fireEvent.click(trigger)
-    expect(trigger).toHaveAttribute("aria-expanded", "false")
   })
 
   it("ignores shortcuts while a modal dialog owns the keyboard", () => {
