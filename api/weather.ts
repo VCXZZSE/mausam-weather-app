@@ -30,12 +30,19 @@ const weatherQuerySchema = z.object({
   source: z.enum(["device", "manual"]).optional(),
 })
 
+let sharedForecastCache: KeyedMemoryCache<Awaited<ReturnType<typeof fetchOpenMeteoData>>> | null = null
+let sharedAirQualityCaches: ReturnType<typeof createAirQualityCaches> | null = null
+
 export default async function handler(req: any, res: any) {
   const env = loadEnv(process.env)
-  const forecastCache = new KeyedMemoryCache<Awaited<ReturnType<typeof fetchOpenMeteoData>>>(
-    env.WEATHER_CACHE_TTL_MS,
-  )
-  const airQualityCaches = createAirQualityCaches(env)
+  if (!sharedForecastCache) {
+    sharedForecastCache = new KeyedMemoryCache(env.WEATHER_CACHE_TTL_MS)
+  }
+  if (!sharedAirQualityCaches) {
+    sharedAirQualityCaches = createAirQualityCaches(env)
+  }
+  const forecastCache = sharedForecastCache
+  const airQualityCaches = sharedAirQualityCaches
 
   res.setHeader("Cache-Control", "no-store")
   res.setHeader("Access-Control-Allow-Origin", "*")
