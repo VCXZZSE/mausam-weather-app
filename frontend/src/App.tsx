@@ -3887,81 +3887,224 @@ export function SemiCircleCrownWheel({
   onSelect: (index: number) => void
 }) {
   const stageRef = useRef<HTMLDivElement>(null)
-  const itemHeight = 60
   const stageHeight = 360
   const centerY = stageHeight / 2 // 180px
 
-  const [scrollTop, setScrollTop] = useState(selectedIndex * itemHeight)
-  const isDraggingRef = useRef(false)
+  // Pure virtual scroll offset (0 to personas.length - 1)
+  const [scrollOffset, setScrollOffset] = useState(selectedIndex)
+  const scrollOffsetRef = useRef(selectedIndex)
+  const animFrameRef = useRef<number | null>(null)
+  const isInteractingRef = useRef(false)
   const startYRef = useRef(0)
-  const startScrollTopRef = useRef(0)
+  const startOffsetRef = useRef(0)
+  const velocityHistoryRef = useRef<{ y: number; t: number }[]>([])
 
-  const smoothScrollTo = (targetTop: number) => {
-    if (stageRef.current) {
-      if (typeof stageRef.current.scrollTo === "function") {
-        stageRef.current.scrollTo({ top: targetTop, behavior: "smooth" })
+  // Keep ref in sync
+  useEffect(() => {
+    scrollOffsetRef.current = scrollOffset
+  }, [scrollOffset])
+
+  // Cancel any running animation
+  const stopAnimation = () => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current)
+      animFrameRef.current = null
+    }
+  }
+
+  // Smoothly animate scrollOffset to target integer index
+  const animateTo = (targetIdx: number) => {
+    stopAnimation()
+    const clampedTarget = Math.max(0, Math.min(personas.length - 1, targetIdx))
+    const start = scrollOffsetRef.current
+    const distance = clampedTarget - start
+    if (Math.abs(distance) < 0.002) {
+      setScrollOffset(clampedTarget)
+      scrollOffsetRef.current = clampedTarget
+      return
+    }
+
+    const duration = Math.min(360, Math.max(200, Math.abs(distance) * 160))
+    const startTime = performance.now()
+
+    const step = (now: number) => {
+      const elapsed = now - startTime
+      const progress = Math.min(1, elapsed / duration)
+      // Ease out cubic
+      const ease = 1 - Math.pow(1 - progress, 3)
+      const current = start + distance * ease
+      setScrollOffset(current)
+      scrollOffsetRef.current = current
+
+      if (progress < 1) {
+        animFrameRef.current = requestAnimationFrame(step)
       } else {
-        stageRef.current.scrollTop = targetTop
+        setScrollOffset(clampedTarget)
+        scrollOffsetRef.current = clampedTarget
+        animFrameRef.current = null
       }
     }
-    setScrollTop(targetTop)
+    animFrameRef.current = requestAnimationFrame(step)
   }
 
+  // Sync external selectedIndex changes
   useEffect(() => {
-    smoothScrollTo(selectedIndex * itemHeight)
+    if (!isInteractingRef.current) {
+      if (Math.abs(scrollOffsetRef.current - selectedIndex) > 0.01) {
+        animateTo(selectedIndex)
+      }
+    }
   }, [selectedIndex])
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const top = e.currentTarget.scrollTop
-    setScrollTop(top)
-    const newIdx = Math.round(top / itemHeight)
-    if (newIdx >= 0 && newIdx < personas.length && newIdx !== selectedIndex) {
-      onSelect(newIdx)
+  // Clean up animation on unmount
+  useEffect(() => {
+    return () => stopAnimation()
+  }, [])
+
+  // Drag / Touch / Gesture handlers
+  const handleDragStart = (clientY: number) => {
+    stopAnimation()
+    isInteractingRef.current = true
+    startYRef.current = clientY
+    startOffsetRef.current = scrollOffsetRef.current
+    velocityHistoryRef.current = [{ y: clientY, t: performance.now() }]
+  }
+
+  const handleDragMove = (clientY: number) => {
+    if (!isInteractingRef.current) return
+    const now = performance.now()
+    velocityHistoryRef.current.push({ y: clientY, t: now })
+    if (velocityHistoryRef.current.length > 5) {
+      velocityHistoryRef.current.shift()
+    }
+
+    const dy = clientY - startYRef.current
+    // 56px drag moves 1 profile
+    const deltaOffset = -dy / 56
+    let nextOffset = startOffsetRef.current + deltaOffset
+
+    // Rubber-band resistance at extremes
+    if (nextOffset < 0) {
+      nextOffset = nextOffset * 0.35
+    } else if (nextOffset > personas.length - 1) {
+      const over = nextOffset - (personas.length - 1)
+      nextOffset = personas.length - 1 + over * 0.35
+    }
+
+    setScrollOffset(nextOffset)
+    scrollOffsetRef.current = nextOffset
+
+    // Live update selection if changed
+    const rounded = Math.round(nextOffset)
+    const clampedRounded = Math.max(0, Math.min(personas.length - 1, rounded))
+    if (clampedRounded !== selectedIndex) {
+      onSelect(clampedRounded)
     }
   }
 
+  const handleDragEnd = () => {
+    if (!isInteractingRef.current) return
+    isInteractingRef.current = false
+
+    // Calculate fling velocity
+    let velocity = 0
+    const history = velocityHistoryRef.current
+    if (history.length >= 2) {
+      const oldest = history[0]
+      const newest = history[history.length - 1]
+      const dt = newest.t - oldest.t
+      if (dt > 10) {
+        velocity = (newest.y - oldest.y) / dt
+      }
+    }
+
+    // Projected target with momentum (-velocity because dragging down decreases offset)
+    const current = scrollOffsetRef.current
+    const momentumOffset = -velocity * 0.15
+    const projected = current + momentumOffset
+    const target = Math.max(0, Math.min(personas.length - 1, Math.round(projected)))
+
+    animateTo(target)
+    onSelect(target)
+  }
+
+  // Pointer Events (Desktop Mouse Dragging)
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    isDraggingRef.current = true
-    startYRef.current = e.clientY
-    startScrollTopRef.current = stageRef.current?.scrollTop || scrollTop
+    if (e.button !== 0) return
+    handleDragStart(e.clientY)
     if (stageRef.current) {
       stageRef.current.setPointerCapture(e.pointerId)
     }
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current || !stageRef.current) return
-    const dy = e.clientY - startYRef.current
-    const newScroll = Math.max(
-      0,
-      Math.min((personas.length - 1) * itemHeight, startScrollTopRef.current - dy),
-    )
-    stageRef.current.scrollTop = newScroll
-    setScrollTop(newScroll)
+    handleDragMove(e.clientY)
   }
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return
-    isDraggingRef.current = false
     if (stageRef.current && stageRef.current.hasPointerCapture(e.pointerId)) {
       stageRef.current.releasePointerCapture(e.pointerId)
     }
-    const currentTop = stageRef.current?.scrollTop ?? scrollTop
-    const finalIdx = Math.max(0, Math.min(personas.length - 1, Math.round(currentTop / itemHeight)))
-    smoothScrollTo(finalIdx * itemHeight)
-    onSelect(finalIdx)
+    handleDragEnd()
   }
 
+  // Native Touch Events (Mobile Touch / Swipe)
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length > 0) {
+      handleDragStart(e.touches[0].clientY)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length > 0) {
+      handleDragMove(e.touches[0].clientY)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    handleDragEnd()
+  }
+
+  // Wheel handling with smooth debounce
+  const wheelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    stopAnimation()
+    isInteractingRef.current = true
+
+    const delta = e.deltaY * 0.003
+    let nextOffset = scrollOffsetRef.current + delta
+    nextOffset = Math.max(0, Math.min(personas.length - 1, nextOffset))
+
+    setScrollOffset(nextOffset)
+    scrollOffsetRef.current = nextOffset
+
+    const rounded = Math.round(nextOffset)
+    const clampedRounded = Math.max(0, Math.min(personas.length - 1, rounded))
+    if (clampedRounded !== selectedIndex) {
+      onSelect(clampedRounded)
+    }
+
+    if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current)
+    wheelTimeoutRef.current = setTimeout(() => {
+      isInteractingRef.current = false
+      const target = Math.max(0, Math.min(personas.length - 1, Math.round(scrollOffsetRef.current)))
+      animateTo(target)
+      onSelect(target)
+    }, 120)
+  }
+
+  // Keyboard Navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "ArrowDown" && selectedIndex < personas.length - 1) {
       e.preventDefault()
       const next = selectedIndex + 1
-      smoothScrollTo(next * itemHeight)
+      animateTo(next)
       onSelect(next)
     } else if (e.key === "ArrowUp" && selectedIndex > 0) {
       e.preventDefault()
       const prev = selectedIndex - 1
-      smoothScrollTo(prev * itemHeight)
+      animateTo(prev)
       onSelect(prev)
     }
   }
@@ -3978,55 +4121,88 @@ export function SemiCircleCrownWheel({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      onScroll={handleScroll}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      onWheel={handleWheel}
       style={{ height: stageHeight }}
     >
       <svg className="crown-minimal-arc-svg" viewBox="0 0 140 360" preserveAspectRatio="none">
         <defs>
           <linearGradient id="crownMinimalArcGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
-            <stop offset="25%" stopColor="rgba(255,255,255,0.3)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.8)" />
-            <stop offset="75%" stopColor="rgba(255,255,255,0.3)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
+            <stop offset="0%" stopColor="rgba(255,255,255,0.06)" />
+            <stop offset="25%" stopColor="rgba(255,255,255,0.35)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.85)" />
+            <stop offset="75%" stopColor="rgba(255,255,255,0.35)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.06)" />
           </linearGradient>
         </defs>
         <path
-          d="M 130 20 Q 34 180 130 340"
+          d="M 128 20 Q 30 180 128 340"
           fill="none"
           stroke="url(#crownMinimalArcGrad)"
           strokeWidth="2.2"
         />
       </svg>
 
+      {/* Up Button */}
+      <button
+        type="button"
+        className="crown-nav-btn btn-up"
+        aria-label="Previous profile"
+        disabled={selectedIndex === 0}
+        onClick={(e) => {
+          e.stopPropagation()
+          if (selectedIndex > 0) {
+            const next = selectedIndex - 1
+            animateTo(next)
+            onSelect(next)
+          }
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+      </button>
+
+      {/* Down Button */}
+      <button
+        type="button"
+        className="crown-nav-btn btn-down"
+        aria-label="Next profile"
+        disabled={selectedIndex === personas.length - 1}
+        onClick={(e) => {
+          e.stopPropagation()
+          if (selectedIndex < personas.length - 1) {
+            const next = selectedIndex + 1
+            animateTo(next)
+            onSelect(next)
+          }
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
       <div className="crown-minimal-pointer" aria-hidden="true" />
 
-      {/* Invisible scroll track spacer */}
-      <div
-        style={{
-          height: (personas.length - 1) * itemHeight + stageHeight,
-          width: 1,
-          pointerEvents: "none",
-          opacity: 0,
-        }}
-      />
-
-      {/* Absolutely positioned items along true semi-circle trajectory */}
+      {/* Profiles along true semi-circle trajectory */}
       {personas.map((persona, index) => {
-        const distFromCenter = index * itemHeight - scrollTop
-        const delta = distFromCenter / itemHeight
+        const delta = index - scrollOffset
         const absDelta = Math.abs(delta)
         const isSelected = index === selectedIndex
 
-        // Pure circular arc trajectory along circle radius R=260px (step = 21 degrees per item)
-        const angleDeg = delta * 21
+        // Pure circular arc trajectory along circle radius R=240px (step = 24 degrees per item)
+        const angleDeg = delta * 24
         const angleRad = (angleDeg * Math.PI) / 180
-        const y = centerY + Math.sin(angleRad) * 260
-        const x = (1 - Math.cos(angleRad)) * 140
+        const y = centerY + Math.sin(angleRad) * 240
+        const x = (1 - Math.cos(angleRad)) * 130
 
         const isVisible = absDelta < 3.2
-        const scale = isVisible ? Math.max(0.78, 1 - absDelta * 0.08) : 0.75
-        const opacity = isVisible ? Math.max(0.2, 1 - absDelta * 0.3) : 0
+        const scale = isVisible ? Math.max(0.78, 1 - absDelta * 0.08) : 0.72
+        const opacity = isVisible ? Math.max(0.18, 1 - absDelta * 0.32) : 0
 
         return (
           <div
@@ -4046,7 +4222,7 @@ export function SemiCircleCrownWheel({
               "--item-accent": persona.accentColor,
             } as React.CSSProperties}
             onClick={() => {
-              smoothScrollTo(index * itemHeight)
+              animateTo(index)
               onSelect(index)
             }}
           >

@@ -3426,7 +3426,7 @@ input:-webkit-autofill {
   height: 360px;
   overflow: hidden;
   user-select: none;
-  touch-action: pan-y;
+  touch-action: none;
   outline: none;
   background: transparent;
   cursor: grab;
@@ -3446,6 +3446,52 @@ input:-webkit-autofill {
   height: 100%;
   pointer-events: none;
   z-index: 1;
+}
+
+/* Up/Down Crown Quick Navigation Buttons */
+.crown-nav-btn {
+  position: absolute;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  z-index: 7;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.crown-nav-btn.btn-up {
+  top: 8px;
+}
+
+.crown-nav-btn.btn-down {
+  bottom: 8px;
+}
+
+.crown-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+.crown-nav-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.crown-nav-btn:disabled {
+  opacity: 0.22;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Center Horizontal Marker Pill right on the arc */

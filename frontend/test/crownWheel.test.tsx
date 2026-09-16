@@ -72,7 +72,7 @@ describe("User Personas & Rotating Crown Wheel", () => {
     expect(event.description).toContain("comfort index")
   })
 
-  it("renders SemiCircleCrownWheel and handles swipe, keyboard navigation and direct selection", () => {
+  it("renders SemiCircleCrownWheel and handles swipe, keyboard navigation, nav buttons, and direct selection", () => {
     const onSelect = vi.fn()
     render(
       <SemiCircleCrownWheel
@@ -85,9 +85,29 @@ describe("User Personas & Rotating Crown Wheel", () => {
     const wheel = screen.getByRole("listbox", { name: /user profile crown wheel/i })
     expect(wheel).toBeInTheDocument()
 
+    // Up and Down nav buttons exist
+    const upBtn = screen.getByRole("button", { name: /previous profile/i })
+    const downBtn = screen.getByRole("button", { name: /next profile/i })
+    expect(upBtn).toBeDisabled() // at 0
+    expect(downBtn).not.toBeDisabled()
+
+    // Down nav button triggers selection of index 1
+    fireEvent.click(downBtn)
+    expect(onSelect).toHaveBeenCalledWith(1)
+
     // Keyboard ArrowDown navigates
     fireEvent.keyDown(wheel, { key: "ArrowDown" })
     expect(onSelect).toHaveBeenCalledWith(1)
+
+    // Touch swipe upwards triggers next selection
+    fireEvent.touchStart(wheel, { touches: [{ clientY: 200 }] })
+    fireEvent.touchMove(wheel, { touches: [{ clientY: 120 }] })
+    fireEvent.touchEnd(wheel)
+    expect(onSelect).toHaveBeenCalled()
+
+    // Wheel event triggers scroll
+    fireEvent.wheel(wheel, { deltaY: 200 })
+    expect(onSelect).toHaveBeenCalled()
 
     // Option click directly selects
     const fitnessOption = screen.getByRole("option", { name: /outdoor fitness enthusiasts/i })
