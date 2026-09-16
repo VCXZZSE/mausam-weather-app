@@ -3714,7 +3714,7 @@ function ScrollWheelColumn<T extends string | number>({
   items,
   value,
   onChange,
-  itemHeight = 44,
+  itemHeight = 40,
 }: {
   items: T[]
   value: T
@@ -3854,16 +3854,19 @@ export function DobPicker({
           items={MONTH_NAMES}
           value={currentMonthName}
           onChange={handleMonthChange}
+          itemHeight={40}
         />
         <ScrollWheelColumn
           items={days}
           value={currentDay}
           onChange={handleDayChange}
+          itemHeight={40}
         />
         <ScrollWheelColumn
           items={years}
           value={yearVal}
           onChange={handleYearChange}
+          itemHeight={40}
         />
       </div>
 
@@ -3884,8 +3887,8 @@ export function SemiCircleCrownWheel({
   onSelect: (index: number) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const itemHeight = 60
-  const stageHeight = 340
+  const itemHeight = 58
+  const stageHeight = 350
   const spacerHeight = (stageHeight - itemHeight) / 2
 
   const [scrollTop, setScrollTop] = useState(selectedIndex * itemHeight)
@@ -3905,6 +3908,7 @@ export function SemiCircleCrownWheel({
 
   useEffect(() => {
     smoothScrollTo(selectedIndex * itemHeight)
+    setScrollTop(selectedIndex * itemHeight)
   }, [selectedIndex])
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -3920,17 +3924,28 @@ export function SemiCircleCrownWheel({
     isDraggingRef.current = true
     startYRef.current = e.clientY
     startScrollTopRef.current = containerRef.current?.scrollTop || 0
+    if (containerRef.current) {
+      containerRef.current.setPointerCapture(e.pointerId)
+    }
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current || !containerRef.current) return
     const dy = e.clientY - startYRef.current
-    containerRef.current.scrollTop = startScrollTopRef.current - dy
+    const newScroll = Math.max(
+      0,
+      Math.min((personas.length - 1) * itemHeight, startScrollTopRef.current - dy),
+    )
+    containerRef.current.scrollTop = newScroll
+    setScrollTop(newScroll)
   }
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return
     isDraggingRef.current = false
+    if (containerRef.current && containerRef.current.hasPointerCapture(e.pointerId)) {
+      containerRef.current.releasePointerCapture(e.pointerId)
+    }
     const currentTop = containerRef.current?.scrollTop || 0
     const finalIdx = Math.max(0, Math.min(personas.length - 1, Math.round(currentTop / itemHeight)))
     smoothScrollTo(finalIdx * itemHeight)
@@ -3960,21 +3975,21 @@ export function SemiCircleCrownWheel({
       onKeyDown={handleKeyDown}
       style={{ height: stageHeight }}
     >
-      <svg className="crown-minimal-arc-svg" viewBox="0 0 100 340" preserveAspectRatio="none">
+      <svg className="crown-minimal-arc-svg" viewBox="0 0 140 350" preserveAspectRatio="none">
         <defs>
           <linearGradient id="crownMinimalArcGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
             <stop offset="25%" stopColor="rgba(255,255,255,0.3)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.7)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.75)" />
             <stop offset="75%" stopColor="rgba(255,255,255,0.3)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
           </linearGradient>
         </defs>
         <path
-          d="M 90 10 Q 20 170 90 330"
+          d="M 130 15 Q 35 175 130 335"
           fill="none"
           stroke="url(#crownMinimalArcGrad)"
-          strokeWidth="2"
+          strokeWidth="2.2"
         />
       </svg>
 
@@ -3997,12 +4012,14 @@ export function SemiCircleCrownWheel({
           const absDelta = Math.abs(delta)
           const isSelected = index === selectedIndex
 
-          const angleDeg = delta * 14
+          // Curved circular trajectory: x offsets smoothly to the right away from center
+          const angleDeg = delta * 23
           const angleRad = (angleDeg * Math.PI) / 180
-          const x = (1 - Math.cos(angleRad)) * 36
+          const x = (1 - Math.cos(angleRad)) * 185
+          const rotateDeg = delta * 12
 
-          const scale = Math.max(0.78, 1 - absDelta * 0.07)
-          const opacity = Math.max(0.2, 1 - absDelta * 0.25)
+          const scale = Math.max(0.74, 1 - absDelta * 0.08)
+          const opacity = Math.max(0.2, 1 - absDelta * 0.28)
 
           return (
             <div
@@ -4012,7 +4029,7 @@ export function SemiCircleCrownWheel({
               className={`crown-minimal-item${isSelected ? " is-selected" : ""}`}
               style={{
                 height: itemHeight,
-                transform: `translateX(${x}px) scale(${scale})`,
+                transform: `translate3d(${x}px, 0, 0) rotate(${rotateDeg}deg) scale(${scale})`,
                 opacity,
                 "--item-accent": persona.accentColor,
               } as React.CSSProperties}
@@ -4027,7 +4044,7 @@ export function SemiCircleCrownWheel({
                 style={{
                   borderColor: isSelected ? persona.accentColor : "rgba(255,255,255,0.18)",
                   boxShadow: isSelected
-                    ? `0 0 16px ${persona.accentColor}55, inset 0 0 8px ${persona.accentColor}33`
+                    ? `0 0 18px ${persona.accentColor}55, inset 0 0 8px ${persona.accentColor}33`
                     : "none",
                 }}
               >
