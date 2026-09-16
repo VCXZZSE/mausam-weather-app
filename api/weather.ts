@@ -99,6 +99,16 @@ export default async function handler(req: any, res: any) {
     // the section — never by substituting a different country's standard.
     const airQuality = await airQualityPromise
 
+    if (req.query.debug === "cpcb") {
+      return res.status(200).json({
+        hasApiKey: Boolean(env.DATA_GOV_IN_API_KEY),
+        keyLength: env.DATA_GOV_IN_API_KEY.length,
+        keyPrefix: env.DATA_GOV_IN_API_KEY.slice(0, 4),
+        cpcbUrl: env.DATA_GOV_IN_BASE_URL,
+        airQuality,
+      })
+    }
+
     const payload = toDashboardWeatherData(forecast, airQuality, {
       city:
         query.locality ??

@@ -55,7 +55,7 @@ export async function fetchCpcbRecords(
   const {
     baseUrl,
     apiKey,
-    limit=1000,
+    limit=5000,
     // Per page, not for the whole pagination. A bulk page from data.gov.in
     // is several MB and the portal is not fast; timeout allows up to 15s.
     timeoutMs=15000,
