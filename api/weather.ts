@@ -21,16 +21,6 @@ import {
   resolveAirQuality,
 } from "../lib/aqi/resolveAirQuality.js"
 
-// Module-level state survives across warm invocations of the same
-// serverless instance (not across cold starts or other instances) — the
-// same best-effort caching behavior the Fastify backend gets from its own
-// long-lived process, just with a shorter effective lifetime.
-const env = loadEnv(process.env)
-const forecastCache = new KeyedMemoryCache<Awaited<ReturnType<typeof fetchOpenMeteoData>>>(
-  env.WEATHER_CACHE_TTL_MS,
-)
-const airQualityCaches = createAirQualityCaches(env)
-
 const weatherQuerySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
@@ -41,6 +31,12 @@ const weatherQuerySchema = z.object({
 })
 
 export default async function handler(req: any, res: any) {
+  const env = loadEnv(process.env)
+  const forecastCache = new KeyedMemoryCache<Awaited<ReturnType<typeof fetchOpenMeteoData>>>(
+    env.WEATHER_CACHE_TTL_MS,
+  )
+  const airQualityCaches = createAirQualityCaches(env)
+
   res.setHeader("Cache-Control", "no-store")
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
