@@ -373,30 +373,32 @@ input:-webkit-autofill {
 
 /* ── Date of Birth Picker (Redesigned Onboarding Step 02) ─────────────────── */
 .dob-picker-card {
-  margin-bottom: 24px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  margin-bottom: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 .dob-picker-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 .dob-picker-header .setup-label {
   margin-bottom: 0;
 }
 .dob-age-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
   padding: 4px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -404,27 +406,28 @@ input:-webkit-autofill {
 .dob-wheels-frame {
   position: relative;
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1.1fr;
-  gap: 10px;
-  height: 220px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 18px;
-  background: rgba(7, 30, 65, 0.45);
+  grid-template-columns: 1.3fr 0.9fr 1fr;
+  gap: 8px;
+  height: 190px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(0, 20, 50, 0.25);
+  backdrop-filter: blur(12px);
   overflow: hidden;
 }
 .dob-wheel-lens {
   position: absolute;
-  top: 88px;
+  top: 73px;
   height: 44px;
-  left: 8px;
-  right: 8px;
+  left: 6px;
+  right: 6px;
   pointer-events: none;
   z-index: 2;
   border-top: 1px solid rgba(255, 255, 255, 0.45);
   border-bottom: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .dob-wheel-scroll-col {
   position: relative;
@@ -445,9 +448,9 @@ input:-webkit-autofill {
   flex-shrink: 0;
   text-align: center;
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.45);
   user-select: none;
   cursor: pointer;
   transition: color 0.15s ease, transform 0.15s ease, font-size 0.15s ease;
@@ -457,13 +460,13 @@ input:-webkit-autofill {
 }
 .dob-wheel-item.is-selected {
   color: #ffffff;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 750;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 .dob-notice-text {
-  margin: 14px 0 0;
-  color: rgba(255, 255, 255, 0.65);
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 11px;
   line-height: 1.5;
   text-align: center;
@@ -3397,15 +3400,15 @@ input:-webkit-autofill {
 .setup-crown-section {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  margin: 10px 0 20px;
+  gap: 14px;
+  margin: 6px 0 16px;
 }
 
 /* Minimal Open Crown Wheel Stage */
 .crown-minimal-stage {
   position: relative;
   width: 100%;
-  height: 390px;
+  height: 340px;
   overflow: hidden;
   user-select: none;
   touch-action: pan-y;
@@ -3419,7 +3422,7 @@ input:-webkit-autofill {
   top: 0;
   bottom: 0;
   right: 0;
-  width: 140px;
+  width: 100px;
   height: 100%;
   pointer-events: none;
   z-index: 1;
@@ -3429,10 +3432,10 @@ input:-webkit-autofill {
 .crown-minimal-pointer {
   position: absolute;
   top: 50%;
-  right: 43px;
+  right: 35px;
   transform: translateY(-50%);
-  width: 24px;
-  height: 8px;
+  width: 20px;
+  height: 6px;
   border-radius: 99px;
   background: #ffffff !important;
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.95), 0 0 6px #ffffff, 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -3445,7 +3448,7 @@ input:-webkit-autofill {
   position: relative;
   z-index: 3;
   width: 100%;
-  height: 390px;
+  height: 340px;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
@@ -3468,8 +3471,8 @@ input:-webkit-autofill {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
-  padding-right: 74px;
+  gap: 12px;
+  padding-right: 48px;
   cursor: pointer;
   transform-origin: right center;
   transition: transform 0.16s ease-out, opacity 0.16s ease-out;
@@ -3477,26 +3480,29 @@ input:-webkit-autofill {
 
 .crown-item-title {
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 550;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.55);
   text-align: right;
   letter-spacing: -0.01em;
+  line-height: 1.25;
+  white-space: normal;
+  max-width: 180px;
+  word-break: break-word;
   transition: color 0.2s ease, font-size 0.2s ease, font-weight 0.2s ease;
-  white-space: nowrap;
 }
 
 .crown-minimal-item.is-selected .crown-item-title {
   color: #ffffff;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 750;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
 }
 
 .crown-item-bubble {
-  width: 50px;
-  height: 50px;
-  border-radius: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3509,11 +3515,11 @@ input:-webkit-autofill {
 
 .crown-minimal-item.is-selected .crown-item-bubble {
   background: rgba(255, 255, 255, 0.18);
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
 
 .crown-item-emoji {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
   display: inline-block;
   transform-origin: center;

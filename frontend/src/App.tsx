@@ -3884,98 +3884,70 @@ export function SemiCircleCrownWheel({
   onSelect: (index: number) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const isScrollingRef = useRef(false)
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [scrollTop, setScrollTop] = useState(selectedIndex * 66)
+  const itemHeight = 60
+  const stageHeight = 340
+  const spacerHeight = (stageHeight - itemHeight) / 2
 
-  const itemHeight = 66
-  const stageHeight = 390
-  const spacerHeight = (stageHeight - itemHeight) / 2 // 162px
+  const [scrollTop, setScrollTop] = useState(selectedIndex * itemHeight)
+  const isDraggingRef = useRef(false)
+  const startYRef = useRef(0)
+  const startScrollTopRef = useRef(0)
 
-  const smoothScrollTo = (top: number) => {
+  const smoothScrollTo = (targetTop: number) => {
     if (containerRef.current) {
       if (typeof containerRef.current.scrollTo === "function") {
-        containerRef.current.scrollTo({ top, behavior: "smooth" })
+        containerRef.current.scrollTo({ top: targetTop, behavior: "smooth" })
       } else {
-        containerRef.current.scrollTop = top
+        containerRef.current.scrollTop = targetTop
       }
     }
   }
 
   useEffect(() => {
-    if (containerRef.current && !isScrollingRef.current) {
-      const target = selectedIndex * itemHeight
-      if (Math.abs(containerRef.current.scrollTop - target) > 4) {
-        smoothScrollTo(target)
-      }
-    }
-  }, [selectedIndex, itemHeight])
+    smoothScrollTo(selectedIndex * itemHeight)
+  }, [selectedIndex])
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const currentScroll = e.currentTarget.scrollTop
-    setScrollTop(currentScroll)
-    isScrollingRef.current = true
-
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
-    scrollTimeoutRef.current = setTimeout(() => {
-      isScrollingRef.current = false
-      const idx = Math.round(currentScroll / itemHeight)
-      const clamped = Math.max(0, Math.min(personas.length - 1, idx))
-      if (clamped !== selectedIndex) {
-        onSelect(clamped)
-      }
-    }, 70)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowUp") {
-      e.preventDefault()
-      if (selectedIndex > 0) {
-        const next = selectedIndex - 1
-        smoothScrollTo(next * itemHeight)
-        onSelect(next)
-      }
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault()
-      if (selectedIndex < personas.length - 1) {
-        const next = selectedIndex + 1
-        smoothScrollTo(next * itemHeight)
-        onSelect(next)
-      }
+    const top = e.currentTarget.scrollTop
+    setScrollTop(top)
+    const newIdx = Math.round(top / itemHeight)
+    if (newIdx >= 0 && newIdx < personas.length && newIdx !== selectedIndex) {
+      onSelect(newIdx)
     }
   }
-
-  const isPointerDownRef = useRef(false)
-  const startYRef = useRef(0)
-  const startScrollRef = useRef(0)
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    isPointerDownRef.current = true
+    isDraggingRef.current = true
     startYRef.current = e.clientY
-    if (containerRef.current) {
-      startScrollRef.current = containerRef.current.scrollTop
-      containerRef.current.setPointerCapture(e.pointerId)
-    }
+    startScrollTopRef.current = containerRef.current?.scrollTop || 0
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isPointerDownRef.current || !containerRef.current) return
-    const diff = e.clientY - startYRef.current
-    containerRef.current.scrollTop = startScrollRef.current - diff
+    if (!isDraggingRef.current || !containerRef.current) return
+    const dy = e.clientY - startYRef.current
+    containerRef.current.scrollTop = startScrollTopRef.current - dy
   }
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isPointerDownRef.current) {
-      isPointerDownRef.current = false
-      if (containerRef.current && containerRef.current.hasPointerCapture(e.pointerId)) {
-        containerRef.current.releasePointerCapture(e.pointerId)
-      }
-      if (containerRef.current) {
-        const idx = Math.round(containerRef.current.scrollTop / itemHeight)
-        const clamped = Math.max(0, Math.min(personas.length - 1, idx))
-        smoothScrollTo(clamped * itemHeight)
-        onSelect(clamped)
-      }
+  const handlePointerUp = () => {
+    if (!isDraggingRef.current) return
+    isDraggingRef.current = false
+    const currentTop = containerRef.current?.scrollTop || 0
+    const finalIdx = Math.max(0, Math.min(personas.length - 1, Math.round(currentTop / itemHeight)))
+    smoothScrollTo(finalIdx * itemHeight)
+    onSelect(finalIdx)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowDown" && selectedIndex < personas.length - 1) {
+      e.preventDefault()
+      const next = selectedIndex + 1
+      smoothScrollTo(next * itemHeight)
+      onSelect(next)
+    } else if (e.key === "ArrowUp" && selectedIndex > 0) {
+      e.preventDefault()
+      const prev = selectedIndex - 1
+      smoothScrollTo(prev * itemHeight)
+      onSelect(prev)
     }
   }
 
@@ -3988,7 +3960,7 @@ export function SemiCircleCrownWheel({
       onKeyDown={handleKeyDown}
       style={{ height: stageHeight }}
     >
-      <svg className="crown-minimal-arc-svg" viewBox="0 0 140 390" preserveAspectRatio="none">
+      <svg className="crown-minimal-arc-svg" viewBox="0 0 100 340" preserveAspectRatio="none">
         <defs>
           <linearGradient id="crownMinimalArcGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
@@ -3999,7 +3971,7 @@ export function SemiCircleCrownWheel({
           </linearGradient>
         </defs>
         <path
-          d="M 130 10 Q 40 195 130 380"
+          d="M 90 10 Q 20 170 90 330"
           fill="none"
           stroke="url(#crownMinimalArcGrad)"
           strokeWidth="2"
@@ -4025,12 +3997,12 @@ export function SemiCircleCrownWheel({
           const absDelta = Math.abs(delta)
           const isSelected = index === selectedIndex
 
-          const angleDeg = delta * 15
+          const angleDeg = delta * 14
           const angleRad = (angleDeg * Math.PI) / 180
-          const x = (1 - Math.cos(angleRad)) * 115
+          const x = (1 - Math.cos(angleRad)) * 36
 
-          const scale = Math.max(0.74, 1 - absDelta * 0.08)
-          const opacity = Math.max(0.15, 1 - absDelta * 0.28)
+          const scale = Math.max(0.78, 1 - absDelta * 0.07)
+          const opacity = Math.max(0.2, 1 - absDelta * 0.25)
 
           return (
             <div
