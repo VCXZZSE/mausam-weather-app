@@ -49,13 +49,15 @@ captures/
 # Android Studio 3 in .gitignore file.
 .idea/caches
 .idea/modules.xml
+.idea/deploymentTargetSelector.xml
 # Comment next line if keeping position of elements in Navigation Editor is relevant for you
 .idea/navEditor.xml
 
-# Keystore files
-# Uncomment the following lines if you do not want to check your keystore files in.
-#*.jks
-#*.keystore
+# Keystore files. Enabled deliberately: a signing key committed to a public
+# repository has to be treated as compromised, and every build signed with it
+# reissued. Keep keystores outside the repo and these lines uncommented.
+*.jks
+*.keystore
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild

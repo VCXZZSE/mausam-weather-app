@@ -38,9 +38,15 @@ import {
   type UserLocation,
 } from "./location"
 import { getTimeGreeting } from "./timeGreeting"
+import { PrivacyPolicyPage } from "./PrivacyPolicy"
+import { FAQPage } from "./FAQPage"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = "home" | "health" | "forecast" | "alerts"
+// Full-screen views that take over the tab area. A single value keeps them
+// mutually exclusive, and "back" from a document returns to the briefing it
+// was opened from.
+type Overlay = "none" | "briefing" | "privacy" | "faq"
 
 // ── Shared UI ──────────────────────────────────────────────────────────────────
 
@@ -3990,11 +3996,15 @@ function PersonalizedWeatherPage({
   location,
   weather,
   onBack,
+  onOpenPrivacy,
+  onOpenFAQ,
 }: {
   profile: Profile
   location: UserLocation
   weather: DashboardWeatherData
   onBack: () => void
+  onOpenPrivacy: () => void
+  onOpenFAQ: () => void
 }) {
   const localFallback = useMemo(
     () => getPersonalizedWeather(profile, weather),
@@ -4227,6 +4237,46 @@ function PersonalizedWeatherPage({
           </div>
         </div>
       </section>
+
+      {/* The briefing is built from the profile and location data these
+          documents describe, so they sit directly beneath it. */}
+      <button
+        type="button"
+        className="personalized-doc-link"
+        onClick={onOpenPrivacy}
+      >
+        <span>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm0 5a2.5 2.5 0 0 1 2.5 2.5V11h.5v5h-6v-5h.5V9.5A2.5 2.5 0 0 1 12 7Zm0 1.6c-.5 0-1 .4-1 .9V11h2V9.5c0-.5-.4-.9-1-.9Z" />
+          </svg>
+        </span>
+        <span>
+          <strong>Privacy policy</strong>
+          <small>What Mausam collects, and why</small>
+        </span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        className="personalized-doc-link"
+        onClick={onOpenFAQ}
+      >
+        <span>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 15.6a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Zm1.6-5.5c-.7.5-.9.8-.9 1.4v.3h-1.5v-.4c0-1.2.5-1.9 1.4-2.5.7-.5 1-.8 1-1.4 0-.7-.5-1.1-1.3-1.2-.8 0-1.4.4-1.6 1.2l-1.4-.5C9.7 7.8 10.8 7 12.3 7c1.7 0 2.9 1 2.9 2.5 0 1-.5 1.8-1.6 2.6Z" />
+          </svg>
+        </span>
+        <span>
+          <strong>FAQs</strong>
+          <small>Common questions about Mausam</small>
+        </span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      </button>
 
       {personalized.disclaimer && (
         <p className="personalized-disclaimer">{personalized.disclaimer}</p>
@@ -4645,7 +4695,7 @@ export default function App() {
       isLiveWeatherEnabled() && loadStoredLocation() ? "loading" : "demo",
     )
   const [tab, setTab] = useState<Tab>("home")
-  const [showPersonalized, setShowPersonalized] = useState(false)
+  const [overlay, setOverlay] = useState<Overlay>("none")
   const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useState<"dark" | "light">(() =>
     localStorage.getItem("mausam-theme") === "dark" ? "dark" : "light",
@@ -4663,7 +4713,7 @@ export default function App() {
     setWeatherLocationKey(null)
     prefetchedLocationKey.current = null
     setTab("home")
-    setShowPersonalized(false)
+    setOverlay("none")
   }
   const logout = () => {
     changeLocation()
@@ -4791,7 +4841,7 @@ export default function App() {
 
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
-  }, [tab, showPersonalized])
+  }, [tab, overlay])
 
   if (!profile || !profileSetupComplete)
     return <Setup weather={isLiveWeatherEnabled() ? null : weather} onComplete={(nextProfile) => {
@@ -4865,13 +4915,31 @@ export default function App() {
           className="no-scrollbar app-scroll"
           style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
         >
-          {(tab !== "home" || showPersonalized) && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
-          {showPersonalized ? (
+          {(tab !== "home" || overlay !== "none") && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
+          {overlay === "privacy" ? (
+            <PrivacyPolicyPage
+              onBack={() => setOverlay("briefing")}
+              onHome={() => {
+                setTab("home")
+                setOverlay("none")
+              }}
+            />
+          ) : overlay === "faq" ? (
+            <FAQPage
+              onBack={() => setOverlay("briefing")}
+              onHome={() => {
+                setTab("home")
+                setOverlay("none")
+              }}
+            />
+          ) : overlay === "briefing" ? (
             <PersonalizedWeatherPage
               profile={profile}
               location={userLocation}
               weather={weather}
-              onBack={() => setShowPersonalized(false)}
+              onBack={() => setOverlay("none")}
+              onOpenPrivacy={() => setOverlay("privacy")}
+              onOpenFAQ={() => setOverlay("faq")}
             />
           ) : (
             <>
@@ -4881,7 +4949,7 @@ export default function App() {
                   location={userLocation}
                   theme={theme}
                   setTheme={setTheme}
-                  onOpenPersonalized={() => setShowPersonalized(true)}
+                  onOpenPersonalized={() => setOverlay("briefing")}
                   onOpenMenu={() => setMenuOpen(true)}
                   menuOpen={menuOpen}
                   weather={weather}
@@ -4893,10 +4961,12 @@ export default function App() {
             </>
           )}
         </div>
-        {!showPersonalized && <BottomNav tab={tab} setTab={setTab} />}
+        {overlay === "none" && <BottomNav tab={tab} setTab={setTab} />}
         <ProfileSidebar open={menuOpen} profile={profile} location={userLocation} theme={theme}
           onClose={() => setMenuOpen(false)} onChangeLocation={changeLocation} onLogout={logout}
-          onBriefing={() => { setMenuOpen(false); setShowPersonalized(true) }} />
+          onBriefing={() => { setMenuOpen(false); setOverlay("briefing") }}
+          onPrivacy={() => { setMenuOpen(false); setOverlay("privacy") }}
+          onFAQ={() => { setMenuOpen(false); setOverlay("faq") }} />
       </div>
     </div>
   )

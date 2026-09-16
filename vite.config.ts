@@ -4,11 +4,18 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
 export default defineConfig({
+  root: "frontend",
+  envDir: "..",
+  publicDir: "public",
+  build: {
+    outDir: "../dist",
+    emptyOutDir: true,
+  },
   base: "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@": fileURLToPath(new URL("./frontend/src", import.meta.url)),
     },
   },
   server: {

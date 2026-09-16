@@ -5,13 +5,13 @@ import react from "@vitejs/plugin-react"
 // separate config from vite.config.ts so `vitest` never picks up the app's
 // dev/preview server settings. Deliberately narrow in scope: this project
 // has no broader frontend test suite, only the location-aware behavior
-// tests this review requires (see test/*.test.tsx).
+// tests this review requires (see frontend/test/*.test.tsx).
 export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
-    setupFiles: ["./test/setupTests.ts"],
-    include: ["test/**/*.test.{ts,tsx}"],
+    setupFiles: ["./frontend/test/setupTests.ts"],
+    include: ["frontend/test/**/*.test.{ts,tsx}"],
     css: false,
   },
 })

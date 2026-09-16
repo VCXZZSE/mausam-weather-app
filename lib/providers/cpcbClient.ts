@@ -55,8 +55,10 @@ export async function fetchCpcbRecords(
   const {
     baseUrl,
     apiKey,
-    limit=5000,
-    timeoutMs=5000,
+    limit=1000,
+    // Per page, not for the whole pagination. A bulk page from data.gov.in
+    // is several MB and the portal is not fast; timeout allows up to 15s.
+    timeoutMs=15000,
     fetchImpl=fetch,
   }=options
   if(!apiKey) {
@@ -68,14 +70,18 @@ export async function fetchCpcbRecords(
   url.searchParams.set("format","json")
   url.searchParams.set("limit",String(limit))
 
-  const controller=new AbortController()
-  const timeout=setTimeout(() => controller.abort(),timeoutMs)
-
-  try {
-    const records: CpcbRecord[]=[]
-    // Read all pages: a single truncated bulk page can omit nearby stations.
-    for(let page=0;page<100;page+=1) {
-      url.searchParams.set("offset",String(records.length))
+  const records: CpcbRecord[]=[]
+  // Read all pages: a single truncated bulk page can omit nearby stations.
+  for(let page=0;page<100;page+=1) {
+    url.searchParams.set("offset",String(records.length))
+    // One controller and timer PER PAGE. Sharing a single deadline across
+    // the whole loop meant the budget was spent on the first page and every
+    // later one was aborted before it could start, which surfaced as
+    // "CPCB unavailable" and a silently missing AQI section.
+    const controller=new AbortController()
+    const timeout=setTimeout(() => controller.abort(),timeoutMs)
+    let body: z.infer<typeof cpcbResponseSchema>
+    try {
       const response=await fetchImpl(url.toString(),{
         signal: controller.signal,
         headers: { Accept: "application/json" },
@@ -83,13 +89,13 @@ export async function fetchCpcbRecords(
       if(!response.ok) throw new Error(`CPCB request failed with status ${response.status}`)
       const result=cpcbResponseSchema.safeParse(await response.json())
       if(!result.success) throw new Error("CPCB response failed validation")
-      const body=result.data
-      records.push(...body.records)
-      if(body.total!==undefined? records.length>=body.total:body.records.length<limit) return records
-      if(body.records.length===0) throw new Error("CPCB response ended before all records were received")
+      body=result.data
+    } finally {
+      clearTimeout(timeout)
     }
-    throw new Error("CPCB pagination limit exceeded")
-  } finally {
-    clearTimeout(timeout)
+    records.push(...body.records)
+    if(body.total!==undefined? records.length>=body.total:body.records.length<limit) return records
+    if(body.records.length===0) throw new Error("CPCB response ended before all records were received")
   }
+  throw new Error("CPCB pagination limit exceeded")
 }

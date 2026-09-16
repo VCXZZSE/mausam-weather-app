@@ -1,9 +1,14 @@
 node_modules/
 dist/
+.dist/
 build/
+*.zip
 .cache/
 .env*
 !.env.example
+# Committed on purpose: the Android build configuration. Contains only
+# public HTTPS endpoints, never a secret. See .env.android for why.
+!.env.android
 .vite/
 vite.config.*.timestamp-*
 *.tsbuildinfo

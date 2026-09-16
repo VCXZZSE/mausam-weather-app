@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import App from "../src/App"
 
@@ -907,5 +907,162 @@ describe("App — location-first state machine", () => {
     await screen.findAllByText(/Kolkata/i)
     expect(screen.queryByText(/EM Bypass/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Ganga Ferry/i)).not.toBeInTheDocument()
+  })
+
+  it("opens the privacy policy from beneath the briefing and returns to it", async () => {
+    seedProfile()
+    localStorage.setItem(
+      LOCATION_STORAGE_KEY,
+      JSON.stringify({
+        latitude: 22.5726,
+        longitude: 88.3639,
+        locality: "Kolkata",
+        region: "West Bengal",
+        country: "India",
+        timezone: "Asia/Kolkata",
+        source: "device",
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderAtLocationStep()
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    )
+    const briefing = await screen.findByRole("heading", { name: /made personal/i })
+    expect(briefing).toBeInTheDocument()
+
+    // The policy entry point sits at the foot of the briefing itself.
+    const page = document.querySelector(".personalized-page") as HTMLElement
+    await user.click(within(page).getByRole("button", { name: /Privacy policy/i }))
+    expect(
+      await screen.findByRole("heading", { name: /in plain words/i }),
+    ).toBeInTheDocument()
+
+    // Back lands on the briefing it was opened from, not the home tab.
+    await user.click(screen.getByRole("button", { name: "Back to briefing" }))
+    expect(
+      await screen.findByRole("heading", { name: /made personal/i }),
+    ).toBeInTheDocument()
+  })
+
+  it("moves between the briefing, the FAQs and the privacy policy", async () => {
+    seedProfile()
+    localStorage.setItem(
+      LOCATION_STORAGE_KEY,
+      JSON.stringify({
+        latitude: 22.5726,
+        longitude: 88.3639,
+        locality: "Kolkata",
+        region: "West Bengal",
+        country: "India",
+        timezone: "Asia/Kolkata",
+        source: "device",
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderAtLocationStep()
+
+    // The entry cards live at the foot of whichever page is on screen, so
+    // each hop re-queries the current one.
+    const openFrom = async (name: RegExp) => {
+      const page = document.querySelector(".personalized-page") as HTMLElement
+      await user.click(within(page).getByRole("button", { name }))
+    }
+    const goBack = async () =>
+      user.click(screen.getByRole("button", { name: "Back to briefing" }))
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    )
+    await screen.findByRole("heading", { name: /made personal/i })
+
+    // briefing → FAQs
+    await openFrom(/FAQs/i)
+    expect(await screen.findByRole("heading", { name: /answered/i })).toBeInTheDocument()
+    // Scoped to the question list: the app's menu trigger and the FAQ page's
+    // own shortcuts button are disclosures too.
+    const questions = document.querySelector(".doc-sections") as HTMLElement
+    expect(within(questions).getAllByRole("button", { expanded: false })).toHaveLength(18)
+
+    // FAQs → back to the briefing
+    await goBack()
+    await screen.findByRole("heading", { name: /made personal/i })
+
+    // briefing → privacy policy
+    await openFrom(/Privacy policy/i)
+    expect(
+      await screen.findByRole("heading", { name: /in plain words/i }),
+    ).toBeInTheDocument()
+
+    // privacy → back to the briefing, not to the FAQs
+    await goBack()
+    await screen.findByRole("heading", { name: /made personal/i })
+    expect(screen.queryByRole("heading", { name: /answered/i })).not.toBeInTheDocument()
+
+    // briefing → FAQs again
+    await openFrom(/FAQs/i)
+    expect(await screen.findByRole("heading", { name: /answered/i })).toBeInTheDocument()
+  })
+
+  it("redirects directly to the home screen when clicking the top back button from privacy policy or FAQs", async () => {
+    seedProfile()
+    localStorage.setItem(
+      LOCATION_STORAGE_KEY,
+      JSON.stringify({
+        latitude: 22.5726,
+        longitude: 88.3639,
+        locality: "Kolkata",
+        region: "West Bengal",
+        country: "India",
+        timezone: "Asia/Kolkata",
+        source: "device",
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderAtLocationStep()
+
+    // Open briefing then privacy policy
+    await user.click(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    )
+    const page = document.querySelector(".personalized-page") as HTMLElement
+    await user.click(within(page).getByRole("button", { name: /Privacy policy/i }))
+    expect(await screen.findByRole("heading", { name: /in plain words/i })).toBeInTheDocument()
+
+    // Top back button redirects directly to home
+    await user.click(screen.getByRole("button", { name: "Back to home" }))
+    expect(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    ).toBeInTheDocument()
+
+    // Now open briefing then FAQs
+    await user.click(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    )
+    const briefingPage = document.querySelector(".personalized-page") as HTMLElement
+    await user.click(within(briefingPage).getByRole("button", { name: /FAQs/i }))
+    expect(await screen.findByRole("heading", { name: /answered/i })).toBeInTheDocument()
+
+    // Top back button on FAQs redirects directly to home
+    await user.click(screen.getByRole("button", { name: "Back to home" }))
+    expect(
+      await screen.findByRole("button", {
+        name: /open your personalised weather briefing/i,
+      }),
+    ).toBeInTheDocument()
   })
 })

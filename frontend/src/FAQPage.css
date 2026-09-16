@@ -1,0 +1,244 @@
+/* FAQ page — the pieces unique to this document.
+   Everything the FAQs share with the privacy policy — the SF Pro Text
+   stack, the teal accent, collapsible sections, the in-card answer scroll
+   (max-height 58vh, 52vh under 390px, overscroll-behavior: contain), the
+   return button and the reduced-motion rules — comes from
+   documentPage.css, so the two pages stay consistent by construction. */
+
+#root .mausam-app .faq-intro { margin-bottom: 16px; }
+#root .mausam-app .faq-breadcrumb {
+  margin: 12px 0 0;
+  color: var(--pw-faint) !important;
+  font-size: 8px;
+  font-weight: 780;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* ── Search ──────────────────────────────────────────────────────────── */
+#root .mausam-app .faq-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 12px;
+  padding: 0 13px;
+  border: 1px solid var(--pw-border);
+  border-radius: 999px;
+  background: var(--pw-soft-surface);
+}
+#root .mausam-app .faq-search:focus-within { border-color: var(--pw-accent); }
+#root .mausam-app .faq-search > svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  color: var(--pw-accent) !important;
+}
+#root .mausam-app .faq-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 0;
+  border: 0;
+  background: transparent;
+  color: var(--pw-text) !important;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+  appearance: none;
+}
+#root .mausam-app .faq-search input::placeholder { color: var(--pw-faint) !important; font-weight: 600; }
+/* The native clear affordance is replaced by the button below, which is
+   reachable by keyboard and styled with the rest of the page. */
+#root .mausam-app .faq-search input::-webkit-search-cancel-button { appearance: none; }
+#root .mausam-app .faq-search-clear {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  cursor: pointer;
+  transition: transform .2s ease;
+}
+#root .mausam-app .faq-search-clear:active { transform: scale(.9); }
+#root .mausam-app .faq-search-clear:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: 2px; }
+#root .mausam-app .faq-search-clear svg { width: 11px; height: 11px; }
+
+#root .mausam-app .faq-badges { letter-spacing: .1em; }
+
+/* ── Search-match highlighting ───────────────────────────────────────── */
+#root .mausam-app .faq-mark {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font: inherit;
+  font-weight: 850;
+}
+
+/* ── Per-question actions (copy answer, copy link) ───────────────────── */
+#root .mausam-app .doc-section-head { display: flex; align-items: center; }
+#root .mausam-app .doc-section-head .doc-section-title { flex: 1; min-width: 0; }
+#root .mausam-app .doc-section-head .doc-section-title > button { padding-right: 6px; }
+#root .mausam-app .doc-section-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+  padding-right: 9px;
+}
+#root .mausam-app .faq-action {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pw-muted) !important;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+#root .mausam-app .faq-action:hover { background: var(--pw-accent-soft); color: var(--pw-accent) !important; }
+#root .mausam-app .faq-action:active { transform: scale(.92); }
+#root .mausam-app .faq-action:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: -2px; }
+#root .mausam-app .faq-action svg { width: 13px; height: 13px; }
+
+/* ── Keyboard shortcut help ──────────────────────────────────────────── */
+#root .mausam-app .faq-help-trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px 7px 9px;
+  border: 1px solid var(--pw-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pw-muted) !important;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .2s ease, color .2s ease;
+}
+#root .mausam-app .faq-help-trigger:hover { border-color: var(--pw-accent); color: var(--pw-accent) !important; }
+#root .mausam-app .faq-help-trigger:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: 3px; }
+#root .mausam-app .faq-help-trigger svg { width: 13px; height: 13px; }
+#root .mausam-app .faq-shortcuts {
+  margin: 0 0 11px;
+  padding: 13px 15px;
+  border-radius: 18px;
+}
+#root .mausam-app .faq-shortcuts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 5px 0;
+}
+#root .mausam-app .faq-shortcuts > div + div { border-top: 1px solid var(--pw-border); }
+#root .mausam-app .faq-shortcuts dt { flex: 0 0 auto; }
+#root .mausam-app .faq-shortcuts kbd {
+  padding: 3px 7px;
+  border: 1px solid var(--pw-border);
+  border-radius: 6px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+#root .mausam-app .faq-shortcuts dd {
+  margin: 0;
+  color: var(--pw-muted) !important;
+  font-size: 9px;
+  text-align: right;
+}
+
+/* ── Toast ───────────────────────────────────────────────────────────── */
+#root .mausam-app .faq-toast {
+  position: fixed;
+  z-index: 40;
+  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  display: flex;
+  justify-content: center;
+  width: min(360px, calc(100vw - 40px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+#root .mausam-app .faq-toast span {
+  padding: 10px 16px;
+  border: 1px solid var(--pw-border);
+  border-radius: 999px;
+  background: var(--pw-surface);
+  color: var(--pw-text) !important;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 14px 34px rgba(0, 20, 32, .22);
+  backdrop-filter: blur(18px) saturate(116%);
+  animation: faqToastIn .22s cubic-bezier(.2, .8, .2, 1);
+}
+@keyframes faqToastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+#root .mausam-app .faq-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  padding: 26px 18px;
+  border-radius: 20px;
+  text-align: center;
+}
+#root .mausam-app .faq-empty strong {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#root .mausam-app .faq-empty button {
+  padding: 8px 15px;
+  border: 1px solid var(--pw-border);
+  border-radius: 999px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color .2s ease;
+}
+#root .mausam-app .faq-empty button:hover { border-color: var(--pw-accent); }
+#root .mausam-app .faq-empty button:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: 3px; }
+
+/* ── Samsung Galaxy / 360px-class phones ─────────────────────────────── */
+@media (max-width: 390px) {
+  #root .mausam-app .faq-search { padding-inline: 12px; }
+  #root .mausam-app .faq-search input { font-size: 10.5px; }
+  #root .mausam-app .faq-empty { padding: 22px 15px; }
+  /* The question text needs the width more than the labels do. */
+  #root .mausam-app .faq-help-trigger span { display: none; }
+  #root .mausam-app .faq-help-trigger { padding: 7px 9px; }
+  #root .mausam-app .doc-section-actions { padding-right: 7px; }
+  #root .mausam-app .faq-action { width: 24px; height: 24px; }
+  #root .mausam-app .faq-shortcuts dd { font-size: 8.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .mausam-app .faq-search-clear,
+  #root .mausam-app .faq-empty button,
+  #root .mausam-app .faq-action,
+  #root .mausam-app .faq-help-trigger { transition: none; }
+  #root .mausam-app .faq-toast span { animation: none; }
+}

@@ -1,0 +1,56 @@
+# Normalize line endings so a clone behaves identically on Windows, macOS and
+# Linux. This repo is committed with core.autocrlf=true on the authoring
+# machine; without these rules a fresh clone can end up with CRLF inside files
+# that must stay LF (or with a text-mangled binary), which breaks the Android
+# build in ways that are hard to diagnose.
+* text=auto
+
+# The Gradle wrapper script is executed by /bin/sh on macOS and Linux. A single
+# CRLF here produces "bad interpreter: /bin/sh^M" and no Gradle build at all.
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Windows-only scripts must keep CRLF.
+gradlew.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Android/Gradle sources are plain text and safe to normalize to LF.
+*.gradle text eol=lf
+*.java text eol=lf
+*.kt text eol=lf
+*.pro text eol=lf
+*.properties text eol=lf
+*.xml text eol=lf
+
+# Web sources.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Never let Git touch these — a byte changed here corrupts the artifact.
+# gradle-wrapper.jar in particular must survive checkout exactly as committed
+# or Gradle cannot start.
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.zip binary
+*.apk binary
+*.aab binary
+*.keystore binary
+*.jks binary

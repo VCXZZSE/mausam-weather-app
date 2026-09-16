@@ -1,0 +1,245 @@
+/* Shared chrome for the Markdown-backed document pages (privacy policy,
+   FAQs). Those pages carry `.personalized-page doc-page` plus their own
+   page class, so they inherit the --pw-* palette, padding, light/dark
+   colours and reduced-motion handling from index.css. With no data-variant
+   set the shell resolves to its default teal accent (#238bb4 light /
+   #70d7eb dark). Page-specific pieces live in PrivacyPolicy.css and
+   FAQPage.css; anything both pages share belongs here, so the two cannot
+   drift apart. */
+
+#root .mausam-app .doc-page {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+#root .mausam-app .doc-page strong { font-size: inherit; font-weight: 800; }
+
+/* ── Toolbar: count and expand-all ───────────────────────────────────── */
+#root .mausam-app .doc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 4px 10px;
+}
+#root .mausam-app .doc-count {
+  color: var(--pw-faint) !important;
+  font-size: 8px;
+  font-weight: 780;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+#root .mausam-app .doc-toggle-all {
+  padding: 7px 13px;
+  border: 1px solid var(--pw-border);
+  border-radius: 999px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease;
+}
+#root .mausam-app .doc-toggle-all:hover { border-color: var(--pw-accent); }
+#root .mausam-app .doc-toggle-all:active { transform: scale(.95); }
+#root .mausam-app .doc-toggle-all:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: 3px; }
+#root .mausam-app .doc-toggle-all:disabled { opacity: .45; cursor: default; }
+
+/* ── Collapsible sections ────────────────────────────────────────────── */
+#root .mausam-app .doc-sections { display: flex; flex-direction: column; gap: 9px; }
+#root .mausam-app .doc-section { overflow: hidden; border-radius: 20px; }
+#root .mausam-app .doc-section-title { margin: 0; font: inherit; }
+#root .mausam-app .doc-section-title > button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 28px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 15px;
+  border: 0;
+  background: transparent;
+  color: var(--pw-text) !important;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#root .mausam-app .doc-section-title > button:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: -3px; }
+#root .mausam-app .doc-section-number {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font-size: 10px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+#root .mausam-app .doc-section-label {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+#root .mausam-app .doc-section-title > button > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--pw-muted) !important;
+  transition: transform .3s cubic-bezier(.2, .8, .2, 1);
+}
+#root .mausam-app .doc-section.is-open .doc-section-title > button > svg { transform: rotate(180deg); }
+
+#root .mausam-app .doc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  /* Collapsed content leaves the accessibility tree once the row collapse
+     has finished, so screen readers skip closed sections. */
+  visibility: hidden;
+  transition:
+    grid-template-rows .36s cubic-bezier(.2, .8, .2, 1),
+    opacity .26s ease,
+    visibility 0s linear .36s;
+}
+#root .mausam-app .doc-section.is-open .doc-panel {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows .36s cubic-bezier(.2, .8, .2, 1),
+    opacity .26s ease,
+    visibility 0s;
+}
+#root .mausam-app .doc-panel > div { min-height: 0; overflow: hidden; }
+
+/* A long answer scrolls inside its own card instead of pushing the rest of
+   the document far down the page — felt most on a 360px phone. */
+#root .mausam-app .doc-panel-inner {
+  max-height: 58vh;
+  margin: 0 15px;
+  padding: 2px 0 15px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--pw-border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--pw-border) transparent;
+}
+#root .mausam-app .doc-panel-inner::-webkit-scrollbar { width: 4px; }
+#root .mausam-app .doc-panel-inner::-webkit-scrollbar-track { background: transparent; }
+#root .mausam-app .doc-panel-inner::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--pw-border); }
+
+/* ── Document prose ──────────────────────────────────────────────────── */
+#root .mausam-app .doc-panel-inner p { margin: 11px 0 0; font-size: 10px; line-height: 1.62; }
+#root .mausam-app .doc-panel-inner p:first-child { margin-top: 10px; }
+#root .mausam-app .doc-line { display: block; }
+#root .mausam-app .doc-list {
+  margin: 10px 0 0;
+  padding-left: 15px;
+  list-style: none;
+}
+#root .mausam-app .doc-list li {
+  position: relative;
+  margin-top: 6px;
+  color: var(--pw-muted) !important;
+  font-size: 10px;
+  line-height: 1.55;
+}
+#root .mausam-app .doc-list li::before {
+  content: "";
+  position: absolute;
+  top: .55em;
+  left: -12px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--pw-accent);
+}
+
+/* Addresses in the document text open the reader's mail client. The nested
+   override is needed because the shell paints every <strong> with --pw-text. */
+#root .mausam-app .doc-mail {
+  color: var(--pw-accent) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+#root .mausam-app .doc-mail strong { color: inherit !important; }
+
+/* ── Return to the briefing ──────────────────────────────────────────── */
+#root .mausam-app .doc-return {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid var(--pw-border);
+  border-radius: 18px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease;
+}
+#root .mausam-app .doc-return:hover { border-color: var(--pw-accent); }
+#root .mausam-app .doc-return:active { transform: scale(.98); }
+#root .mausam-app .doc-return:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: 3px; }
+#root .mausam-app .doc-return svg { width: 15px; height: 15px; }
+
+/* ── Entry cards at the foot of the daily briefing ───────────────────── */
+#root .mausam-app .personalized-doc-link {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 13px 15px;
+  border: 1px solid var(--pw-border);
+  border-radius: 18px;
+  background: var(--pw-soft-surface);
+  color: var(--pw-text) !important;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease;
+}
+#root .mausam-app .personalized-doc-link:first-of-type { margin-top: 14px; }
+#root .mausam-app .personalized-doc-link:hover { border-color: var(--pw-accent); }
+#root .mausam-app .personalized-doc-link:active { transform: scale(.99); }
+#root .mausam-app .personalized-doc-link:focus-visible { outline: 3px solid var(--pw-accent-soft); outline-offset: 3px; }
+#root .mausam-app .personalized-doc-link > span:first-child {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent) !important;
+}
+#root .mausam-app .personalized-doc-link > span:first-child svg { width: 15px; height: 15px; }
+#root .mausam-app .personalized-doc-link > span:nth-child(2) { min-width: 0; flex: 1; }
+#root .mausam-app .personalized-doc-link strong { display: block; font-size: 11px; font-weight: 800; }
+#root .mausam-app .personalized-doc-link small { display: block; margin-top: 3px; font-size: 8px; }
+#root .mausam-app .personalized-doc-link > svg { width: 14px; height: 14px; color: var(--pw-muted) !important; }
+
+/* ── Samsung Galaxy / 360px-class phones ─────────────────────────────── */
+@media (max-width: 390px) {
+  #root .mausam-app .doc-section-title > button { padding: 12px 13px; gap: 10px; }
+  #root .mausam-app .doc-panel-inner { max-height: 52vh; margin-inline: 13px; }
+  #root .mausam-app .doc-section-label { font-size: 10.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .mausam-app .doc-panel,
+  #root .mausam-app .doc-section.is-open .doc-panel,
+  #root .mausam-app .doc-section-title > button > svg,
+  #root .mausam-app .doc-toggle-all,
+  #root .mausam-app .doc-return,
+  #root .mausam-app .personalized-doc-link { transition: none; }
+}
