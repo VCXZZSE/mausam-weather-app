@@ -3387,3 +3387,199 @@ input:-webkit-autofill {
   opacity: .5;
   cursor: default;
 }
+
+/* ── Semi-Circle Rotating Crown Wheel Profile Selector (Minimal Redesign) ── */
+.setup-profile-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.setup-crown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 10px 0 20px;
+}
+
+/* Minimal Open Crown Wheel Stage */
+.crown-minimal-stage {
+  position: relative;
+  width: 100%;
+  height: 390px;
+  overflow: hidden;
+  user-select: none;
+  touch-action: pan-y;
+  outline: none;
+  background: transparent;
+}
+
+/* Subtle Curved Arc Line on the right */
+.crown-minimal-arc-svg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 140px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Center Horizontal Marker Pill right on the arc */
+.crown-minimal-pointer {
+  position: absolute;
+  top: 50%;
+  right: 43px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 8px;
+  border-radius: 99px;
+  background: #ffffff !important;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.95), 0 0 6px #ffffff, 0 2px 6px rgba(0, 0, 0, 0.35);
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* Scroll / Swipe Column */
+.crown-minimal-scroll {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 390px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+}
+
+.crown-minimal-scroll:active {
+  cursor: grabbing;
+}
+
+.crown-minimal-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Each profile row: Text on left, Icon bubble on right */
+.crown-minimal-item {
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-right: 74px;
+  cursor: pointer;
+  transform-origin: right center;
+  transition: transform 0.16s ease-out, opacity 0.16s ease-out;
+}
+
+.crown-item-title {
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 550;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease, font-size 0.2s ease, font-weight 0.2s ease;
+  white-space: nowrap;
+}
+
+.crown-minimal-item.is-selected .crown-item-title {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 750;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+}
+
+.crown-item-bubble {
+  width: 50px;
+  height: 50px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.crown-minimal-item.is-selected .crown-item-bubble {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.08);
+}
+
+.crown-item-emoji {
+  font-size: 24px;
+  line-height: 1;
+  display: inline-block;
+  transform-origin: center;
+}
+
+/* Minimal Precise Summary at Bottom */
+.crown-minimal-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px);
+  animation: crownFadeIn 0.25s ease both;
+}
+
+@keyframes crownFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.crown-summary-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+}
+
+.crown-summary-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--persona-accent, #71efff);
+  box-shadow: 0 0 8px var(--persona-accent, #71efff);
+  flex-shrink: 0;
+}
+
+.crown-summary-line strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.crown-summary-sep {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.crown-summary-tagline {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.crown-summary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.crown-summary-tag {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import type { Profile } from "./App"
+import { getPersonaById } from "./App"
 import type { UserLocation } from "./location"
 import "./ProfileSidebar.css"
 
@@ -84,10 +85,31 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
           <p className="sidebar-eyebrow">A LITTLE MORE YOU</p>
           <h2 id="sidebar-title">{profile.name}</h2>
           <p className="sidebar-subtitle">Your day, in your element.</p>
+          {profile.persona && (() => {
+            const persona = getPersonaById(profile.persona)
+            return persona ? (
+              <div className="sidebar-persona-chip">
+                <span className="sidebar-persona-icon">{persona.icon}</span>
+                <span className="sidebar-persona-label">{persona.title}</span>
+              </div>
+            ) : null
+          })()}
         </section>
 
         <section className="sidebar-profile-card" aria-label="Your profile">
           <div className="sidebar-section-heading"><h3>Your profile</h3><span>PERSONALISED</span></div>
+          {profile.persona && (() => {
+            const persona = getPersonaById(profile.persona)
+            return persona ? (
+              <div className="sidebar-active-persona-banner" style={{ "--persona-accent": persona.accentColor } as React.CSSProperties}>
+                <span className="sidebar-active-persona-icon">{persona.icon}</span>
+                <div className="sidebar-active-persona-info">
+                  <strong>{persona.title}</strong>
+                  <small>{persona.tagline}</small>
+                </div>
+              </div>
+            ) : null
+          })()}
           <dl className="sidebar-metrics"><div><dt>Age</dt><dd>{profile.age}<small>years</small></dd></div></dl>
           <dl className="sidebar-baseline"><div><dt>Gender</dt><dd>{profile.gender ?? "Not shared"}</dd></div><div><dt>Activity</dt><dd>{profile.activity}</dd></div></dl>
           <details className="sidebar-preferences"><summary>Your preferences <span>Goals, sensitivities & health</span><Icon name="arrow" /></summary><div className="sidebar-preference-content">{([

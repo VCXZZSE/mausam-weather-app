@@ -2580,6 +2580,161 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
 
 type SetupStep = "welcome" | "name" | "body" | "sensitivities" | "routine"
 export type ProfileGender = "Female" | "Male" | "Non-binary" | "Prefer not to say"
+
+export type UserPersonaId =
+  | "health"
+  | "fitness"
+  | "beach"
+  | "travel"
+  | "family"
+  | "garden"
+  | "commute"
+  | "event"
+
+export interface UserPersona {
+  id: UserPersonaId
+  title: string
+  shortTitle: string
+  icon: string
+  accentColor: string
+  gradient: string
+  tagline: string
+  description: string
+  highlights: string[]
+  defaultSensitivities: string[]
+  defaultConcerns: string[]
+  defaultGoals: string[]
+  defaultActivity: string
+}
+
+export const USER_PERSONAS: UserPersona[] = [
+  {
+    id: "health",
+    title: "Health-conscious",
+    shortTitle: "Health",
+    icon: "🌿",
+    accentColor: "#10b981",
+    gradient: "linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 95, 70, 0.15))",
+    tagline: "Allergy, asthma & skin shield",
+    description: "Highlight Air Quality Index (AQI), pollen count, UV index, and humidity levels to help manage allergies, asthma, or sensitive skin.",
+    highlights: ["Air Quality (AQI)", "Pollen & Allergens", "UV & Skin Index", "Humidity Levels"],
+    defaultSensitivities: ["AQI / smoke", "Pollen", "Humidity", "UV / sun"],
+    defaultConcerns: ["Asthma", "Allergies", "Skin sensitivity"],
+    defaultGoals: ["Daily energy", "Outdoor plans"],
+    defaultActivity: "Moderate",
+  },
+  {
+    id: "fitness",
+    title: "Outdoor fitness enthusiasts",
+    shortTitle: "Fitness",
+    icon: "⚡",
+    accentColor: "#f59e0b",
+    gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(180, 83, 9, 0.15))",
+    tagline: "Best running hours & thermal stamina",
+    description: "Focus on sunrise/sunset times, 'best running hours', wind speed, and heat alerts for optimal athletic performance.",
+    highlights: ["Best Running Hours", "Sunrise / Sunset", "Wind & Gusts", "Heat Alerts"],
+    defaultSensitivities: ["Heat", "AQI / smoke", "UV / sun"],
+    defaultConcerns: ["None of these"],
+    defaultGoals: ["Fitness", "Outdoor plans"],
+    defaultActivity: "High",
+  },
+  {
+    id: "beach",
+    title: "Beachgoers & surfers",
+    shortTitle: "Beach & Surf",
+    icon: "🌊",
+    accentColor: "#06b6d4",
+    gradient: "linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(14, 116, 144, 0.15))",
+    tagline: "Sea conditions, swell & tide timings",
+    description: "Provide sea conditions, tide timings, wave height, and water temperature for optimal coastal planning.",
+    highlights: ["Sea Conditions", "Tide Timings", "Wave Height", "Water Temperature"],
+    defaultSensitivities: ["UV / sun", "Heat", "Monsoon damp"],
+    defaultConcerns: ["None of these"],
+    defaultGoals: ["Outdoor plans", "Fitness"],
+    defaultActivity: "High",
+  },
+  {
+    id: "travel",
+    title: "Travelers",
+    shortTitle: "Travelers",
+    icon: "✈️",
+    accentColor: "#8b5cf6",
+    gradient: "linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(109, 40, 217, 0.15))",
+    tagline: "Saved destinations & transit alerts",
+    description: "Offer quick access to saved destinations, severe weather alerts for flights, and packing suggestions based on forecasts.",
+    highlights: ["Flight Weather Alerts", "Packing Suggestions", "Saved Destinations", "Severe Weather"],
+    defaultSensitivities: ["Cold", "AQI / smoke"],
+    defaultConcerns: ["None of these"],
+    defaultGoals: ["Travel", "Daily energy"],
+    defaultActivity: "Moderate",
+  },
+  {
+    id: "family",
+    title: "Parents & families",
+    shortTitle: "Parents & Families",
+    icon: "🏡",
+    accentColor: "#ec4899",
+    gradient: "linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(190, 24, 93, 0.15))",
+    tagline: "School commute & daily routine safety",
+    description: "Focus on school commute conditions, rain alerts, and severe weather warnings to plan daily routines safely.",
+    highlights: ["School Commute", "Rain Alerts", "Severe Warnings", "Kids Comfort Index"],
+    defaultSensitivities: ["AQI / smoke", "Cold", "Heat"],
+    defaultConcerns: ["Allergies"],
+    defaultGoals: ["Family care", "Daily energy"],
+    defaultActivity: "Moderate",
+  },
+  {
+    id: "garden",
+    title: "Agriculture & gardeners",
+    shortTitle: "Agri & Gardeners",
+    icon: "🌱",
+    accentColor: "#22c55e",
+    gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(21, 128, 61, 0.15))",
+    tagline: "Soil moisture & seasonal planting",
+    description: "Provide soil moisture, rainfall predictions, frost alerts, and seasonal planting guidance.",
+    highlights: ["Soil Moisture", "Rain Predictions", "Frost Alerts", "Planting Guidance"],
+    defaultSensitivities: ["Monsoon damp", "Cold", "Heat"],
+    defaultConcerns: ["None of these"],
+    defaultGoals: ["Outdoor plans", "Daily energy"],
+    defaultActivity: "Moderate",
+  },
+  {
+    id: "commute",
+    title: "Commuters",
+    shortTitle: "Commuters",
+    icon: "🚗",
+    accentColor: "#3b82f6",
+    gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(29, 78, 216, 0.15))",
+    tagline: "Visibility, traffic flow & storm alerts",
+    description: "Integrate weather with traffic updates, visibility conditions (fog/smog), and alerts for sudden storms affecting travel.",
+    highlights: ["Fog & Smog Visibility", "Traffic Weather", "Storm Alerts", "Commute Timing"],
+    defaultSensitivities: ["AQI / smoke", "Monsoon damp"],
+    defaultConcerns: ["None of these"],
+    defaultGoals: ["Daily energy", "Travel"],
+    defaultActivity: "Moderate",
+  },
+  {
+    id: "event",
+    title: "Event planners",
+    shortTitle: "Event Planners",
+    icon: "🎉",
+    accentColor: "#f43f5e",
+    gradient: "linear-gradient(135deg, rgba(244, 63, 94, 0.25), rgba(190, 18, 60, 0.15))",
+    tagline: "Extended forecasts & comfort index",
+    description: "Extended forecasts, probability of rain, and 'comfort index' for organizing outdoor gatherings or weddings.",
+    highlights: ["14-Day Outlook", "Rain Probability", "Comfort Index", "Outdoor Gatherings"],
+    defaultSensitivities: ["Monsoon damp", "Heat", "Humidity"],
+    defaultConcerns: ["None of these"],
+    defaultGoals: ["Outdoor plans", "Daily energy"],
+    defaultActivity: "Moderate",
+  },
+]
+
+export function getPersonaById(id?: string): UserPersona | undefined {
+  if (!id) return undefined
+  return USER_PERSONAS.find((p) => p.id === id)
+}
+
 export type Profile = {
   dob?: string
   gender?: ProfileGender
@@ -2591,6 +2746,7 @@ export type Profile = {
   height?: number
   weight?: number
   activity: string
+  persona?: UserPersonaId
 }
 
 export function calculateAge(dobStr?: string): number {
@@ -3508,6 +3664,7 @@ function loadStoredProfile(): Profile | null {
       return null
     const dob = typeof profile.dob === "string" ? profile.dob : undefined
     const age = dob ? calculateAge(dob) : (typeof profile.age === "number" ? profile.age : 29)
+    const persona = typeof profile.persona === "string" ? (profile.persona as UserPersonaId) : undefined
     // Rebuild the object explicitly
     return {
       name: profile.name,
@@ -3520,6 +3677,7 @@ function loadStoredProfile(): Profile | null {
       height: typeof profile.height === "number" ? profile.height : undefined,
       weight: typeof profile.weight === "number" ? profile.weight : undefined,
       activity: profile.activity,
+      persona,
     }
   } catch {
     return null
@@ -3716,6 +3874,202 @@ export function DobPicker({
   )
 }
 
+export function SemiCircleCrownWheel({
+  personas,
+  selectedIndex,
+  onSelect,
+}: {
+  personas: UserPersona[]
+  selectedIndex: number
+  onSelect: (index: number) => void
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isScrollingRef = useRef(false)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [scrollTop, setScrollTop] = useState(selectedIndex * 66)
+
+  const itemHeight = 66
+  const stageHeight = 390
+  const spacerHeight = (stageHeight - itemHeight) / 2 // 162px
+
+  const smoothScrollTo = (top: number) => {
+    if (containerRef.current) {
+      if (typeof containerRef.current.scrollTo === "function") {
+        containerRef.current.scrollTo({ top, behavior: "smooth" })
+      } else {
+        containerRef.current.scrollTop = top
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (containerRef.current && !isScrollingRef.current) {
+      const target = selectedIndex * itemHeight
+      if (Math.abs(containerRef.current.scrollTop - target) > 4) {
+        smoothScrollTo(target)
+      }
+    }
+  }, [selectedIndex, itemHeight])
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScroll = e.currentTarget.scrollTop
+    setScrollTop(currentScroll)
+    isScrollingRef.current = true
+
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
+    scrollTimeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false
+      const idx = Math.round(currentScroll / itemHeight)
+      const clamped = Math.max(0, Math.min(personas.length - 1, idx))
+      if (clamped !== selectedIndex) {
+        onSelect(clamped)
+      }
+    }, 70)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowUp") {
+      e.preventDefault()
+      if (selectedIndex > 0) {
+        const next = selectedIndex - 1
+        smoothScrollTo(next * itemHeight)
+        onSelect(next)
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault()
+      if (selectedIndex < personas.length - 1) {
+        const next = selectedIndex + 1
+        smoothScrollTo(next * itemHeight)
+        onSelect(next)
+      }
+    }
+  }
+
+  const isPointerDownRef = useRef(false)
+  const startYRef = useRef(0)
+  const startScrollRef = useRef(0)
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isPointerDownRef.current = true
+    startYRef.current = e.clientY
+    if (containerRef.current) {
+      startScrollRef.current = containerRef.current.scrollTop
+      containerRef.current.setPointerCapture(e.pointerId)
+    }
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current || !containerRef.current) return
+    const diff = e.clientY - startYRef.current
+    containerRef.current.scrollTop = startScrollRef.current - diff
+  }
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isPointerDownRef.current) {
+      isPointerDownRef.current = false
+      if (containerRef.current && containerRef.current.hasPointerCapture(e.pointerId)) {
+        containerRef.current.releasePointerCapture(e.pointerId)
+      }
+      if (containerRef.current) {
+        const idx = Math.round(containerRef.current.scrollTop / itemHeight)
+        const clamped = Math.max(0, Math.min(personas.length - 1, idx))
+        smoothScrollTo(clamped * itemHeight)
+        onSelect(clamped)
+      }
+    }
+  }
+
+  return (
+    <div
+      className="crown-minimal-stage"
+      tabIndex={0}
+      role="listbox"
+      aria-label="User Profile Crown Wheel"
+      onKeyDown={handleKeyDown}
+      style={{ height: stageHeight }}
+    >
+      <svg className="crown-minimal-arc-svg" viewBox="0 0 140 390" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="crownMinimalArcGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
+            <stop offset="25%" stopColor="rgba(255,255,255,0.3)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.7)" />
+            <stop offset="75%" stopColor="rgba(255,255,255,0.3)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M 130 10 Q 40 195 130 380"
+          fill="none"
+          stroke="url(#crownMinimalArcGrad)"
+          strokeWidth="2"
+        />
+      </svg>
+
+      <div className="crown-minimal-pointer" aria-hidden="true" />
+
+      <div
+        ref={containerRef}
+        className="crown-minimal-scroll"
+        onScroll={handleScroll}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        style={{ height: stageHeight }}
+      >
+        <div style={{ height: spacerHeight, flexShrink: 0 }} />
+        {personas.map((persona, index) => {
+          const distFromCenter = index * itemHeight - scrollTop
+          const delta = distFromCenter / itemHeight
+          const absDelta = Math.abs(delta)
+          const isSelected = index === selectedIndex
+
+          const angleDeg = delta * 15
+          const angleRad = (angleDeg * Math.PI) / 180
+          const x = (1 - Math.cos(angleRad)) * 115
+
+          const scale = Math.max(0.74, 1 - absDelta * 0.08)
+          const opacity = Math.max(0.15, 1 - absDelta * 0.28)
+
+          return (
+            <div
+              key={persona.id}
+              role="option"
+              aria-selected={isSelected}
+              className={`crown-minimal-item${isSelected ? " is-selected" : ""}`}
+              style={{
+                height: itemHeight,
+                transform: `translateX(${x}px) scale(${scale})`,
+                opacity,
+                "--item-accent": persona.accentColor,
+              } as React.CSSProperties}
+              onClick={() => {
+                smoothScrollTo(index * itemHeight)
+                onSelect(index)
+              }}
+            >
+              <span className="crown-item-title">{persona.title}</span>
+              <div
+                className="crown-item-bubble"
+                style={{
+                  borderColor: isSelected ? persona.accentColor : "rgba(255,255,255,0.18)",
+                  boxShadow: isSelected
+                    ? `0 0 16px ${persona.accentColor}55, inset 0 0 8px ${persona.accentColor}33`
+                    : "none",
+                }}
+              >
+                <span className="crown-item-emoji">{persona.icon}</span>
+              </div>
+            </div>
+          )
+        })}
+        <div style={{ height: spacerHeight, flexShrink: 0 }} />
+      </div>
+    </div>
+  )
+}
+
 function Setup({
   weather,
   onComplete,
@@ -3729,9 +4083,9 @@ function Setup({
   const [sex, setSex] = useState<ProfileGender>("Prefer not to say")
   const [sensitivities, setSensitivities] = useState<string[]>([])
   const [concerns, setConcerns] = useState<string[]>([])
-  const [goals, setGoals] = useState<string[]>(["Daily energy"])
-  const [activity, setActivity] = useState("Moderate")
+  const [selectedPersonaIndex, setSelectedPersonaIndex] = useState(0)
   const [nameError, setNameError] = useState("")
+  const activePersona = USER_PERSONAS[selectedPersonaIndex] || USER_PERSONAS[0]
   const stepIndex = SETUP_STEPS.indexOf(step)
   const toggle = (
     value: string,
@@ -3951,51 +4305,44 @@ function Setup({
           </section>
         )}
         {step === "routine" && (
-          <section className="setup-panel setup-animate">
-            <div className="setup-eyebrow">04 / YOUR RHYTHM</div>
+          <section className="setup-panel setup-profile-panel setup-animate">
+            <div className="setup-eyebrow">04 / CHOOSE YOUR PROFILE</div>
             <h2>
-              What should your
+              How do you experience
               <br />
-              <em>day feel like?</em>
+              <em>the elements?</em>
             </h2>
             <p className="setup-copy">
-              We’ll turn conditions into useful nudges for the way you actually
-              live.
+              Swipe up or down to select your lifestyle profile.
             </p>
-            <label className="setup-label">WHAT MATTERS MOST</label>
-            <div className="setup-chips">
-              {choiceSets.goals.map((item) => (
-                <SetupChip
-                  key={item}
-                  label={item}
-                  selected={goals.includes(item)}
-                  onClick={() => toggle(item, goals, setGoals)}
-                />
-              ))}
-            </div>
-            <label className="setup-label">YOUR USUAL ACTIVITY</label>
-            <div className="setup-segmented">
-              {["Low", "Moderate", "High"].map((item) => (
-                <button
-                  key={item}
-                  className={activity === item ? "active" : ""}
-                  onClick={() => setActivity(item)}
-                  type="button"
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-            <div className="setup-preview">
-              <span>✦</span>
-              <div>
-                <strong>Your first insight</strong>
-                <small>
-                  {weather ? `${weather.current.condition} · ${weather.current.temperature}°C · ${weather.current.humidity}% humidity. ` : "Once you select your area, "}
-                  we’ll use local weather to suggest your best outdoor window and daily guidance.
-                </small>
+
+            <div className="setup-crown-section">
+              <SemiCircleCrownWheel
+                personas={USER_PERSONAS}
+                selectedIndex={selectedPersonaIndex}
+                onSelect={setSelectedPersonaIndex}
+              />
+
+              <div
+                className="crown-minimal-summary"
+                style={{ "--persona-accent": activePersona.accentColor } as React.CSSProperties}
+              >
+                <div className="crown-summary-line">
+                  <span className="crown-summary-dot" />
+                  <strong>{activePersona.title}</strong>
+                  <span className="crown-summary-sep">·</span>
+                  <span className="crown-summary-tagline">{activePersona.tagline}</span>
+                </div>
+                <div className="crown-summary-tags">
+                  {activePersona.highlights.map((item) => (
+                    <span key={item} className="crown-summary-tag">
+                      {item}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
+
             <button
               className="setup-primary"
               onClick={() =>
@@ -4003,11 +4350,18 @@ function Setup({
                   dob,
                   gender: sex,
                   name,
-                  sensitivities,
-                  concerns,
-                  goals,
+                  sensitivities:
+                    sensitivities.length > 0
+                      ? sensitivities
+                      : activePersona.defaultSensitivities,
+                  concerns:
+                    concerns.length > 0
+                      ? concerns
+                      : activePersona.defaultConcerns,
+                  goals: activePersona.defaultGoals,
                   age: calculateAge(dob),
-                  activity,
+                  activity: activePersona.defaultActivity,
+                  persona: activePersona.id,
                 })
               }
               type="button"

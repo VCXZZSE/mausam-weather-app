@@ -106,3 +106,63 @@
     padding-top: 16px;
   }
 }
+
+.sidebar-persona-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--side-line);
+  background: var(--side-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--side-ink);
+}
+.sidebar-persona-icon {
+  font-size: 14px;
+}
+.sidebar-persona-label {
+  letter-spacing: -0.01em;
+}
+
+.sidebar-active-persona-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--side-line);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+.sidebar-dark .sidebar-active-persona-banner {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.sidebar-active-persona-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.sidebar-active-persona-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-active-persona-info strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--side-ink);
+  letter-spacing: -0.01em;
+}
+.sidebar-active-persona-info small {
+  font-size: 9px;
+  color: var(--side-muted);
+  line-height: 1.35;
+  margin-top: 1px;
+}

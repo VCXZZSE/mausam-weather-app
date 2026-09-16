@@ -57,4 +57,11 @@ describe("profile sidebar", () => {
     expect(trigger).toHaveFocus()
     trigger.remove()
   })
+
+  it("displays the persona chip and banner when profile has an active persona", () => {
+    render(<ProfileSidebar {...props()} profile={{ ...profile, persona: "health" }} />)
+    const chips = screen.getAllByText("Health-conscious")
+    expect(chips.length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("🌿").length).toBeGreaterThanOrEqual(1)
+  })
 })
