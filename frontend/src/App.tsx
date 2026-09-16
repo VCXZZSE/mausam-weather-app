@@ -1020,15 +1020,11 @@ function HomeTab({
             ) : (
               <>
                 <CardLabel>Air Quality</CardLabel>
-                <div className="aqi-status">Unavailable</div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "rgba(255,255,255,0.32)",
-                    marginTop: 4,
-                  }}
-                >
-                  No nearby CPCB station reading is available.
+                <div className="aqi-unavailable">
+                  <div className="aqi-unavailable-title">Unavailable</div>
+                  <div className="aqi-unavailable-note">
+                    No nearby CPCB station reading is available.
+                  </div>
                 </div>
               </>
             )}

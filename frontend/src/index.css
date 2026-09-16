@@ -2513,6 +2513,45 @@ input:-webkit-autofill {
   top: calc(47% + 31px);
 }
 
+/* AQI fallback: the reading-axis rules above pull .aqi-status out of flow, so the
+   unavailable state gets its own centred stack instead of colliding with the note. */
+#root .mausam-app .metric-grid > .aqi-tile .aqi-unavailable {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 2px;
+  text-align: center;
+}
+#root .mausam-app .metric-grid > .aqi-tile .aqi-unavailable-title {
+  color: #f8fdff;
+  font-size: clamp(13px, 3.6vw, 15px);
+  font-weight: 800;
+  letter-spacing: 2px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+#root .mausam-app .metric-grid > .aqi-tile .aqi-unavailable-note {
+  margin-top: 6px;
+  color: rgba(222, 241, 246, .48);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+#root .mausam-app.theme-light .metric-grid > .aqi-tile .aqi-unavailable-title { color: #153f64; }
+#root .mausam-app.theme-light .metric-grid > .aqi-tile .aqi-unavailable-note { color: rgba(21, 63, 100, .62); }
+
+/* The 1:1 tile is only ~135px tall on a 320px screen; ease the fallback stack so the
+   2px tracking still fits on one title line and nothing is clipped by overflow:hidden. */
+@media (max-width: 350px) {
+  #root .mausam-app .metric-grid > .aqi-tile .aqi-unavailable { padding: 0; }
+  #root .mausam-app .metric-grid > .aqi-tile .aqi-unavailable-title { font-size: 12px; }
+  #root .mausam-app .metric-grid > .aqi-tile .aqi-unavailable-note { margin-top: 5px; }
+}
+
 /* ── Animated day / night switch ───────────────────────────── */
 #root .mausam-app .home-screen .theme-toggle {
   position: relative !important;
