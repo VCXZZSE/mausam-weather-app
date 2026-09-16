@@ -1,0 +1,348 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { LanguageSelector } from "../src/LanguageSelector"
+import { ProfileSidebar } from "../src/ProfileSidebar"
+import App from "../src/App"
+import { LanguageProvider, useTranslation } from "../src/i18n"
+import {
+  CATALOGUES,
+  LANGUAGES,
+  translate,
+  type Language,
+  type TranslationKey,
+} from "../src/i18n/translations"
+import { translateDynamic } from "../src/i18n/dynamicTranslations"
+import { LANGUAGE_STORAGE_KEY, setLanguage } from "../src/i18n/languageStore"
+import type { Profile } from "../src/App"
+
+const profile: Profile = {
+  name: "Aditi Roy", gender: "Female", age: 29, activity: "Moderate",
+  goals: ["Fitness"], sensitivities: ["Heat"], concerns: ["Allergies"],
+}
+const location = {
+  latitude: 22.5, longitude: 88.3, locality: "Kolkata", region: "West Bengal",
+  country: "India", timezone: "Asia/Kolkata", postalCode: "700150",
+  source: "manual" as const,
+}
+function sidebarProps() {
+  return {
+    open: true, profile, location, theme: "light" as const,
+    onClose: vi.fn(), onChangeLocation: vi.fn(), onLogout: vi.fn(),
+    onBriefing: vi.fn(), onPrivacy: vi.fn(), onFAQ: vi.fn(),
+  }
+}
+
+const HI = "हिन्दी"
+const BN = "বাংলা"
+const OTHER_LANGUAGES: Language[] = ["hi", "bn"]
+
+/** Opens the collapsed selector in `scope` and picks `name` from its menu. */
+function pickLanguage(name: string, scope: HTMLElement = document.body) {
+  // The header also holds the menu button, so the trigger is identified by the
+  // popup it owns rather than by position.
+  const trigger = within(scope)
+    .getAllByRole("button")
+    .find((button) => button.getAttribute("aria-haspopup") === "menu")
+  fireEvent.click(trigger!)
+  fireEvent.click(screen.getByRole("menuitemradio", { name: new RegExp(name) }))
+}
+const englishKeys = Object.keys(CATALOGUES.en) as TranslationKey[]
+const placeholders = (value: string) =>
+  [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort()
+
+beforeEach(() => {
+  localStorage.clear()
+  setLanguage("en")
+})
+afterEach(() => {
+  cleanup()
+  setLanguage("en")
+  localStorage.clear()
+})
+
+describe("translation catalogues", () => {
+  it.each(OTHER_LANGUAGES)("covers every English key in %s", (language) => {
+    const missing = englishKeys.filter((key) => !CATALOGUES[language][key]?.trim())
+    expect(missing).toEqual([])
+  })
+
+  it.each(OTHER_LANGUAGES)("keeps the same placeholders as English in %s", (language) => {
+    const mismatched = englishKeys.filter(
+      (key) =>
+        placeholders(CATALOGUES.en[key]).join() !==
+        placeholders(CATALOGUES[language][key]).join(),
+    )
+    expect(mismatched).toEqual([])
+  })
+
+  it.each(OTHER_LANGUAGES)("actually translates, rather than copying English, in %s", (language) => {
+    // A handful of keys are legitimately identical across languages (units,
+    // brand marks). Everything else must differ from the English source.
+    const identical = englishKeys.filter(
+      (key) => CATALOGUES[language][key] === CATALOGUES.en[key],
+    )
+    expect(identical).toEqual(["unit.percent"])
+  })
+
+  it("interpolates values and falls back to English for an unknown language", () => {
+    expect(translate("hi", "alerts.active", { count: 3 })).toContain("3")
+    expect(translate("en", "hero.feels", { value: 31 })).toBe("Feels 31°")
+    expect(translate("xx" as Language, "nav.home")).toBe("Home")
+  })
+
+  it("leaves unknown placeholders untouched", () => {
+    expect(translate("en", "hero.highLow", { high: 35 })).toBe("H:35° L:{low}°")
+  })
+})
+
+describe("language selector", () => {
+  it("collapses to a single trigger showing the active code", () => {
+    render(<LanguageProvider><LanguageSelector /></LanguageProvider>)
+    const trigger = screen.getByRole("button", { name: "Current language: English" })
+    expect(trigger).toHaveTextContent("EN")
+    expect(trigger).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+  })
+
+  it("opens a menu of all three languages, checking the active one", () => {
+    render(<LanguageProvider><LanguageSelector /></LanguageProvider>)
+    fireEvent.click(screen.getByRole("button", { name: /Current language/ }))
+    const menu = screen.getByRole("menu", { name: "Select language" })
+    const items = within(menu).getAllByRole("menuitemradio")
+    expect(items.map((item) => item.querySelector(".language-option-name")?.textContent))
+      .toEqual(["English", "हिन्दी", "বাংলা"])
+    expect(items[0]).toBeChecked()
+    expect(items[1]).not.toBeChecked()
+  })
+
+  it("switches the active language, closes the menu and re-labels itself", () => {
+    render(<LanguageProvider><LanguageSelector /></LanguageProvider>)
+    pickLanguage(HI)
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    const trigger = screen.getByRole("button")
+    expect(trigger).toHaveTextContent("हि")
+    expect(trigger).toHaveAccessibleName("वर्तमान भाषा: हिन्दी")
+  })
+
+  it("closes on Escape and on an outside click without changing the language", () => {
+    render(
+      <LanguageProvider>
+        <LanguageSelector />
+        <button type="button">outside</button>
+      </LanguageProvider>,
+    )
+    const trigger = screen.getByRole("button", { name: /Current language/ })
+
+    fireEvent.click(trigger)
+    fireEvent.keyDown(document, { key: "Escape" })
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+
+    fireEvent.click(trigger)
+    fireEvent.pointerDown(screen.getByRole("button", { name: "outside" }))
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(trigger).toHaveTextContent("EN")
+  })
+
+  it("moves between options with the arrow keys", () => {
+    render(<LanguageProvider><LanguageSelector /></LanguageProvider>)
+    fireEvent.click(screen.getByRole("button", { name: /Current language/ }))
+    const items = screen.getAllByRole("menuitemradio")
+    expect(items[0]).toHaveFocus()
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" })
+    expect(items[1]).toHaveFocus()
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowUp" })
+    expect(items[0]).toHaveFocus()
+  })
+})
+
+describe("global language state", () => {
+  function Probe() {
+    const { t, language } = useTranslation()
+    return <p data-testid="probe">{language}:{t("nav.home")}</p>
+  }
+
+  it("defaults to English when nothing is stored", () => {
+    render(<LanguageProvider><Probe /></LanguageProvider>)
+    expect(screen.getByTestId("probe")).toHaveTextContent("en:Home")
+    expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBeNull()
+  })
+
+  it("re-renders every consumer when the language changes", () => {
+    render(
+      <LanguageProvider>
+        <LanguageSelector />
+        <Probe />
+      </LanguageProvider>,
+    )
+    pickLanguage(BN)
+    expect(screen.getByTestId("probe")).toHaveTextContent("bn:হোম")
+  })
+
+  it("translates for components rendered without a provider", () => {
+    render(<Probe />)
+    act(() => setLanguage("hi"))
+    expect(screen.getByTestId("probe")).toHaveTextContent("hi:होम")
+  })
+
+  it("persists the choice to localStorage", () => {
+    render(<LanguageProvider><LanguageSelector /></LanguageProvider>)
+    pickLanguage(HI)
+    expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("hi")
+  })
+
+  it("restores a persisted choice on the next load", async () => {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, "bn")
+    vi.resetModules()
+    const { getLanguage } = await import("../src/i18n/languageStore")
+    expect(getLanguage()).toBe("bn")
+  })
+
+  it("ignores a corrupted stored value and falls back to English", async () => {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, "klingon")
+    vi.resetModules()
+    const { getLanguage } = await import("../src/i18n/languageStore")
+    expect(getLanguage()).toBe("en")
+  })
+})
+
+describe("document direction", () => {
+  // Devanagari and Bengali are left-to-right scripts, so no RTL mirroring is
+  // needed — this pins that, and pins `lang` for font fallback and screen readers.
+  it.each(LANGUAGES.map((option) => option.code))("keeps <html> LTR for %s", (code) => {
+    setLanguage(code)
+    expect(document.documentElement.lang).toBe(code)
+    expect(document.documentElement.dir).toBe("ltr")
+  })
+})
+
+describe("dynamic (API-sourced) values", () => {
+  it("returns English input untouched", () => {
+    expect(translateDynamic("en", "Heavy rain")).toBe("Heavy rain")
+  })
+
+  it("translates known weather vocabulary", () => {
+    expect(translateDynamic("hi", "Heavy rain")).toBe("भारी वर्षा")
+    expect(translateDynamic("bn", "Very Poor")).toBe("খুব খারাপ")
+    expect(translateDynamic("hi", "Comfortable")).toBe("आरामदायक")
+  })
+
+  it("passes free text through unchanged", () => {
+    for (const language of OTHER_LANGUAGES) {
+      expect(translateDynamic(language, "Rabindra Sarobar, Kolkata")).toBe(
+        "Rabindra Sarobar, Kolkata",
+      )
+      expect(translateDynamic(language, "")).toBe("")
+      expect(translateDynamic(language, undefined)).toBeUndefined()
+    }
+  })
+
+  it("handles numeric composites and emoji-prefixed advice", () => {
+    expect(translateDynamic("hi", "India AQI 154 · UV 8")).toBe("भारत AQI 154 · UV 8")
+    expect(translateDynamic("bn", "Wind 18 km/h")).toBe("বাতাস 18 কিমি/ঘন্টা")
+    expect(translateDynamic("hi", "~25 min")).toBe("~25 मिनट")
+    expect(translateDynamic("hi", "🧴 Reapply SPF every 2h")).toBe(
+      "🧴 हर 2 घंटे में SPF दोबारा लगाएँ",
+    )
+  })
+
+  it("translates personalised briefing copy", () => {
+    expect(translateDynamic("hi", "Keep sun protection nearby")).toBe(
+      "धूप से बचाव पास रखें",
+    )
+    expect(
+      translateDynamic("bn", "Weather guidance only — not medical advice."),
+    ).toBe("শুধুমাত্র আবহাওয়া সংক্রান্ত দিকনির্দেশ — চিকিৎসা পরামর্শ নয়।")
+  })
+
+  it("translates each segment of a compound advice string", () => {
+    expect(translateDynamic("bn", "Use SPF 30+ · Seek shade at midday")).toContain(
+      "SPF 30+ ব্যবহার করুন",
+    )
+  })
+})
+
+describe("app surfaces render in every language", () => {
+  it.each([
+    ["en", "Your profile", "Log out", "Change location"],
+    ["hi", "आपकी प्रोफ़ाइल", "लॉग आउट", "स्थान बदलें"],
+    ["bn", "আপনার প্রোফাইল", "লগ আউট", "স্থান পরিবর্তন করুন"],
+  ] as const)("renders the sidebar in %s", (code, heading, logout, changeLocation) => {
+    setLanguage(code)
+    render(<LanguageProvider><ProfileSidebar {...sidebarProps()} /></LanguageProvider>)
+    const drawer = screen.getByRole("dialog", { name: "Aditi Roy" })
+    expect(within(drawer).getByRole("heading", { name: heading })).toBeInTheDocument()
+    expect(within(drawer).getByRole("button", { name: logout })).toBeInTheDocument()
+    expect(
+      within(drawer).getByRole("button", { name: new RegExp(changeLocation) }),
+    ).toBeInTheDocument()
+  })
+
+  it("translates stored profile vocabulary rather than the raw English value", () => {
+    setLanguage("hi")
+    render(<LanguageProvider><ProfileSidebar {...sidebarProps()} /></LanguageProvider>)
+    fireEvent.click(screen.getByText("आपकी प्राथमिकताएँ"))
+    // "Heat" / "Allergies" are stored in English on the profile.
+    expect(screen.getByText("गर्मी")).toBeVisible()
+    expect(screen.getByText("एलर्जी")).toBeVisible()
+  })
+
+  it("switches the sidebar live from its own selector, without a remount", () => {
+    render(
+      <LanguageProvider>
+        <ProfileSidebar {...sidebarProps()} />
+      </LanguageProvider>,
+    )
+    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument()
+    pickLanguage(BN, screen.getByRole("dialog"))
+    expect(screen.getByRole("button", { name: "লগ আউট" })).toBeInTheDocument()
+  })
+})
+
+describe("dashboard renders in every language", () => {
+  // The demo dataset renders the whole dashboard without a network round trip.
+  beforeEach(() => {
+    vi.stubEnv("VITE_USE_DEMO_WEATHER", "true")
+    localStorage.setItem(
+      "mausam-profile",
+      JSON.stringify({
+        name: "Aditi", sensitivities: [], concerns: [], goals: ["Daily energy"],
+        age: 29, activity: "Moderate",
+      }),
+    )
+    localStorage.setItem(
+      "mausam-location",
+      JSON.stringify({
+        latitude: 22.5726, longitude: 88.3639, locality: "Kolkata",
+        region: "West Bengal", country: "India", timezone: "Asia/Kolkata",
+        source: "device",
+      }),
+    )
+  })
+  afterEach(() => vi.unstubAllEnvs())
+
+  it.each([
+    ["en", "Today's Metrics", "Air Quality", "UV Index"],
+    ["hi", "आज के आँकड़े", "वायु गुणवत्ता", "UV सूचकांक"],
+    ["bn", "আজকের পরিমাপ", "বায়ুর মান", "UV সূচক"],
+  ] as const)("shows the home dashboard in %s", async (code, metrics, air, uv) => {
+    setLanguage(code)
+    render(<App />)
+    await waitFor(() =>
+      expect(screen.getByText(metrics)).toBeInTheDocument(),
+    )
+    expect(screen.getByText(air)).toBeInTheDocument()
+    expect(screen.getByText(uv)).toBeInTheDocument()
+  })
+
+  it("switches the live dashboard from the header selector", async () => {
+    render(<App />)
+    await waitFor(() =>
+      expect(screen.getByText("Today's Metrics")).toBeInTheDocument(),
+    )
+    pickLanguage(BN, screen.getByRole("banner", { name: "Mausam header" }))
+    expect(screen.getByText("আজকের পরিমাপ")).toBeInTheDocument()
+    // The API-sourced condition text is translated too, not just the chrome.
+    expect(screen.getByText("ঝলমলে রোদ")).toBeInTheDocument()
+  })
+})

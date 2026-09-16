@@ -60,6 +60,19 @@
 .sidebar-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .sidebar-tags span { font-size: 9px; border: 1px solid var(--side-line); border-radius: 6px; background: var(--side-card); padding: 5px 7px; overflow-wrap: anywhere; }
 .sidebar-tools-label { margin: 23px 0 10px 3px; font-size: 7px; letter-spacing: 1.5px; }
+.sidebar-language-row { display: flex; flex-direction: column; gap: 9px; margin-bottom: 12px; padding: 11px 12px; border: 1px solid var(--side-line); border-radius: 13px; background: var(--side-card); }
+.sidebar-language-copy strong { display: block; font-size: 11px; font-weight: 600; color: var(--side-ink); }
+.sidebar-language-copy small { display: block; margin-top: 4px; font-size: 9px; line-height: 1.5; color: var(--side-muted); }
+.sidebar-language-row .language-trigger { color: var(--side-ink); }
+.sidebar-language-row .language-menu { border-color: var(--side-line); background: #f3f9ff; box-shadow: 0 18px 38px rgba(12,32,66,.24); }
+.sidebar-language-row .language-option { color: var(--side-muted); }
+.sidebar-language-row .language-option:hover { background: rgba(23,104,223,.08); color: var(--side-ink); }
+.sidebar-language-row .language-option.is-active { background: rgba(23,104,223,.12); color: var(--side-ink); }
+.sidebar-language-row .language-option-check { color: #1768df; }
+.sidebar-dark .sidebar-language-row .language-menu { background: #22384f; box-shadow: 0 18px 38px rgba(0,0,0,.45); }
+.sidebar-dark .sidebar-language-row .language-option:hover,
+.sidebar-dark .sidebar-language-row .language-option.is-active { background: rgba(130,201,230,.16); color: var(--side-ink); }
+.sidebar-dark .sidebar-language-row .language-option-check { color: #8fd4e6; }
 .sidebar-actions { display: flex; flex-direction: column; gap: 3px; }
 .sidebar-action { width: 100%; display: flex; gap: 12px; align-items: center; padding: 11px 7px; border: 0; border-radius: 13px; background: transparent; color: var(--side-ink); text-align: left; transition: background .2s; }
 .sidebar-action:hover { background: var(--side-card); }

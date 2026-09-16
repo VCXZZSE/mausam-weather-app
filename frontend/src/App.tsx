@@ -39,6 +39,8 @@ import {
   type UserLocation,
 } from "./location"
 import { getTimeGreeting } from "./timeGreeting"
+import { LanguageProvider, useTranslation, type TranslationKey } from "./i18n"
+import { LanguageSelector } from "./LanguageSelector"
 import { PrivacyPolicyPage } from "./PrivacyPolicy"
 import { FAQPage } from "./FAQPage"
 
@@ -300,14 +302,15 @@ function NavIcon({ id, active }: { id: Tab; active: boolean }) {
 
 // ── Bottom Nav ─────────────────────────────────────────────────────────────────
 
-const NAV_TABS: { id: Tab; label: string }[] = [
-  { id: "home", label: "Home" },
-  { id: "health", label: "Health" },
-  { id: "forecast", label: "Forecast" },
-  { id: "alerts", label: "Alerts" },
+const NAV_TABS: { id: Tab; labelKey: TranslationKey }[] = [
+  { id: "home", labelKey: "nav.home" },
+  { id: "health", labelKey: "nav.health" },
+  { id: "forecast", labelKey: "nav.forecast" },
+  { id: "alerts", labelKey: "nav.alerts" },
 ]
 
 function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
+  const { t } = useTranslation()
   return (
     <nav
       style={{
@@ -337,7 +340,7 @@ function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
               border: "none",
               cursor: "pointer",
             }}
-            aria-label={item.label}
+            aria-label={t(item.labelKey)}
           >
             <NavIcon id={item.id} active={active} />
           </button>
@@ -348,16 +351,17 @@ function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
 }
 
 function AudienceFocus({ items }: { items: DashboardWeatherData["overview"] }) {
+  const { t, td } = useTranslation()
   return (
     <div className="audience-focus">
-      <div className="audience-focus-heading">Today, at a glance</div>
+      <div className="audience-focus-heading">{t("audience.heading")}</div>
       <div className="audience-focus-grid">
         {items.map((item) => (
           <div key={item.label} className={`audience-focus-card ${item.tone}`}>
             <span className="audience-focus-icon">{item.icon}</span>
             <div>
-              <strong>{item.label}</strong>
-              <small>{item.value}</small>
+              <strong>{td(item.label)}</strong>
+              <small>{td(item.value)}</small>
             </div>
           </div>
         ))}
@@ -387,6 +391,7 @@ function HomeTab({
   menuOpen: boolean
   weather: DashboardWeatherData
 }) {
+  const { t, td } = useTranslation()
   const { current } = weather
   // Rain has its own buddy in either daylight state. Any non-rainy night
   // uses the lunar preset, including older API payloads that still say
@@ -417,16 +422,17 @@ function HomeTab({
 
   return (
     <div className="home-screen app-page" style={{ padding: "52px 16px 24px" }}>
-      <header className="app-top-header" aria-label="Mausam header">
+      <header className="app-top-header" aria-label={t("home.headerAria")}>
         <div className="app-header-group">
           <MausamMenuButton onClick={onOpenMenu} expanded={menuOpen} />
+          <LanguageSelector />
           <button
             className={`theme-toggle theme-toggle-${theme}`}
             type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label={`Switch to ${
-              theme === "dark" ? "light" : "dark"
-            } theme`}
+            aria-label={t("home.themeSwitch", {
+              theme: t(theme === "dark" ? "theme.light" : "theme.dark"),
+            })}
             aria-pressed={theme === "dark"}
           >
             <span className="theme-toggle-thumb" aria-hidden="true" />
@@ -461,17 +467,22 @@ function HomeTab({
         className="personal-insight home-insight"
         type="button"
         onClick={onOpenPersonalized}
-        aria-label="Open your personalised weather briefing"
+        aria-label={t("home.briefingAria")}
       >
         <div className="insight-spark">✦</div>
         <div>
           <strong>
-            {profile.name ? `${greeting}, ${profile.name}` : greeting}
+            {profile.name ? `${td(greeting)}, ${profile.name}` : td(greeting)}
           </strong>
           <span>
-            Personalised for {location.locality}
+            {t("home.personalisedFor", { place: location.locality })}
             {profile.sensitivities.length
-              ? ` · Watching ${profile.sensitivities.slice(0, 2).join(" + ")}`
+              ? ` · ${t("home.watching", {
+                  items: profile.sensitivities
+                    .slice(0, 2)
+                    .map((item) => td(item))
+                    .join(" + "),
+                })}`
               : ""}
           </span>
         </div>
@@ -584,7 +595,7 @@ function HomeTab({
                   marginTop: 6,
                 }}
               >
-                {current.condition}
+                {td(current.condition)}
               </div>
               <div
                 className="weather-meta"
@@ -594,22 +605,24 @@ function HomeTab({
                   marginTop: 3,
                 }}
               >
-                Feels {current.feelsLike}° &nbsp;·&nbsp; H:{current.high}° L:
-                {current.low}°
+                {t("hero.feels", { value: current.feelsLike })} &nbsp;·&nbsp;{" "}
+                {t("hero.highLow", { high: current.high, low: current.low })}
               </div>
               <div className="weather-estimate-note" style={{ fontSize: 11, marginTop: 8, opacity: 0.7 }}>
-                {isLiveWeatherEnabled() ? `Area weather estimate · ${weather.updatedAt}` : "Demo preview"}
+                {isLiveWeatherEnabled()
+                  ? t("hero.areaEstimate", { time: weather.updatedAt })
+                  : t("hero.demoPreview")}
               </div>
             </div>
             <div
               className={`weather-companion weather-companion-${weatherHeroVariant}`}
-              aria-label={
+              aria-label={t(
                 isRainy
-                  ? "Animated rain cloud"
+                  ? "hero.ariaRain"
                   : isNight
-                    ? "Animated smiling moon"
-                    : "Animated smiling sun"
-              }
+                    ? "hero.ariaNight"
+                    : "hero.ariaSun",
+              )}
             >
               <svg
                 className="companion-illustration"
@@ -853,11 +866,11 @@ function HomeTab({
             {[
               {
                 v: `${current.windSpeed}`,
-                u: "km/h",
-                l: `Wind · ${current.windDirection}`,
+                u: t("unit.kmh"),
+                l: t("stat.wind", { direction: current.windDirection }),
               },
-              { v: `${current.humidity}`, u: "%", l: "Humidity" },
-              { v: `${current.visibility}`, u: "km", l: "Visibility" },
+              { v: `${current.humidity}`, u: t("unit.percent"), l: t("stat.humidity") },
+              { v: `${current.visibility}`, u: t("unit.km"), l: t("stat.visibility") },
             ].map((s, i) => (
               <div
                 className="weather-stat"
@@ -896,7 +909,7 @@ function HomeTab({
 
       {/* Hourly Forecast */}
       <div style={{ marginBottom: 22 }}>
-        <SectionLabel>Hourly · Rain Chance</SectionLabel>
+        <SectionLabel>{t("section.hourlyRain")}</SectionLabel>
         <div
           className="no-scrollbar horizontal-scroll"
           style={{
@@ -939,7 +952,7 @@ function HomeTab({
                 <WeatherIcon
                   conditionCode={hour.conditionCode}
                   icon={hour.icon}
-                  label={hour.condition}
+                  label={td(hour.condition)}
                   isDay={
                     hour.isDay ?? (i === 0 ? weather.current.isDay : undefined)
                   }
@@ -972,7 +985,7 @@ function HomeTab({
 
       {/* Metric Grid */}
       <div style={{ marginBottom: 22 }}>
-        <SectionLabel>Today's Metrics</SectionLabel>
+        <SectionLabel>{t("section.todaysMetrics")}</SectionLabel>
         <div
           className="metric-grid"
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
@@ -986,10 +999,10 @@ function HomeTab({
             {weather.airQuality ? (
               <>
                 <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">
-                  INDIA AQI {weather.airQuality.index}
+                  {t("badge.indiaAqi", { index: weather.airQuality.index })}
                 </Badge>
-                <CardLabel>Air Quality</CardLabel>
-                <div className="aqi-status">{weather.airQuality.label}</div>
+                <CardLabel>{t("card.airQuality")}</CardLabel>
+                <div className="aqi-status">{td(weather.airQuality.label)}</div>
                 <div className="aqi-meter">
                   <Bar
                     pct={
@@ -1020,11 +1033,13 @@ function HomeTab({
               </>
             ) : (
               <>
-                <CardLabel>Air Quality</CardLabel>
+                <CardLabel>{t("card.airQuality")}</CardLabel>
                 <div className="aqi-unavailable">
-                  <div className="aqi-unavailable-title">Unavailable</div>
+                  <div className="aqi-unavailable-title">
+                    {t("aqi.unavailable")}
+                  </div>
                   <div className="aqi-unavailable-note">
-                    No nearby CPCB station reading is available.
+                    {t("aqi.noStation")}
                   </div>
                 </div>
               </>
@@ -1038,17 +1053,17 @@ function HomeTab({
             border="rgba(251,146,60,0.1)"
           >
             <Badge color="#fb923c" bg="rgba(251,146,60,0.14)">
-              {weather.uv.label.toUpperCase()}
+              {td(weather.uv.label).toUpperCase()}
             </Badge>
-            <CardLabel>UV Index</CardLabel>
+            <CardLabel>{t("card.uvIndex")}</CardLabel>
             <div className="metric-card-number metric-index">
               {weather.uv.index}
             </div>
             <div className="metric-card-emphasis">
-              {weather.uv.recommendation}
+              {td(weather.uv.recommendation)}
             </div>
             <div className="metric-card-note">
-              Peak · {weather.uv.peakHours}
+              {t("uv.peak", { value: td(weather.uv.peakHours) })}
             </div>
           </Card>
 
@@ -1059,17 +1074,29 @@ function HomeTab({
             border="rgba(52,211,153,0.1)"
           >
             <Badge color="#34d399" bg="rgba(52,211,153,0.14)">
-              {weather.running.badge}
+              {td(weather.running.badge)}
             </Badge>
-            <CardLabel>Best Run Time{weather.running.dayLabel ? ` · ${weather.running.dayLabel}` : ""}</CardLabel>
+            <CardLabel>
+              {weather.running.dayLabel
+                ? t("card.bestRunOn", { day: td(weather.running.dayLabel) })
+                : t("card.bestRun")}
+            </CardLabel>
             <div className="metric-card-number metric-run-time">
-              {weather.running.start ? `${weather.running.start}–${weather.running.end}` : "Unavailable"}
+              {weather.running.start
+                ? `${weather.running.start}–${weather.running.end}`
+                : t("common.unavailable")}
             </div>
             <div className="metric-card-emphasis">
-              {weather.running.summary}
+              {td(weather.running.summary)}
             </div>
             <div className="metric-card-note metric-card-accent">
-              Sunrise · {weather.running.sunrise ?? (weather.running.dayLabel === "Tomorrow" ? "Unavailable" : weather.astronomy.sunrise)}
+              {t("run.sunrise", {
+                value:
+                  weather.running.sunrise ??
+                  (weather.running.dayLabel === "Tomorrow"
+                    ? t("common.unavailable")
+                    : weather.astronomy.sunrise),
+              })}
             </div>
           </Card>
 
@@ -1082,19 +1109,21 @@ function HomeTab({
             <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">
               {weather.rainfall.chance}%
             </Badge>
-            <CardLabel>Rainfall Today</CardLabel>
+            <CardLabel>{t("card.rainfallToday")}</CardLabel>
             <div className="metric-card-number metric-rainfall">
               {weather.rainfall.today}
               <span> {weather.rainfall.unit}</span>
             </div>
             <div className="metric-card-emphasis">
-              {weather.rainfall.periodLabel}
+              {td(weather.rainfall.periodLabel)}
             </div>
             <div className="metric-card-note">
-              Month ·{" "}
-              {weather.rainfall.month !== undefined
-                ? `${weather.rainfall.month} ${weather.rainfall.unit}`
-                : "Unavailable"}
+              {t("rainfall.month", {
+                value:
+                  weather.rainfall.month !== undefined
+                    ? `${weather.rainfall.month} ${td(weather.rainfall.unit)}`
+                    : t("common.unavailable"),
+              })}
             </div>
           </Card>
 
@@ -1105,9 +1134,11 @@ function HomeTab({
             span2
           >
             <Badge color="#f87171" bg="rgba(239,68,68,0.14)">
-              {weather.commute.status}
+              {td(weather.commute.status)}
             </Badge>
-            <CardLabel>Commute Status · {weather.commute.location}</CardLabel>
+            <CardLabel>
+              {t("card.commuteStatus", { location: weather.commute.location })}
+            </CardLabel>
             <div
               style={{
                 display: "grid",
@@ -1136,7 +1167,7 @@ function HomeTab({
                       letterSpacing: "0.04em",
                     }}
                   >
-                    {c.name}
+                    {td(c.name)}
                   </div>
                   <div
                     style={{
@@ -1146,7 +1177,7 @@ function HomeTab({
                       marginTop: 2,
                     }}
                   >
-                    {c.value}
+                    {td(c.value)}
                   </div>
                   <div
                     style={{
@@ -1155,7 +1186,7 @@ function HomeTab({
                       marginTop: 1,
                     }}
                   >
-                    {c.detail}
+                    {td(c.detail)}
                   </div>
                 </div>
               ))}
@@ -1168,7 +1199,7 @@ function HomeTab({
 
       {/* 7-Day Forecast */}
       <div style={{ marginBottom: 14 }}>
-        <SectionLabel>7-Day Forecast</SectionLabel>
+        <SectionLabel>{t("section.sevenDay")}</SectionLabel>
         <div
           style={{
             background: "rgba(255,255,255,0.025)",
@@ -1199,7 +1230,7 @@ function HomeTab({
                   color: i === 0 ? "#60a5fa" : "rgba(255,255,255,0.6)",
                 }}
               >
-                {day.day}
+                {td(day.day)}
               </div>
               <div
                 style={{
@@ -1212,7 +1243,7 @@ function HomeTab({
                 <WeatherIcon
                   conditionCode={day.conditionCode}
                   icon={day.icon}
-                  label={day.condition}
+                  label={td(day.condition)}
                 />
               </div>
               <div
@@ -1222,7 +1253,7 @@ function HomeTab({
                   color: "rgba(255,255,255,0.32)",
                 }}
               >
-                {day.condition}
+                {td(day.condition)}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span
@@ -1286,6 +1317,7 @@ function HomeTab({
 // ── Health Tab ─────────────────────────────────────────────────────────────────
 
 function HealthTab({ weather }: { weather: DashboardWeatherData }) {
+  const { t, td, tdList } = useTranslation()
   return (
     <div
       className="app-page health-screen"
@@ -1300,7 +1332,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
           marginBottom: 18,
         }}
       >
-        Health Metrics
+        {t("health.title")}
       </div>
 
       {/* AQI Detailed */}
@@ -1309,7 +1341,9 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
         border="rgba(245,158,11,0.12)"
         pad={20}
       >
-        <CardLabel>India National AQI · {weather.current.city}</CardLabel>
+        <CardLabel>
+          {t("health.aqiCard", { city: weather.current.city })}
+        </CardLabel>
         {weather.airQuality ? (
           <>
             <div
@@ -1339,7 +1373,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                     marginTop: 5,
                   }}
                 >
-                  {weather.airQuality.label}
+                  {td(weather.airQuality.label)}
                 </div>
                 <div
                   style={{
@@ -1348,7 +1382,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                     marginTop: 2,
                   }}
                 >
-                  {weather.airQuality.updatedLabel}
+                  {td(weather.airQuality.updatedLabel)}
                 </div>
               </div>
               <div style={{ fontSize: 40 }}>{weather.airQuality.icon}</div>
@@ -1370,7 +1404,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 marginBottom: 16,
               }}
             >
-              {weather.airQuality.scaleLabels.map((label) => (
+              {tdList(weather.airQuality.scaleLabels).map((label) => (
                 <span key={label}>{label}</span>
               ))}
             </div>
@@ -1440,7 +1474,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 lineHeight: 1.55,
               }}
             >
-              {weather.airQuality.advice}
+              {td(weather.airQuality.advice)}
             </div>
             {weather.airQuality.stationName && (
               <div
@@ -1451,9 +1485,13 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                   lineHeight: 1.5,
                 }}
               >
-                CPCB station: {weather.airQuality.stationName}
+                {t("health.cpcbStation", {
+                  name: weather.airQuality.stationName,
+                })}
                 {weather.airQuality.stationDistanceKm != null
-                  ? ` · ${weather.airQuality.stationDistanceKm} km away`
+                  ? ` · ${t("health.kmAway", {
+                      km: weather.airQuality.stationDistanceKm,
+                    })}`
                   : ""}
               </div>
             )}
@@ -1466,7 +1504,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
               fontSize: 12,
             }}
           >
-            No nearby CPCB station reading is available right now.
+            {t("health.noStationNow")}
           </div>
         )}
       </Card>
@@ -1479,7 +1517,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
         border="rgba(251,146,60,0.1)"
         pad={20}
       >
-        <CardLabel>UV Index</CardLabel>
+        <CardLabel>{t("card.uvIndex")}</CardLabel>
         <div
           style={{
             display: "flex",
@@ -1500,10 +1538,10 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
           </div>
           <div style={{ marginBottom: 4 }}>
             <div style={{ fontSize: 19, fontWeight: 800, color: "#fb923c" }}>
-              {weather.uv.label}
+              {td(weather.uv.label)}
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-              {weather.uv.recommendation}
+              {td(weather.uv.recommendation)}
             </div>
           </div>
         </div>
@@ -1538,7 +1576,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
             marginBottom: 14,
           }}
         >
-          {weather.uv.scaleLabels.map((label) => (
+          {tdList(weather.uv.scaleLabels).map((label) => (
             <span key={label}>{label}</span>
           ))}
         </div>
@@ -1559,7 +1597,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
             }}
           >
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-              Peak Hours
+              {t("health.peakHours")}
             </div>
             <div
               style={{
@@ -1569,7 +1607,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 4,
               }}
             >
-              {weather.uv.peakHours}
+              {td(weather.uv.peakHours)}
             </div>
           </div>
           <div
@@ -1581,7 +1619,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
             }}
           >
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-              Burn Time
+              {t("health.burnTime")}
             </div>
             <div
               style={{
@@ -1591,7 +1629,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 4,
               }}
             >
-              {weather.uv.burnTime}
+              {td(weather.uv.burnTime)}
             </div>
           </div>
         </div>
@@ -1602,7 +1640,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
             lineHeight: 1.6,
           }}
         >
-          {weather.uv.advice}
+          {td(weather.uv.advice)}
         </div>
       </Card>
 
@@ -1614,7 +1652,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
         border="rgba(74,222,128,0.08)"
         pad={20}
       >
-        <CardLabel>Pollen Outlook (Seasonal Estimate)</CardLabel>
+        <CardLabel>{t("health.pollen")}</CardLabel>
         <div
           style={{
             display: "flex",
@@ -1624,7 +1662,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
           }}
         >
           <div style={{ fontSize: 24, fontWeight: 800, color: "white" }}>
-            {weather.pollen.overall}
+            {td(weather.pollen.overall)}
           </div>
           <div style={{ fontSize: 28 }}>{weather.pollen.icon}</div>
         </div>
@@ -1644,10 +1682,10 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                   fontWeight: 600,
                 }}
               >
-                {p.type}
+                {td(p.type)}
               </span>
               <span style={{ fontSize: 11, fontWeight: 800, color: p.color }}>
-                {p.level}
+                {td(p.level)}
               </span>
             </div>
             <Bar pct={p.percent} fill={p.color} height={3} />
@@ -1664,7 +1702,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
             lineHeight: 1.55,
           }}
         >
-          {weather.pollen.advice}
+          {td(weather.pollen.advice)}
         </div>
       </Card>
 
@@ -1676,7 +1714,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
         border="rgba(96,165,250,0.08)"
         pad={20}
       >
-        <CardLabel>Heat & Hydration</CardLabel>
+        <CardLabel>{t("health.heatHydration")}</CardLabel>
         <div
           style={{
             display: "grid",
@@ -1710,7 +1748,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 4,
               }}
             >
-              Heat Index (Approx.)
+              {t("health.heatIndex")}
             </div>
           </div>
           <div
@@ -1738,7 +1776,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 4,
               }}
             >
-              Humidity
+              {t("health.humidity")}
             </div>
           </div>
         </div>
@@ -1752,7 +1790,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
             lineHeight: 1.6,
           }}
         >
-          {weather.current.hydrationAdvice}
+          {td(weather.current.hydrationAdvice)}
         </div>
       </Card>
     </div>
@@ -1762,6 +1800,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
 // ── Forecast Tab ───────────────────────────────────────────────────────────────
 
 function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
+  const { t, td } = useTranslation()
   const rainfallHistory = weather.rainfall.history
   const maxRainfall = rainfallHistory
     ? Math.max(1, ...rainfallHistory.map((item) => item.value))
@@ -1792,12 +1831,12 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
           marginBottom: 18,
         }}
       >
-        Extended Forecast
+        {t("forecast.title")}
       </div>
 
       {/* 7 Day */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>Next 7 Days</SectionLabel>
+        <SectionLabel>{t("forecast.next7")}</SectionLabel>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {weather.daily.map((day, i) => (
             <div
@@ -1823,7 +1862,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                   color: i === 0 ? "#60a5fa" : "rgba(255,255,255,0.65)",
                 }}
               >
-                {day.day}
+                {td(day.day)}
               </div>
               <div
                 style={{ display: "grid", placeItems: "center", fontSize: 22 }}
@@ -1831,7 +1870,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 <WeatherIcon
                   conditionCode={day.conditionCode}
                   icon={day.icon}
-                  label={day.condition}
+                  label={td(day.condition)}
                 />
               </div>
               <div style={{ flex: 1 }}>
@@ -1842,7 +1881,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                     fontWeight: 600,
                   }}
                 >
-                  {day.condition}
+                  {td(day.condition)}
                 </div>
                 <span
                   style={{
@@ -1856,7 +1895,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                     display: "inline-block",
                   }}
                 >
-                  {day.rainChance}% rain
+                  {t("forecast.rainChip", { chance: day.rainChance })}
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -1892,7 +1931,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
 
       {/* Sun & Moon */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>Sun & Moon</SectionLabel>
+        <SectionLabel>{t("forecast.sunMoon")}</SectionLabel>
         <Card
           className="sun-moon-card"
           grad="linear-gradient(140deg,#1a2a4a 0%,#0d1730 100%)"
@@ -1921,7 +1960,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 {weather.astronomy.sunrise}
               </div>
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>
-                Sunrise
+                {t("forecast.sunrise")}
               </div>
             </div>
             <div className="sun-time-tile">
@@ -1937,7 +1976,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 {weather.astronomy.sunset}
               </div>
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>
-                Sunset
+                {t("forecast.sunset")}
               </div>
             </div>
           </div>
@@ -1975,7 +2014,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
           >
             <span>{weather.astronomy.sunrise}</span>
             <span style={{ color: "#fbbf24", fontWeight: 700 }}>
-              Solar noon · {weather.astronomy.solarNoon}
+              {t("forecast.solarNoon", { time: weather.astronomy.solarNoon })}
             </span>
             <span>{weather.astronomy.sunset}</span>
           </div>
@@ -1991,25 +2030,28 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
             {[
               {
                 icon: "◐",
-                label: "Moon Phase",
-                val: weather.astronomy.moonPhase,
+                id: "moon-phase",
+                label: t("forecast.moonPhase"),
+                val: td(weather.astronomy.moonPhase),
                 className: "moon-detail-tile",
               },
               {
                 icon: "☼",
-                label: "Golden Hour",
+                id: "golden-hour",
+                label: t("forecast.goldenHour"),
                 val: weather.astronomy.goldenHour,
                 className: "golden-hour-tile",
               },
               {
                 icon: "◔",
-                label: "Moonrise",
+                id: "moonrise",
+                label: t("forecast.moonrise"),
                 val: weather.astronomy.moonrise,
                 className: "moon-detail-tile",
               },
             ].map((m) => (
               <div
-                key={m.label}
+                key={m.id}
                 className={`sun-detail-tile ${m.className}`}
                 style={{ textAlign: "center" }}
               >
@@ -2033,7 +2075,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 >
                   {m.label}
                 </div>
-                {m.label === "Golden Hour" && (
+                {m.id === "golden-hour" && (
                   <div className="golden-progress">
                     <span />
                   </div>
@@ -2046,7 +2088,11 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
 
       {/* Monthly Rainfall */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>{weather.rainfall.monthLabel} Rainfall</SectionLabel>
+        <SectionLabel>
+          {t("forecast.rainfallSection", {
+            month: td(weather.rainfall.monthLabel),
+          })}
+        </SectionLabel>
         <Card
           grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)"
           border="rgba(96,165,250,0.08)"
@@ -2089,8 +2135,11 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                       marginTop: 4,
                     }}
                   >
-                    of ~{weather.rainfall.monthlyAverage}
-                    {weather.rainfall.unit} {weather.rainfall.monthLabel} avg
+                    {t("forecast.ofAverage", {
+                      value: weather.rainfall.monthlyAverage ?? "",
+                      unit: td(weather.rainfall.unit),
+                      month: td(weather.rainfall.monthLabel),
+                    })}
                   </div>
                 </div>
                 <div
@@ -2107,7 +2156,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
             </>
           ) : (
             <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-              Monthly rainfall data unavailable.
+              {t("forecast.monthlyUnavailable")}
             </div>
           )}
           {rainfallHistory && (
@@ -2143,7 +2192,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                     }}
                   />
                   <div style={{ fontSize: 7, color: "rgba(255,255,255,0.22)" }}>
-                    {item.label}
+                    {td(item.label)}
                   </div>
                 </div>
               ))}
@@ -2153,7 +2202,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
       </div>
 
       {/* Comfort Index */}
-      <SectionLabel>Comfort & Feel</SectionLabel>
+      <SectionLabel>{t("forecast.comfortFeel")}</SectionLabel>
       <Card
         grad="linear-gradient(140deg,#2e1065 0%,#100522 100%)"
         border="rgba(167,139,250,0.08)"
@@ -2186,7 +2235,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 5,
               }}
             >
-              {weather.comfort.label}
+              {td(weather.comfort.label)}
             </div>
             <div
               style={{
@@ -2195,7 +2244,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 2,
               }}
             >
-              Comfort Index (Estimate)
+              {t("forecast.comfortIndex")}
             </div>
           </div>
           {/* Centred on the 46px index line, not the whole text column. */}
@@ -2223,10 +2272,10 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
               }}
             >
               <span style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
-                {factor.label}
+                {td(factor.label)}
               </span>
               <span style={{ fontSize: 11, fontWeight: 700, color: "white" }}>
-                {factor.value}
+                {td(factor.value)}
               </span>
             </div>
             <Bar pct={factor.percent} fill={factor.color} height={3} />
@@ -2243,7 +2292,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
             lineHeight: 1.55,
           }}
         >
-          {weather.comfort.advice}
+          {td(weather.comfort.advice)}
         </div>
       </Card>
     </div>
@@ -2253,6 +2302,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
 // ── Alerts Tab ─────────────────────────────────────────────────────────────────
 
 function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
+  const { t, td } = useTranslation()
   return (
     <div
       className="app-page alerts-screen"
@@ -2267,12 +2317,14 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
           marginBottom: 18,
         }}
       >
-        Alerts & Travel
+        {t("alerts.title")}
       </div>
 
       {/* Active Alerts */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>Active Alerts · {weather.alerts.length}</SectionLabel>
+        <SectionLabel>
+          {t("alerts.active", { count: weather.alerts.length })}
+        </SectionLabel>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {weather.alerts.map((a) => (
             <div
@@ -2306,7 +2358,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                     <div
                       style={{ fontSize: 13, fontWeight: 700, color: "white" }}
                     >
-                      {a.title}
+                      {td(a.title)}
                     </div>
                     <div
                       style={{
@@ -2326,7 +2378,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                       lineHeight: 1.55,
                     }}
                   >
-                    {a.body}
+                    {td(a.body)}
                   </div>
                   <div
                     style={{
@@ -2341,7 +2393,10 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                       letterSpacing: "0.06em",
                     }}
                   >
-                    {a.level.toUpperCase()} ALERT · {a.source}
+                    {t("alerts.badge", {
+                      level: td(a.level).toUpperCase(),
+                      source: a.source,
+                    })}
                   </div>
                 </div>
               </div>
@@ -2352,7 +2407,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
 
       {/* Saved Locations */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>Saved Locations</SectionLabel>
+        <SectionLabel>{t("alerts.saved")}</SectionLabel>
         <div
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
         >
@@ -2383,7 +2438,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                   <WeatherIcon
                     conditionCode={location.conditionCode}
                     icon={location.icon}
-                    label={location.condition}
+                    label={td(location.condition)}
                   />
                 </div>
                 <div
@@ -2393,7 +2448,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                     fontWeight: 600,
                   }}
                 >
-                  {location.distance}
+                  {td(location.distance)}
                 </div>
               </div>
               <div
@@ -2413,7 +2468,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                   marginBottom: 8,
                 }}
               >
-                {location.condition}
+                {td(location.condition)}
               </div>
               <div style={{ fontSize: 26, fontWeight: 800, color: "white" }}>
                 {location.temperature}°
@@ -2425,7 +2480,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
 
       {/* Packing List */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel>Today's Packing List</SectionLabel>
+        <SectionLabel>{t("alerts.packing")}</SectionLabel>
         <Card
           grad="linear-gradient(140deg,#1a3256 0%,#0d1a2e 100%)"
           border="rgba(96,165,250,0.08)"
@@ -2439,7 +2494,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
               marginBottom: 14,
             }}
           >
-            {weather.packing.title}
+            {td(weather.packing.title)}
           </div>
           {weather.packing.items.map((p, i, arr) => (
             <div
@@ -2468,7 +2523,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
               </div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-                  {p.item}
+                  {td(p.item)}
                 </div>
                 <div
                   style={{
@@ -2477,7 +2532,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                     marginTop: 1,
                   }}
                 >
-                  {p.reason}
+                  {td(p.reason)}
                 </div>
               </div>
             </div>
@@ -2486,7 +2541,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
       </div>
 
       {/* Seasonal event planner */}
-      <SectionLabel>{weather.event.sectionLabel}</SectionLabel>
+      <SectionLabel>{td(weather.event.sectionLabel)}</SectionLabel>
       <Card
         grad="linear-gradient(140deg,rgba(251,191,36,0.08) 0%,rgba(239,68,68,0.04) 100%)"
         border="rgba(251,191,36,0.14)"
@@ -2509,19 +2564,19 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                 marginBottom: 3,
               }}
             >
-              {weather.event.icon} {weather.event.title}
+              {weather.event.icon} {td(weather.event.title)}
             </div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.38)" }}>
-              {weather.event.dateRange} · Starts in {weather.event.daysAway}{" "}
-              days
+              {weather.event.dateRange} ·{" "}
+              {t("event.startsIn", { days: weather.event.daysAway })}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>
-              Expected
+              {t("event.expected")}
             </div>
             <div style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-              {weather.event.expectedSeason}
+              {td(weather.event.expectedSeason)}
             </div>
           </div>
         </div>
@@ -2542,7 +2597,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
             }}
           >
             <div style={{ fontSize: 13, fontWeight: 800, color: "white" }}>
-              {weather.event.expectedTemperature}°C avg
+              {t("event.avgTemp", { value: weather.event.expectedTemperature })}
             </div>
             <div
               style={{
@@ -2551,7 +2606,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 2,
               }}
             >
-              Expected temp
+              {t("event.expectedTemp")}
             </div>
           </div>
           <div
@@ -2563,7 +2618,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
             }}
           >
             <div style={{ fontSize: 13, fontWeight: 800, color: "#4ade80" }}>
-              {weather.event.rainLabel}
+              {td(weather.event.rainLabel)}
             </div>
             <div
               style={{
@@ -2572,7 +2627,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                 marginTop: 2,
               }}
             >
-              ~{weather.event.rainChance}% chance
+              {t("event.rainChance", { chance: weather.event.rainChance })}
             </div>
           </div>
         </div>
@@ -2583,7 +2638,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
             lineHeight: 1.55,
           }}
         >
-          {weather.event.advice}
+          {td(weather.event.advice)}
         </div>
       </Card>
     </div>
@@ -3802,29 +3857,37 @@ export function DobPicker({
   value: string
   onChange: (dateStr: string) => void
 }) {
+  const { t, td } = useTranslation()
   const parts = value.split("-")
   const yearVal = parseInt(parts[0] || "1995", 10)
   const monthVal = Math.max(0, Math.min(11, parseInt(parts[1] || "02", 10) - 1))
   const dayVal = parseInt(parts[2] || "18", 10)
 
-  const MONTH_NAMES = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ]
+  // The wheel column carries the displayed label as its own value, so the list
+  // is translated up front and the month is resolved back by index. The order
+  // is identical in every language, which keeps indexOf() correct.
+  const MONTH_NAMES = useMemo(
+    () =>
+      [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ].map((month) => td(month)),
+    [td],
+  )
 
   const maxDaysInMonth = new Date(yearVal, monthVal + 1, 0).getDate()
   const currentDay = Math.min(dayVal, maxDaysInMonth)
-  const currentMonthName = MONTH_NAMES[monthVal] || "February"
+  const currentMonthName = MONTH_NAMES[monthVal] ?? MONTH_NAMES[1]
 
   const handleMonthChange = (selectedMonthName: string) => {
     const mIndex = MONTH_NAMES.indexOf(selectedMonthName)
@@ -3858,8 +3921,10 @@ export function DobPicker({
   return (
     <div className="dob-picker-card">
       <div className="dob-picker-header">
-        <span className="setup-label">SELECT YOUR DATE OF BIRTH</span>
-        <span className="dob-age-badge">{calculatedAge} yrs</span>
+        <span className="setup-label">{t("setup.dobLabel")}</span>
+        <span className="dob-age-badge">
+          {t("setup.ageBadge", { age: calculatedAge })}
+        </span>
       </div>
 
       <div className="dob-wheels-frame">
@@ -3885,7 +3950,9 @@ export function DobPicker({
       </div>
 
       <p className="dob-notice-text">
-        Please refer to our <strong>Privacy notice</strong> for further information on how we process this data.
+        {t("setup.dobPrivacyBefore")}
+        <strong>{t("setup.dobPrivacyLink")}</strong>
+        {t("setup.dobPrivacyAfter")}
       </p>
     </div>
   )
@@ -3900,6 +3967,7 @@ export function SemiCircleCrownWheel({
   selectedIndex: number
   onSelect: (index: number) => void
 }) {
+  const { t, td } = useTranslation()
   const stageRef = useRef<HTMLDivElement>(null)
   const stageHeight = 360
   const centerY = stageHeight / 2 // 180px
@@ -4129,7 +4197,7 @@ export function SemiCircleCrownWheel({
       className="crown-minimal-stage"
       tabIndex={0}
       role="listbox"
-      aria-label="User Profile Crown Wheel"
+      aria-label={t("setup.crownAria")}
       onKeyDown={handleKeyDown}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -4164,7 +4232,7 @@ export function SemiCircleCrownWheel({
       <button
         type="button"
         className="crown-nav-btn btn-up"
-        aria-label="Previous profile"
+        aria-label={t("setup.previousProfile")}
         disabled={selectedIndex === 0}
         onClick={(e) => {
           e.stopPropagation()
@@ -4184,7 +4252,7 @@ export function SemiCircleCrownWheel({
       <button
         type="button"
         className="crown-nav-btn btn-down"
-        aria-label="Next profile"
+        aria-label={t("setup.nextProfile")}
         disabled={selectedIndex === personas.length - 1}
         onClick={(e) => {
           e.stopPropagation()
@@ -4223,7 +4291,7 @@ export function SemiCircleCrownWheel({
             key={persona.id}
             role="option"
             aria-selected={isSelected}
-            aria-label={persona.title}
+            aria-label={td(persona.title)}
             className={`crown-minimal-item${isSelected ? " is-selected" : ""}`}
             style={{
               position: "absolute",
@@ -4240,7 +4308,7 @@ export function SemiCircleCrownWheel({
               onSelect(index)
             }}
           >
-            <span className="crown-item-title">{persona.title}</span>
+            <span className="crown-item-title">{td(persona.title)}</span>
             <div
               className="crown-item-bubble"
               style={{
@@ -4266,6 +4334,7 @@ function Setup({
   weather: DashboardWeatherData | null
   onComplete: (profile: Profile) => void
 }) {
+  const { t, td } = useTranslation()
   const [step, setStep] = useState<SetupStep>("welcome")
   const [name, setName] = useState("")
   const [dob, setDob] = useState("1995-02-18")
@@ -4273,7 +4342,7 @@ function Setup({
   const [sensitivities, setSensitivities] = useState<string[]>([])
   const [concerns, setConcerns] = useState<string[]>([])
   const [selectedPersonaIndex, setSelectedPersonaIndex] = useState(0)
-  const [nameError, setNameError] = useState("")
+  const [nameMissing, setNameMissing] = useState(false)
   const activePersona = USER_PERSONAS[selectedPersonaIndex] || USER_PERSONAS[0]
   const stepIndex = SETUP_STEPS.indexOf(step)
   const toggle = (
@@ -4306,10 +4375,10 @@ function Setup({
   }
   const next = () => {
     if (step === "name" && !name.trim()) {
-      setNameError("Please enter your name to continue.")
+      setNameMissing(true)
       return
     }
-    setNameError("")
+    setNameMissing(false)
     setStep(SETUP_STEPS[Math.min(stepIndex + 1, SETUP_STEPS.length - 1)])
   }
   const back = () => setStep(SETUP_STEPS[Math.max(stepIndex - 1, 0)])
@@ -4321,6 +4390,7 @@ function Setup({
         <div className="brand-mark">
           <span>✦</span> MAUSAM
         </div>
+        <LanguageSelector className="setup-language-selector" />
         {step !== "welcome" && (
           <div className="setup-progress">
             <span style={{ width: `${Math.max(9, (stepIndex / 4) * 100)}%` }} />
@@ -4338,91 +4408,87 @@ function Setup({
             <div className="welcome-orb welcome-orb-a" />
             <div className="welcome-orb welcome-orb-b" />
             <div className="welcome-menu">
-              <span className="welcome-menu-active">today</span>
-              <span>discover</span>
-              <span>for you</span>
-              <span>mausam</span>
+              <span className="welcome-menu-active">{t("setup.menuToday")}</span>
+              <span>{t("setup.menuDiscover")}</span>
+              <span>{t("setup.menuForYou")}</span>
+              <span>{t("setup.menuMausam")}</span>
             </div>
             <div className="welcome-brand">
               <span>✦</span> MAUSAM
             </div>
-            <div className="setup-eyebrow">PERSONAL WEATHER INTELLIGENCE</div>
+            <div className="setup-eyebrow">{t("setup.welcomeEyebrow")}</div>
             <h1>
-              feel the
+              {t("setup.welcomeLine1")}
               <br />
-              <em>weather.</em>
+              <em>{t("setup.welcomeLine2")}</em>
             </h1>
-            <p>
-              Personal signals for a clearer day. Mausam turns the air, light
-              and rain around you into guidance made for your body.
-            </p>
+            <p>{t("setup.welcomeCopy")}</p>
             <div className="welcome-reading">
               <span className="reading-dot" />
               <div>
-                <small>{weather ? "DEMO PREVIEW" : "LOCAL WEATHER"}</small>
+                <small>
+                  {t(weather ? "setup.demoPreview" : "setup.localWeather")}
+                </small>
                 <strong>
-                  {weather ? `${weather.current.city} · ${weather.current.condition}` : "Choose your area to get your first reading"}
+                  {weather
+                    ? `${weather.current.city} · ${td(weather.current.condition)}`
+                    : t("setup.chooseArea")}
                 </strong>
               </div>
               {weather && <b>{weather.current.temperature}°</b>}
             </div>
             <button className="welcome-start" onClick={next} type="button">
-              <span>start your profile</span>
+              <span>{t("setup.start")}</span>
               <b>→</b>
             </button>
-            <div className="setup-footnote">
-              Your weather. Your rhythm. Your way.
-            </div>
+            <div className="setup-footnote">{t("setup.footnote")}</div>
           </section>
         )}
         {step === "name" && (
           <section className="setup-panel setup-name-panel setup-animate">
-            <div className="setup-eyebrow">01 / YOUR NAME</div>
+            <div className="setup-eyebrow">{t("setup.nameEyebrow")}</div>
             <h2>
-              What should we
+              {t("setup.nameLine1")}
               <br />
-              <em>call you?</em>
+              <em>{t("setup.nameLine2")}</em>
             </h2>
-            <p className="setup-copy">
-              Your name is used only to make your daily Mausam briefing feel
-              personal.
-            </p>
+            <p className="setup-copy">{t("setup.nameCopy")}</p>
             <label className="setup-label" htmlFor="profile-name">
-              YOUR NAME <span>REQUIRED</span>
+              {t("setup.nameLabel")} <span>{t("setup.required")}</span>
             </label>
             <input
               id="profile-name"
-              className={`setup-input${nameError ? " input-error" : ""}`}
+              className={`setup-input${nameMissing ? " input-error" : ""}`}
               autoComplete="name"
-              placeholder="Enter your name"
+              placeholder={t("setup.namePlaceholder")}
               value={name}
               onChange={(event) => {
                 setName(event.target.value)
-                setNameError("")
+                setNameMissing(false)
               }}
-              aria-invalid={Boolean(nameError)}
+              aria-invalid={nameMissing}
             />
-            {nameError && <div className="setup-error">{nameError}</div>}
+            {nameMissing && (
+              <div className="setup-error">{t("setup.nameError")}</div>
+            )}
             <button className="setup-primary" onClick={next} type="button">
-              Continue <span>→</span>
+              {t("setup.continue")} <span>→</span>
             </button>
           </section>
         )}
         {step === "body" && (
           <section className="setup-panel setup-animate">
-            <div className="setup-eyebrow">02 / YOUR BASELINE</div>
+            <div className="setup-eyebrow">{t("setup.bodyEyebrow")}</div>
             <h2>
-              Select your
+              {t("setup.bodyLine1")}
               <br />
-              <em>date of birth.</em>
+              <em>{t("setup.bodyLine2")}</em>
             </h2>
-            <p className="setup-copy">
-              Your date of birth and gender help us make hydration, heat and activity guidance more personal.
-            </p>
+            <p className="setup-copy">{t("setup.bodyCopy")}</p>
             <div className="setup-body-stack">
               <DobPicker value={dob} onChange={setDob} />
               <div>
-                <label className="setup-label">GENDER</label>
+                <label className="setup-label">{t("setup.genderLabel")}</label>
                 <div className="gender-options">
                   {(["Female", "Male", "Non-binary", "Prefer not to say"] as const).map(
                     (item) => (
@@ -4432,7 +4498,7 @@ function Setup({
                         onClick={() => setSex(item)}
                         type="button"
                       >
-                        {item}
+                        {td(item)}
                       </button>
                     ),
                   )}
@@ -4444,41 +4510,38 @@ function Setup({
               onClick={() => setStep("sensitivities")}
               type="button"
             >
-              Save baseline <span>→</span>
+              {t("setup.saveBaseline")} <span>→</span>
             </button>
           </section>
         )}
         {step === "sensitivities" && (
           <section className="setup-panel setup-animate">
-            <div className="setup-eyebrow">03 / YOUR RESPONSE</div>
+            <div className="setup-eyebrow">{t("setup.sensitivitiesEyebrow")}</div>
             <h2>
-              What does the
+              {t("setup.sensitivitiesLine1")}
               <br />
-              <em>weather stir up?</em>
+              <em>{t("setup.sensitivitiesLine2")}</em>
             </h2>
-            <p className="setup-copy">
-              Select everything that affects you. We’ll surface the risk before
-              it becomes a bad day.
-            </p>
-            <label className="setup-label">WEATHER & AIR TRIGGERS</label>
+            <p className="setup-copy">{t("setup.sensitivitiesCopy")}</p>
+            <label className="setup-label">{t("setup.triggersLabel")}</label>
             <div className="setup-chips">
               {choiceSets.sensitivities.map((item) => (
                 <SetupChip
                   key={item}
-                  label={item}
+                  label={td(item)}
                   selected={sensitivities.includes(item)}
                   onClick={() => toggle(item, sensitivities, setSensitivities)}
                 />
               ))}
             </div>
             <label className="setup-label">
-              HEALTH CONCERNS <span>OPTIONAL</span>
+              {t("setup.concernsLabel")} <span>{t("setup.optional")}</span>
             </label>
             <div className="setup-chips">
               {choiceSets.concerns.map((item) => (
                 <SetupChip
                   key={item}
-                  label={item}
+                  label={td(item)}
                   selected={concerns.includes(item)}
                   disabled={
                     item !== "None of these" &&
@@ -4489,21 +4552,19 @@ function Setup({
               ))}
             </div>
             <button className="setup-primary" onClick={next} type="button">
-              Tune my alerts <span>→</span>
+              {t("setup.tuneAlerts")} <span>→</span>
             </button>
           </section>
         )}
         {step === "routine" && (
           <section className="setup-panel setup-profile-panel setup-animate">
-            <div className="setup-eyebrow">04 / CHOOSE YOUR PROFILE</div>
+            <div className="setup-eyebrow">{t("setup.routineEyebrow")}</div>
             <h2>
-              How do you experience
+              {t("setup.routineLine1")}
               <br />
-              <em>the elements?</em>
+              <em>{t("setup.routineLine2")}</em>
             </h2>
-            <p className="setup-copy">
-              Swipe up or down to select your lifestyle profile.
-            </p>
+            <p className="setup-copy">{t("setup.routineCopy")}</p>
 
             <div className="setup-crown-section">
               <SemiCircleCrownWheel
@@ -4518,14 +4579,14 @@ function Setup({
               >
                 <div className="crown-summary-line">
                   <span className="crown-summary-dot" />
-                  <strong>{activePersona.title}</strong>
+                  <strong>{td(activePersona.title)}</strong>
                   <span className="crown-summary-sep">·</span>
-                  <span className="crown-summary-tagline">{activePersona.tagline}</span>
+                  <span className="crown-summary-tagline">{td(activePersona.tagline)}</span>
                 </div>
                 <div className="crown-summary-tags">
                   {activePersona.highlights.map((item) => (
                     <span key={item} className="crown-summary-tag">
-                      {item}
+                      {td(item)}
                     </span>
                   ))}
                 </div>
@@ -4555,7 +4616,7 @@ function Setup({
               }
               type="button"
             >
-              Continue <span>→</span>
+              {t("setup.continue")} <span>→</span>
             </button>
           </section>
         )}
@@ -4661,6 +4722,7 @@ function PersonalizedWeatherPage({
   onOpenPrivacy: () => void
   onOpenFAQ: () => void
 }) {
+  const { t, td } = useTranslation()
   const localFallback = useMemo(
     () => getPersonalizedWeather(profile, weather),
     [profile, weather],
@@ -4707,7 +4769,7 @@ function PersonalizedWeatherPage({
           className="personalized-back"
           type="button"
           onClick={onBack}
-          aria-label="Back to home"
+          aria-label={t("briefing.back")}
         >
           <svg
             viewBox="0 0 24 24"
@@ -4722,7 +4784,7 @@ function PersonalizedWeatherPage({
           </svg>
         </button>
         <div>
-          <strong>Your Mausam</strong>
+          <strong>{t("briefing.title")}</strong>
           <span>
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
@@ -4734,14 +4796,14 @@ function PersonalizedWeatherPage({
 
       <section className="personalized-intro">
         <span className="personalized-eyebrow">
-          FOR {profile.name || "YOU"}
+          {t("briefing.for", { name: profile.name || t("briefing.you") })}
         </span>
         <h1>
-          Your weather,
+          {t("briefing.headingLine1")}
           <br />
-          <span>made personal.</span>
+          <span>{t("briefing.headingLine2")}</span>
         </h1>
-        <p>A clear view of today, shaped around what matters to you.</p>
+        <p>{t("briefing.subtitle")}</p>
       </section>
 
       <article className="personalized-overview personalized-glass">
@@ -4750,19 +4812,19 @@ function PersonalizedWeatherPage({
             ✦
           </span>
           <div>
-            <span>Today at a glance</span>
+            <span>{t("briefing.glance")}</span>
           </div>
         </div>
-        <h2>{personalized.headline}</h2>
-        <p>{personalized.overview}</p>
+        <h2>{td(personalized.headline)}</h2>
+        <p>{td(personalized.overview)}</p>
         <div
           className="personalized-factor-pills"
-          aria-label="Key weather factors"
+          aria-label={t("briefing.factorsAria")}
         >
           {personalized.factors.slice(0, 3).map((factor) => (
             <span key={factor.label}>
-              <small>{factor.label}</small>
-              <strong>{factor.value}</strong>
+              <small>{td(factor.label)}</small>
+              <strong>{td(factor.value)}</strong>
             </span>
           ))}
         </div>
@@ -4771,12 +4833,13 @@ function PersonalizedWeatherPage({
             <PersonalizedIconGraphic name="outdoor" />
           </span>
           <div>
-            <small>{personalized.windowLabel}</small>
-            <strong>{personalized.window}</strong>
+            <small>{td(personalized.windowLabel)}</small>
+            <strong>{td(personalized.window)}</strong>
           </div>
         </div>
         <div className="personalized-basis">
-          <span>✦</span> Based on your profile · {personalized.basis}
+          <span>✦</span>{" "}
+          {t("briefing.basis", { basis: td(personalized.basis) })}
         </div>
       </article>
 
@@ -4786,10 +4849,12 @@ function PersonalizedWeatherPage({
       >
         <div className="personalized-section-heading">
           <div>
-            <span>FOR YOUR DAY</span>
-            <h2 id="personalized-tiles-title">Today, personalized for you</h2>
+            <span>{t("briefing.forYourDay")}</span>
+            <h2 id="personalized-tiles-title">{t("briefing.tilesTitle")}</h2>
           </div>
-          <small>{personalized.tiles.length} essentials</small>
+          <small>
+            {t("briefing.essentials", { count: personalized.tiles.length })}
+          </small>
         </div>
         <div className="personalized-tile-grid">
           {personalized.tiles.map((tile) => (
@@ -4800,9 +4865,9 @@ function PersonalizedWeatherPage({
               <span className="personalized-tile-icon">
                 <PersonalizedIconGraphic name={tile.icon} />
               </span>
-              <span className="personalized-tile-title">{tile.title}</span>
-              <strong>{tile.value}</strong>
-              <small>{tile.detail}</small>
+              <span className="personalized-tile-title">{td(tile.title)}</span>
+              <strong>{td(tile.value)}</strong>
+              <small>{td(tile.detail)}</small>
             </article>
           ))}
         </div>
@@ -4814,8 +4879,8 @@ function PersonalizedWeatherPage({
       >
         <div className="personalized-section-heading">
           <div>
-            <span>SIMPLE NEXT STEPS</span>
-            <h2 id="personalized-actions-title">What should I do?</h2>
+            <span>{t("briefing.nextSteps")}</span>
+            <h2 id="personalized-actions-title">{t("briefing.whatShouldIDo")}</h2>
           </div>
         </div>
         <div className="personalized-actions personalized-glass">
@@ -4826,8 +4891,8 @@ function PersonalizedWeatherPage({
                 <PersonalizedIconGraphic name={recommendation.icon} />
               </span>
               <div>
-                <strong>{recommendation.title}</strong>
-                <p>{recommendation.reason}</p>
+                <strong>{td(recommendation.title)}</strong>
+                <p>{td(recommendation.reason)}</p>
               </div>
             </article>
           ))}
@@ -4847,8 +4912,8 @@ function PersonalizedWeatherPage({
         >
           <span className="personalized-why-icon">?</span>
           <span>
-            <strong>Why these recommendations?</strong>
-            <small>See the signals used for your briefing</small>
+            <strong>{t("briefing.whyTitle")}</strong>
+            <small>{t("briefing.whySubtitle")}</small>
           </span>
           <svg
             viewBox="0 0 24 24"
@@ -4864,15 +4929,12 @@ function PersonalizedWeatherPage({
         </button>
         <div className="personalized-why-panel" id="personalized-why-content">
           <div>
-            <p>
-              Mausam combines today’s weather factors with the sensitivities you
-              selected during setup.
-            </p>
+            <p>{t("briefing.whyBody")}</p>
             <div className="personalized-factor-list">
               {personalized.factors.map((factor) => (
                 <div key={factor.label}>
-                  <span>{factor.label}</span>
-                  <strong>{factor.value}</strong>
+                  <span>{td(factor.label)}</span>
+                  <strong>{td(factor.value)}</strong>
                 </div>
               ))}
             </div>
@@ -4883,11 +4945,11 @@ function PersonalizedWeatherPage({
               ]
                 .slice(0, 5)
                 .map((item) => (
-                  <span key={item}>{item}</span>
+                  <span key={item}>{td(item)}</span>
                 ))}
               {!profile.sensitivities.length &&
                 !profile.concerns.filter((item) => item !== "None of these")
-                  .length && <span>General weather profile</span>}
+                  .length && <span>{t("briefing.generalProfile")}</span>}
             </div>
           </div>
         </div>
@@ -4906,8 +4968,8 @@ function PersonalizedWeatherPage({
           </svg>
         </span>
         <span>
-          <strong>Privacy policy</strong>
-          <small>What Mausam collects, and why</small>
+          <strong>{t("sidebar.privacy")}</strong>
+          <small>{t("sidebar.privacyHint")}</small>
         </span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m9 5 7 7-7 7" />
@@ -4925,8 +4987,8 @@ function PersonalizedWeatherPage({
           </svg>
         </span>
         <span>
-          <strong>FAQs</strong>
-          <small>Common questions about Mausam</small>
+          <strong>{t("sidebar.faq")}</strong>
+          <small>{t("sidebar.faqHint")}</small>
         </span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m9 5 7 7-7 7" />
@@ -4934,7 +4996,7 @@ function PersonalizedWeatherPage({
       </button>
 
       {personalized.disclaimer && (
-        <p className="personalized-disclaimer">{personalized.disclaimer}</p>
+        <p className="personalized-disclaimer">{td(personalized.disclaimer)}</p>
       )}
     </main>
   )
@@ -4948,6 +5010,7 @@ function Ready({
   onComplete: () => void
   onBack?: () => void
 }) {
+  const { t } = useTranslation()
   const [entryProgress, setEntryProgress] = useState(0)
   return (
     <main className="setup-shell">
@@ -4956,12 +5019,13 @@ function Ready({
         <div className="brand-mark">
           <span>✦</span> MAUSAM
         </div>
+        <LanguageSelector className="setup-language-selector" />
         {onBack && (
           <button
             className="setup-back"
             onClick={onBack}
             type="button"
-            aria-label="Go back"
+            aria-label={t("location.back")}
           >
             ←
           </button>
@@ -4970,16 +5034,13 @@ function Ready({
       <div className="setup-content">
         <section className="setup-panel setup-login setup-animate">
           <div className="login-symbol">✦</div>
-          <div className="setup-eyebrow">MAUSAM PROFILE READY</div>
+          <div className="setup-eyebrow">{t("ready.eyebrow")}</div>
           <h2>
-            Your world,
+            {t("ready.headingLine1")}
             <br />
-            <em>in sync.</em>
+            <em>{t("ready.headingLine2")}</em>
           </h2>
-          <p className="setup-copy">
-            Your personal weather intelligence is ready. Pull the slider to
-            enter your daily view.
-          </p>
+          <p className="setup-copy">{t("ready.copy")}</p>
           <div
             className="entry-slider"
             style={
@@ -4990,7 +5051,7 @@ function Ready({
             }
           >
             <input
-              aria-label="Slide to enter Mausam"
+              aria-label={t("ready.sliderAria")}
               type="range"
               min="0"
               max="100"
@@ -5003,14 +5064,11 @@ function Ready({
             />
             <span />
             <strong>
-              SLIDE TO DIVE IN <b>→</b>
+              {t("ready.slide")} <b>→</b>
             </strong>
             <i className="entry-handle">→</i>
           </div>
-          <div className="setup-consent">
-            Your answers stay on this device until you choose to create an
-            account.
-          </div>
+          <div className="setup-consent">{t("ready.consent")}</div>
         </section>
       </div>
     </main>
@@ -5030,13 +5088,16 @@ export function LocationSetup({
   onResolved: (location: UserLocation, weather?: DashboardWeatherData) => void
   onBack?: () => void
 }) {
+  const { t } = useTranslation()
   const [locating, setLocating] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
+  // Error copy is stored as a catalogue key, not a rendered sentence, so a
+  // language switch while the message is on screen re-renders it translated.
+  const [errorKey, setErrorKey] = useState<TranslationKey | "">("")
   const [manualOpen, setManualOpen] = useState(false)
   const [manualQuery, setManualQuery] = useState("")
   const [manualResults, setManualResults] = useState<LocationSearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [searchError, setSearchError] = useState("")
+  const [searchErrorKey, setSearchErrorKey] = useState<TranslationKey | "">("")
 
   const finishSelection = async (
     location: UserLocation,
@@ -5104,7 +5165,7 @@ export function LocationSetup({
 
   const useCurrentLocation = async () => {
     setLocating(true)
-    setErrorMessage("")
+    setErrorKey("")
     try {
       const coordinates = await resolveDeviceCoordinates()
       // Address resolution and weather are independent once coordinates
@@ -5118,20 +5179,20 @@ export function LocationSetup({
         error instanceof GeolocationError
           ? error.reason
           : "position-unavailable"
-      setErrorMessage(
+      setErrorKey(
         reason === "permission-denied"
-          ? "Location access is blocked by your browser or device. If this site is already allowed, enable Location Services for this browser in your device settings, then try again."
+          ? "location.errorPermission"
           : reason === "policy-blocked"
-            ? "This embedded preview blocks location. Open Mausam directly in a browser tab, then tap Use my current area."
-          : reason === "insecure-context"
-            ? "GPS is unavailable on this HTTP network address. On this computer, open http://localhost:8443. On a phone, open an HTTPS version of Mausam."
-            : reason === "unsupported"
-              ? "Location isn't supported on this device. Search for your area instead."
-              : reason === "services-disabled"
-                ? "Your device is not providing location to this browser. Check device Location Services and the browser’s system location permission, then try again."
-                : reason === "timeout"
-                  ? "Location took too long to respond. Check that device Location Services are on, then try again — or search manually."
-                  : "The device did not provide coordinates. Check Location Services for your browser, then try again — or search manually.",
+            ? "location.errorPolicy"
+            : reason === "insecure-context"
+              ? "location.errorInsecure"
+              : reason === "unsupported"
+                ? "location.errorUnsupported"
+                : reason === "services-disabled"
+                  ? "location.errorServices"
+                  : reason === "timeout"
+                    ? "location.errorTimeout"
+                    : "location.errorUnavailable",
       )
       setManualOpen(true)
     } finally {
@@ -5141,29 +5202,24 @@ export function LocationSetup({
 
   const runSearch = async (query: string) => {
     setManualQuery(query)
-    setSearchError("")
+    setSearchErrorKey("")
     if (!query.trim()) {
       setManualResults([])
       return
     }
     if (/^\d+$/.test(query.trim()) && !/^[1-9]\d{5}$/.test(query.trim())) {
       setManualResults([])
-      setSearchError("Enter a valid 6-digit Indian PIN code.")
+      setSearchErrorKey("location.errorPin")
       return
     }
     setSearching(true)
     try {
       const results = await searchLocations(query)
       setManualResults(results)
-      if (results.length === 0)
-        setSearchError(
-          "No matching location was found in India. Check the area name or PIN code.",
-        )
+      if (results.length === 0) setSearchErrorKey("location.errorNoMatch")
     } catch {
       setManualResults([])
-      setSearchError(
-        "Location search is temporarily unavailable. Please try again.",
-      )
+      setSearchErrorKey("location.errorSearch")
     } finally {
       setSearching(false)
     }
@@ -5194,12 +5250,13 @@ export function LocationSetup({
         <div className="brand-mark">
           <span>✦</span> MAUSAM
         </div>
+        <LanguageSelector className="setup-language-selector" />
         {onBack && (
           <button
             className="setup-back"
             onClick={onBack}
             type="button"
-            aria-label="Go back"
+            aria-label={t("location.back")}
           >
             ←
           </button>
@@ -5207,16 +5264,13 @@ export function LocationSetup({
       </div>
       <div className="setup-content">
         <section className="setup-panel setup-animate">
-          <div className="setup-eyebrow">ALMOST THERE</div>
+          <div className="setup-eyebrow">{t("location.eyebrow")}</div>
           <h2>
-            Where are
+            {t("location.headingLine1")}
             <br />
-            <em>you right now?</em>
+            <em>{t("location.headingLine2")}</em>
           </h2>
-          <p className="setup-copy">
-            Mausam needs your real location to show live, accurate weather for
-            where you actually are — not a fixed city.
-          </p>
+          <p className="setup-copy">{t("location.copy")}</p>
 
           <button
             className="setup-primary"
@@ -5224,10 +5278,11 @@ export function LocationSetup({
             onClick={useCurrentLocation}
             disabled={locating}
           >
-            {locating ? "Finding you…" : "Use my current area"} <span>→</span>
+            {locating ? t("location.finding") : t("location.useCurrent")}{" "}
+            <span>→</span>
           </button>
 
-          {errorMessage && <div className="setup-error">{errorMessage}</div>}
+          {errorKey && <div className="setup-error">{t(errorKey)}</div>}
 
           <button
             type="button"
@@ -5237,7 +5292,7 @@ export function LocationSetup({
             disabled={locating}
             onClick={() => setManualOpen((open) => !open)}
           >
-            Search manually instead
+            {t("location.searchManually")}
           </button>
 
           {manualOpen && (
@@ -5250,7 +5305,7 @@ export function LocationSetup({
                 }}
               >
                 <label className="setup-label" htmlFor="india-location-search">
-                  SEARCH INDIA BY AREA, CITY OR 6-DIGIT PIN
+                  {t("location.searchLabel")}
                 </label>
                 <div className="location-search-row">
                   <input
@@ -5258,12 +5313,12 @@ export function LocationSetup({
                     className="setup-input"
                     inputMode="search"
                     autoComplete="postal-code"
-                    placeholder="e.g. Saltlake or 711101"
+                    placeholder={t("location.placeholder")}
                     value={manualQuery}
                     onChange={(event) => {
                       setManualQuery(event.target.value)
                       setManualResults([])
-                      setSearchError("")
+                      setSearchErrorKey("")
                     }}
                   />
                   <button
@@ -5271,12 +5326,16 @@ export function LocationSetup({
                     className="location-search-button"
                     disabled={searching || !manualQuery.trim()}
                   >
-                    {searching ? "…" : "Search"}
+                    {searching ? "…" : t("location.search")}
                   </button>
                 </div>
               </form>
-              {searching && <div className="setup-copy">Searching…</div>}
-              {searchError && <div className="setup-error">{searchError}</div>}
+              {searching && (
+                <div className="setup-copy">{t("location.searching")}</div>
+              )}
+              {searchErrorKey && (
+                <div className="setup-error">{t(searchErrorKey)}</div>
+              )}
               {manualResults.map((result) => (
                 <button
                   key={`${result.name}-${result.latitude}-${result.longitude}`}
@@ -5314,7 +5373,7 @@ export function LocationSetup({
             disabled={locating}
             onClick={useDemoLocation}
           >
-            Continue with Kolkata demo location
+            {t("location.demo")}
           </button>
         </section>
       </div>
@@ -5324,7 +5383,20 @@ export function LocationSetup({
 
 // ── App Root ───────────────────────────────────────────────────────────────────
 
+/**
+ * The provider owns the language for the whole tree, including the onboarding
+ * and location screens that render before the dashboard exists.
+ */
 export default function App() {
+  return (
+    <LanguageProvider>
+      <MausamApp />
+    </LanguageProvider>
+  )
+}
+
+function MausamApp() {
+  const { t } = useTranslation()
   // Development-only, one-shot route for reviewing the complete onboarding
   // without manually clearing browser storage. The query parameter is
   // removed immediately so completing onboarding still persists normally.
@@ -5528,12 +5600,13 @@ export default function App() {
   if (!weather || weatherLocationKey !== `${userLocation.latitude},${userLocation.longitude}`) {
     const failed = weatherSource === "error"
     return <main className="setup-shell" data-weather-source={failed ? "error" : "loading"}>
+      <div className="setup-topbar"><LanguageSelector className="setup-language-selector" /></div>
       <div className="setup-content"><section className="setup-panel">
-        <div className="setup-eyebrow">{userLocation.locality} · LIVE WEATHER</div>
-        <h2>{failed ? "Weather unavailable" : "Getting your weather"}</h2>
-        <p className="setup-copy" role="status">{failed ? "We couldn’t load current conditions for your area. Try again to get a fresh reading." : "Fetching current conditions for your selected area…"}</p>
-        {failed && <button type="button" className="setup-primary" onClick={() => setWeatherRetry(value => value + 1)}>Try again <span>↻</span></button>}
-        <button type="button" className="location-manual-toggle" onClick={() => { clearStoredLocation(); setUserLocation(null); setWeather(null); setWeatherLocationKey(null) }}>Change location</button>
+        <div className="setup-eyebrow">{t("gate.liveWeather", { place: userLocation.locality })}</div>
+        <h2>{t(failed ? "gate.errorTitle" : "gate.loadingTitle")}</h2>
+        <p className="setup-copy" role="status">{t(failed ? "gate.errorCopy" : "gate.loadingCopy")}</p>
+        {failed && <button type="button" className="setup-primary" onClick={() => setWeatherRetry(value => value + 1)}>{t("gate.tryAgain")} <span>↻</span></button>}
+        <button type="button" className="location-manual-toggle" onClick={() => { clearStoredLocation(); setUserLocation(null); setWeather(null); setWeatherLocationKey(null) }}>{t("gate.changeLocation")}</button>
       </section></div>
     </main>
   }

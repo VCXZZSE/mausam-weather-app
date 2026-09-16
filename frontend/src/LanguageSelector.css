@@ -1,0 +1,278 @@
+/* Collapsed language control: globe + active code + chevron, opening a
+   compact menu of full endonyms. Matched to the glass treatment of the
+   day/night switch it sits beside; every tap target is at least 44px. */
+
+.language-selector {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.language-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 9px 0 8px;
+  border: 1px solid rgba(175, 218, 235, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #dff9ff;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.16),
+    0 6px 14px rgba(0, 0, 0, 0.16);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.2s ease;
+}
+
+/* The pill stays 38px so it lines up with the day/night switch beside it,
+   while the tap target is padded out to the 44px touch guidance. */
+.language-trigger::after {
+  content: "";
+  position: absolute;
+  inset: -3px -4px;
+}
+
+.language-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.language-trigger:active {
+  transform: scale(0.97);
+}
+.language-trigger:focus-visible {
+  outline: 3px solid rgba(69, 166, 211, 0.62);
+  outline-offset: 3px;
+}
+
+.language-globe {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  opacity: 0.8;
+}
+
+.language-trigger-code {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  /* Devanagari and Bengali glyphs sit taller than "EN"; a fixed min-width
+     stops the header shifting sideways when the language changes. */
+  min-width: 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.language-chevron {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  opacity: 0.55;
+  transition: transform 0.22s ease;
+}
+.language-selector.is-open .language-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Menu ────────────────────────────────────────────────────────────────── */
+.language-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 182px;
+  padding: 6px;
+  border: 1px solid rgba(175, 218, 235, 0.26);
+  border-radius: 16px;
+  background: #101a2b;
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.44),
+    inset 0 1px rgba(255, 255, 255, 0.1);
+  animation: language-menu-in 0.16s ease-out;
+}
+.language-menu.drops-up {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
+@keyframes language-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: rgba(223, 249, 255, 0.78);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.language-option:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f2fdff;
+}
+.language-option:focus-visible {
+  outline: 2px solid rgba(69, 166, 211, 0.8);
+  outline-offset: -2px;
+}
+.language-option.is-active {
+  background: rgba(23, 104, 223, 0.2);
+  color: #fff;
+}
+
+.language-option-check {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #4fd2ff;
+}
+.language-option-check svg {
+  width: 100%;
+  height: 100%;
+}
+
+.language-option-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.language-option-code {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  opacity: 0.45;
+}
+
+/* ── Home header: pushed right, ahead of the theme switch ────────────────── */
+#root .mausam-app .home-screen .app-header-group .language-selector {
+  margin-left: auto;
+}
+#root .mausam-app
+  .home-screen
+  .app-header-group
+  .language-selector
+  + .theme-toggle {
+  margin-left: 0 !important;
+}
+
+/* ── Light theme ─────────────────────────────────────────────────────────── */
+.mausam-app.theme-light .language-trigger {
+  border-color: rgba(75, 139, 175, 0.34);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(207, 237, 247, 0.78)
+  );
+  color: #163b5c;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.98),
+    0 8px 18px rgba(47, 137, 171, 0.14);
+}
+.mausam-app.theme-light .language-menu {
+  border-color: rgba(75, 139, 175, 0.26);
+  background: #f4fbff;
+  box-shadow: 0 18px 38px rgba(31, 84, 117, 0.22);
+}
+.mausam-app.theme-light .language-option {
+  color: rgba(22, 59, 92, 0.78);
+}
+.mausam-app.theme-light .language-option:hover {
+  background: rgba(23, 104, 223, 0.08);
+  color: #0f2c47;
+}
+.mausam-app.theme-light .language-option.is-active {
+  background: rgba(23, 104, 223, 0.12);
+  color: #0f2c47;
+}
+.mausam-app.theme-light .language-option-check {
+  color: #1768df;
+}
+
+/* ── Sidebar settings row: full-width trigger, menu matched to it ────────── */
+.language-selector-full {
+  width: 100%;
+}
+.language-selector-full .language-trigger {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  gap: 9px;
+  justify-content: flex-start;
+  border-color: var(--side-line, rgba(175, 218, 235, 0.32));
+  background: transparent;
+  color: var(--side-ink, #dff9ff);
+  box-shadow: none;
+}
+.language-selector-full .language-trigger-code {
+  flex: 1;
+  text-align: left;
+  font-size: 13px;
+}
+.language-selector-full .language-menu {
+  left: 0;
+  right: 0;
+  min-width: 0;
+}
+
+/* ── Setup / onboarding topbars, which are always dark ───────────────────── */
+.setup-shell .language-trigger {
+  border-color: rgba(214, 236, 255, 0.24);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e7e9f2;
+}
+.setup-topbar .setup-language-selector .language-trigger {
+  height: 34px;
+  min-height: 34px;
+}
+/* On steps with a progress bar or a back arrow, those own the right-hand end;
+   the selector only claims it when nothing follows it (welcome, weather gate). */
+.setup-topbar .setup-language-selector:last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 380px) {
+  .language-trigger {
+    padding-inline: 7px 8px;
+    gap: 4px;
+  }
+  .language-menu {
+    min-width: 168px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .language-trigger,
+  .language-chevron,
+  .language-option {
+    transition: none;
+  }
+  .language-menu {
+    animation: none;
+  }
+}

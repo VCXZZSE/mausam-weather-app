@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { z } from "zod"
 import type { UserLocation } from "./location"
+import { useTranslation } from "./i18n"
 import "./OfficialAdvisories.css"
 
 const alertSchema = z.object({
@@ -23,23 +24,27 @@ function currentCategory(category: z.infer<typeof categorySchema> | undefined, n
   return { alerts, status: alerts.length < category.alerts.length ? "unavailable" : category.status }
 }
 
-function dateLabel(value: string) {
+// Bulletin timestamps are rendered with the active language's own numerals and
+// month names; the IST time zone is fixed because the feeds are Indian.
+const DATE_LOCALES = { en: "en-IN", hi: "hi-IN", bn: "bn-IN" } as const
+function dateLabel(value: string, language: keyof typeof DATE_LOCALES = "en") {
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date.toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleString(DATE_LOCALES[language], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })
 }
 function officialLink(value: string) {
   try { const url = new URL(value); return url.protocol === "https:" ? url.href : undefined } catch { return undefined }
 }
 function Bulletin({ alert }: { alert: OfficialAlert }) {
-  const expiry = dateLabel(alert.expiresAt)
-  const issued = dateLabel(alert.issuedAt)
+  const { t, td, language } = useTranslation()
+  const expiry = dateLabel(alert.expiresAt, language)
+  const issued = dateLabel(alert.issuedAt, language)
   const href = officialLink(alert.url)
   return <article className="official-bulletin">
-    <div className="official-bulletin-heading"><h4>{alert.title}</h4><span className="official-severity">{alert.severity}</span></div>
+    <div className="official-bulletin-heading"><h4>{alert.title}</h4><span className="official-severity">{td(alert.severity)}</span></div>
     <p>{alert.description}</p>
     {alert.instruction && alert.instruction !== alert.description && <p className="official-instruction">{alert.instruction}</p>}
-    <div className="official-bulletin-meta">{alert.area} · {alert.source}{issued && <> · Issued {issued} IST</>}{expiry && <> · Valid until {expiry} IST</>}</div>
-    {href && <a href={href} target="_blank" rel="noopener noreferrer">View official bulletin <span aria-hidden="true">↗</span></a>}
+    <div className="official-bulletin-meta">{alert.area} · {alert.source}{issued && <> · {t("advisories.issued", { time: issued })}</>}{expiry && <> · {t("advisories.validUntil", { time: expiry })}</>}</div>
+    {href && <a href={href} target="_blank" rel="noopener noreferrer">{t("advisories.viewOfficial")} <span aria-hidden="true">↗</span></a>}
   </article>
 }
 function Shield() {
@@ -47,6 +52,7 @@ function Shield() {
 }
 
 export function LiveOfficialAdvisories({ location }: { location: UserLocation }) {
+  const { t, language } = useTranslation()
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60_000)
@@ -88,54 +94,61 @@ export function LiveOfficialAdvisories({ location }: { location: UserLocation })
   const general = currentCategory(data?.categories.general, now)
   const generalAvailable = general?.status === "available"
   const generalAlerts = general?.alerts ?? []
-  const checked = data?.checkedAt && dateLabel(data.checkedAt)
-  return <section className="official-advisories" aria-label="Official alerts and advisories">
+  const checked = data?.checkedAt && dateLabel(data.checkedAt, language)
+  return <section className="official-advisories" aria-label={t("advisories.aria")}>
     <header className="official-advisories-header">
-      <div className="official-advisories-title"><span className="official-shield"><Shield /></span><div><h2>Official alerts & advisories</h2><p>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div></div>
-      <span className="official-government-label">GOV SOURCES</span>
+      <div className="official-advisories-title"><span className="official-shield"><Shield /></span><div><h2>{t("advisories.title")}</h2><p>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div></div>
+      <span className="official-government-label">{t("advisories.govLabel")}</span>
     </header>
     <div className="official-general" aria-live="polite" aria-busy={loading}>
-      <div className="official-section-label">General alerts</div>
+      <div className="official-section-label">{t("advisories.general")}</div>
       {generalAlerts.length ? <>
         <Bulletin alert={generalAlerts[0]} />
-        {generalAlerts.length > 1 && <details className="official-more"><summary>{generalAlerts.length - 1} more {generalAlerts.length === 2 ? "alert" : "alerts"} for your area</summary><div>{generalAlerts.slice(1).map(alert => <Bulletin key={alert.id} alert={alert} />)}</div></details>}
-      </> : <div className="official-empty"><span className={`official-status-dot ${generalAvailable ? "is-clear" : ""}`} aria-hidden="true"/><div><h3>{loading ? "Checking official alerts…" : generalAvailable ? "No active general alerts" : "Official updates unavailable"}</h3><p>{loading ? "Looking for government advisories for your area." : generalAvailable ? "No active warning reported for this area." : "We couldn’t verify current warnings. Please check again shortly."}</p></div></div>}
-      {generalAlerts.length > 0 && !generalAvailable && <p className="official-partial">Some official sources are unavailable. Coverage may be incomplete.</p>}
+        {generalAlerts.length > 1 && <details className="official-more"><summary>{t(generalAlerts.length === 2 ? "advisories.moreOne" : "advisories.moreMany", { count: generalAlerts.length - 1 })}</summary><div>{generalAlerts.slice(1).map(alert => <Bulletin key={alert.id} alert={alert} />)}</div></details>}
+      </> : <div className="official-empty"><span className={`official-status-dot ${generalAvailable ? "is-clear" : ""}`} aria-hidden="true"/><div><h3>{loading ? t("advisories.checking") : generalAvailable ? t("advisories.noneActive") : t("advisories.unavailable")}</h3><p>{loading ? t("advisories.checkingCopy") : generalAvailable ? t("advisories.noneActiveCopy") : t("advisories.unavailableCopy")}</p></div></div>}
+      {generalAlerts.length > 0 && !generalAvailable && <p className="official-partial">{t("advisories.partial")}</p>}
     </div>
     <div className="official-specialties">{(["farming", "fishing"] as const).map(category => {
       const info = currentCategory(data?.categories[category], now)
       const alerts = info?.alerts ?? []
-      const title = category === "farming" ? "Farming" : "Fishing"
-      const status = loading ? "Checking advisories…" : alerts.length ? `${alerts.length} active ${alerts.length === 1 ? "advisory" : "advisories"}` : info?.status === "available" ? `No ${category} advisory today` : "Updates unavailable"
+      const title = t(category === "farming" ? "advisories.farming" : "advisories.fishing")
+      const status = loading
+        ? t("advisories.checkingSpecialty")
+        : alerts.length
+          ? t(alerts.length === 1 ? "advisories.activeOne" : "advisories.activeMany", { count: alerts.length })
+          : info?.status === "available"
+            ? t(category === "farming" ? "advisories.noFarming" : "advisories.noFishing")
+            : t("advisories.specialtyUnavailable")
       const label = <><span aria-hidden="true" className="official-specialty-icon">{category === "farming" ? "🌾" : "🐟"}</span><span><strong>{title}</strong><span className="official-specialty-status">{status}</span></span>{alerts.length > 0 && <span aria-hidden="true" className="official-expand">⌄</span>}</>
-      return alerts.length ? <details className="official-specialty has-advisory" key={category}><summary>{label}</summary><div className="official-specialty-bulletins">{alerts.map(alert => <Bulletin key={alert.id} alert={alert} />)}{info?.status !== "available" && <p className="official-partial">Some official sources are unavailable.</p>}</div></details> : <div className="official-specialty" key={category}>{label}</div>
+      return alerts.length ? <details className="official-specialty has-advisory" key={category}><summary>{label}</summary><div className="official-specialty-bulletins">{alerts.map(alert => <Bulletin key={alert.id} alert={alert} />)}{info?.status !== "available" && <p className="official-partial">{t("advisories.partialShort")}</p>}</div></details> : <div className="official-specialty" key={category}>{label}</div>
     })}</div>
-    <footer className="official-advisories-footer"><span>Government-issued · Area-specific</span><span>{checked ? `Checked ${checked} IST` : loading ? "Connecting to sources" : "Awaiting verified updates"}</span></footer>
+    <footer className="official-advisories-footer"><span>{t("advisories.footerLeft")}</span><span>{checked ? t("advisories.checked", { time: checked }) : loading ? t("advisories.connecting") : t("advisories.awaiting")}</span></footer>
   </section>
 }
 
 // Government-feed access is paused at the user's request. Keep the future live
 // component separate so the homepage cannot start requests or imply an all-clear.
 export function OfficialAdvisories({ location }: { location: UserLocation }) {
-  return <section className="official-advisories" aria-label="Official alerts and advisories">
+  const { t } = useTranslation()
+  return <section className="official-advisories" aria-label={t("advisories.aria")}>
     <header className="official-advisories-header">
       <div className="official-advisories-title">
         <span className="official-shield"><Shield /></span>
-        <div><h2>Official alerts & advisories</h2><p>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div>
+        <div><h2>{t("advisories.title")}</h2><p>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div>
       </div>
-      <span className="official-government-label">UNAVAILABLE</span>
+      <span className="official-government-label">{t("advisories.unavailableLabel")}</span>
     </header>
     <div className="official-general">
-      <div className="official-section-label">General alerts</div>
+      <div className="official-section-label">{t("advisories.general")}</div>
       <div className="official-empty">
         <span className="official-status-dot" aria-hidden="true" />
-        <div><h3>No advisories available now</h3></div>
+        <div><h3>{t("advisories.none")}</h3></div>
       </div>
     </div>
     <div className="official-specialties">
-      {(["Farming", "Fishing"] as const).map(title => <div className="official-specialty" key={title}>
-        <span aria-hidden="true" className="official-specialty-icon">{title === "Farming" ? "♧" : "≋"}</span>
-        <span><strong>{title}</strong><span className="official-specialty-status">No advisories available now</span></span>
+      {(["advisories.farming", "advisories.fishing"] as const).map(key => <div className="official-specialty" key={key}>
+        <span aria-hidden="true" className="official-specialty-icon">{key === "advisories.farming" ? "♧" : "≋"}</span>
+        <span><strong>{t(key)}</strong><span className="official-specialty-status">{t("advisories.none")}</span></span>
       </div>)}
     </div>
   </section>

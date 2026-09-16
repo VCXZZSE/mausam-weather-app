@@ -1,3 +1,5 @@
+import { useTranslation } from "./i18n"
+
 // Comfort & Feel dial - a colour-coded thermometer/humidity mark that replaces
 // the comfort emoji, which rendered inconsistently across platform emoji fonts.
 
@@ -11,6 +13,9 @@ type ComfortTone = {
 // comfort.icon is the only field that separates "too cold" from "too hot" - both
 // score the same on the index - so it stays the discriminator while label carries
 // severity. Anything unrecognised falls back to the label alone.
+//
+// `label` is always the English label from the API: tone is keyed off it, so it
+// must not be translated before it gets here. Only the aria-label is localised.
 export function comfortTone(label: string, icon: string): ComfortTone {
   if (icon === "🥶") return { color: "#60a5fa", mercury: 0.16 }
   if (label === "Comfortable") return { color: "#34d399", mercury: 0.5 }
@@ -28,6 +33,7 @@ export function ComfortIndicator({
   icon: string
   size?: number
 }) {
+  const { t, td } = useTranslation()
   const { color, mercury } = comfortTone(label, icon)
   const stemTop = 15
   const stemBottom = 27
@@ -40,7 +46,7 @@ export function ComfortIndicator({
       viewBox="0 0 48 48"
       fill="none"
       role="img"
-      aria-label={`Comfort: ${label}`}
+      aria-label={t("comfort.aria", { label: td(label) })}
       style={{ display: "block", flex: "0 0 auto" }}
     >
       <circle cx="24" cy="24" r="23" fill={`${color}1f`} />
