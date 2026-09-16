@@ -55,7 +55,7 @@ export async function fetchCpcbRecords(
   const {
     baseUrl,
     apiKey,
-    limit=5000,
+    limit=2000,
     // Per page, not for the whole pagination. A bulk page from data.gov.in
     // is several MB and the portal is not fast; timeout allows up to 15s.
     timeoutMs=15000,
@@ -94,7 +94,10 @@ export async function fetchCpcbRecords(
       clearTimeout(timeout)
     }
     records.push(...body.records)
-    if(body.total!==undefined? records.length>=body.total:body.records.length<limit) return records
+    const totalRecords=body.total!==undefined? Number(body.total):undefined
+    if(body.records.length<limit || (totalRecords!==undefined && !Number.isNaN(totalRecords) && records.length>=totalRecords)) {
+      return records
+    }
     if(body.records.length===0) throw new Error("CPCB response ended before all records were received")
   }
   throw new Error("CPCB pagination limit exceeded")
