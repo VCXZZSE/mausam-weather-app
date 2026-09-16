@@ -1,5 +1,6 @@
 import { MausamMenuButton, ProfileSidebar } from "./ProfileSidebar"
 import { OfficialAdvisories } from "./OfficialAdvisories"
+import { ComfortIndicator, comfortTone } from "./ComfortIndicator"
 import {
   useState,
   useEffect,
@@ -1772,6 +1773,10 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
     hasMonthlyRainfall && weather.rainfall.monthlyAverage! > 0
       ? (weather.rainfall.month! / weather.rainfall.monthlyAverage!) * 100
       : 0
+  const comfortColor = comfortTone(
+    weather.comfort.label,
+    weather.comfort.icon,
+  ).color
 
   return (
     <div
@@ -2167,7 +2172,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
               style={{
                 fontSize: 46,
                 fontWeight: 800,
-                color: "#f87171",
+                color: comfortColor,
                 lineHeight: 1,
               }}
             >
@@ -2177,7 +2182,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
               style={{
                 fontSize: 14,
                 fontWeight: 700,
-                color: "#f87171",
+                color: comfortColor,
                 marginTop: 5,
               }}
             >
@@ -2193,7 +2198,20 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
               Comfort Index (Estimate)
             </div>
           </div>
-          <div style={{ fontSize: 36 }}>{weather.comfort.icon}</div>
+          {/* Centred on the 46px index line, not the whole text column. */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: 46,
+              flex: "0 0 auto",
+            }}
+          >
+            <ComfortIndicator
+              label={weather.comfort.label}
+              icon={weather.comfort.icon}
+            />
+          </div>
         </div>
         {weather.comfort.factors.map((factor) => (
           <div key={factor.label} style={{ marginBottom: 10 }}>
