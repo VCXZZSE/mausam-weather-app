@@ -2043,8 +2043,8 @@ function SunArcCard({
   function getSkyColors(): SkyPhase {
     if (isLight) {
       if (activeProgress < -0.05 || activeProgress > 1.05) {
-        // Twilight / Night in Light Mode
-        return { top: "#1e293b", mid: "#334155", bottom: "#475569" }
+        // Night in Light Mode: rich, celestial sapphire indigo (never dull muddy black!)
+        return { top: "#0d1b38", mid: "#142850", bottom: "#223d6e" }
       }
       if (activeProgress < 0.08) {
         // Sunrise in Light Mode
@@ -2089,7 +2089,42 @@ function SunArcCard({
       return { top: "#1a0814", mid: "#4a1228", bottom: "#6e1d2c" }
     }
   }
+
+  // Dynamic ground colors per time phase & theme
+  type GroundPhase = { top: string; bottom: string }
+  function getGroundColors(): GroundPhase {
+    if (isLight) {
+      if (isNight) {
+        // Night in Light Mode: deep, starry nocturnal floor so the moon glows with clear contrast
+        return { top: "rgba(18, 36, 68, 0.88)", bottom: "rgba(10, 20, 42, 0.96)" }
+      }
+      if (activeProgress < 0.08) {
+        // Sunrise ground
+        return { top: "rgba(254, 240, 138, 0.55)", bottom: "rgba(224, 242, 254, 0.75)" }
+      }
+      if (activeProgress < 0.2) {
+        // Morning ground
+        return { top: "rgba(224, 242, 254, 0.8)", bottom: "rgba(190, 225, 252, 0.85)" }
+      }
+      if (activeProgress < 0.8) {
+        // Daytime ground
+        return { top: "rgba(215, 235, 252, 0.8)", bottom: "rgba(186, 220, 248, 0.88)" }
+      }
+      if (activeProgress <= 1.05) {
+        // Golden hour / Sunset ground
+        return { top: "rgba(254, 215, 170, 0.6)", bottom: "rgba(254, 243, 199, 0.75)" }
+      }
+      return { top: "rgba(18, 36, 68, 0.88)", bottom: "rgba(10, 20, 42, 0.96)" }
+    } else {
+      if (isNight) {
+        return { top: "rgba(10, 18, 38, 0.82)", bottom: "rgba(3, 7, 18, 0.95)" }
+      }
+      return { top: "rgba(10, 18, 38, 0.75)", bottom: "rgba(3, 7, 18, 0.92)" }
+    }
+  }
+
   const sky = getSkyColors()
+  const ground = getGroundColors()
 
   return (
     <div className="sun-arc-card sun-moon-card">
@@ -2178,8 +2213,8 @@ function SunArcCard({
 
             {/* Underground gradient */}
             <linearGradient id="sarc-ground-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={isLight ? "rgba(215, 232, 250, 0.7)" : "rgba(10, 18, 38, 0.75)"} />
-              <stop offset="100%" stopColor={isLight ? "rgba(190, 218, 245, 0.85)" : "rgba(3, 7, 18, 0.92)"} />
+              <stop offset="0%" stopColor={ground.top} />
+              <stop offset="100%" stopColor={ground.bottom} />
             </linearGradient>
 
             {/* Arc glowing beam filter */}
@@ -2211,8 +2246,9 @@ function SunArcCard({
             {/* Moon gradient */}
             <radialGradient id="sarc-moon-grad" cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="45%" stopColor="#cbd5e1" />
-              <stop offset="100%" stopColor="#64748b" />
+              <stop offset="35%" stopColor="#f8fafc" />
+              <stop offset="70%" stopColor={isLight ? "#cbd5e1" : "#94a3b8"} />
+              <stop offset="100%" stopColor={isLight ? "#94a3b8" : "#64748b"} />
             </radialGradient>
 
             {/* Drop shadow for floating tooltip */}
@@ -2226,13 +2262,13 @@ function SunArcCard({
 
           {/* Twinkling stars (visible at night or during dark sky) */}
           {(isNight || !isLight) && (
-            <g opacity={isNight ? 0.75 : 0.35}>
-              <circle cx="35" cy="22" r="1" fill="#ffffff" opacity="0.8" />
-              <circle cx="85" cy="15" r="0.8" fill="#ffffff" opacity="0.6" />
-              <circle cx="140" cy="32" r="1.1" fill="#ffffff" opacity="0.7" />
-              <circle cx="190" cy="18" r="0.9" fill="#ffffff" opacity="0.5" />
-              <circle cx="240" cy="28" r="1" fill="#ffffff" opacity="0.8" />
-              <circle cx="285" cy="16" r="0.8" fill="#ffffff" opacity="0.6" />
+            <g opacity={isNight ? (isLight ? 0.95 : 0.8) : 0.35}>
+              <circle cx="35" cy="22" r="1.1" fill="#ffffff" opacity="0.9" />
+              <circle cx="85" cy="15" r="0.9" fill="#fef08a" opacity="0.8" />
+              <circle cx="140" cy="30" r="1.2" fill="#ffffff" opacity="0.85" />
+              <circle cx="190" cy="18" r="0.9" fill="#bae6fd" opacity="0.75" />
+              <circle cx="240" cy="26" r="1.1" fill="#ffffff" opacity="0.9" />
+              <circle cx="285" cy="16" r="0.9" fill="#fef08a" opacity="0.75" />
             </g>
           )}
 
@@ -2245,28 +2281,62 @@ function SunArcCard({
             y1={horizonY}
             x2={W - 8}
             y2={horizonY}
-            stroke={isLight ? "rgba(59, 130, 246, 0.32)" : "rgba(255, 255, 255, 0.16)"}
+            stroke={isNight ? (isLight ? "rgba(147, 197, 253, 0.45)" : "rgba(255, 255, 255, 0.2)") : (isLight ? "rgba(59, 130, 246, 0.32)" : "rgba(255, 255, 255, 0.16)")}
             strokeWidth="1.2"
             strokeDasharray="4 3"
           />
 
           {/* Left badge: EAST */}
           <g transform="translate(12, 72)">
-            <rect width="28" height="11" rx="3.5" fill={isLight ? "rgba(255,255,255,0.85)" : "rgba(15,23,42,0.7)"} stroke={isLight ? "rgba(147,197,253,0.5)" : "rgba(255,255,255,0.12)"} strokeWidth="0.6" />
-            <text x="14" y="8" textAnchor="middle" fontSize="6" fontWeight="700" letterSpacing="0.05em" fill={isLight ? "#d97706" : "#fbbf24"}>{t("forecast.east")}</text>
+            <rect
+              width="28"
+              height="11"
+              rx="3.5"
+              fill={isNight ? (isLight ? "rgba(15, 23, 42, 0.72)" : "rgba(15,23,42,0.7)") : (isLight ? "rgba(255,255,255,0.88)" : "rgba(15,23,42,0.7)")}
+              stroke={isNight ? (isLight ? "rgba(251, 191, 36, 0.45)" : "rgba(255,255,255,0.12)") : (isLight ? "rgba(147,197,253,0.5)" : "rgba(255,255,255,0.12)")}
+              strokeWidth="0.6"
+            />
+            <text
+              x="14"
+              y="8"
+              textAnchor="middle"
+              fontSize="6"
+              fontWeight="700"
+              letterSpacing="0.05em"
+              fill={isNight ? "#fbbf24" : (isLight ? "#d97706" : "#fbbf24")}
+            >
+              {t("forecast.east")}
+            </text>
           </g>
 
           {/* Right badge: HORIZON (placed completely outside curve to prevent overlap!) */}
           <g transform={`translate(${W - 52}, 72)`}>
-            <rect width="42" height="11" rx="3.5" fill={isLight ? "rgba(255,255,255,0.85)" : "rgba(15,23,42,0.7)"} stroke={isLight ? "rgba(147,197,253,0.5)" : "rgba(255,255,255,0.12)"} strokeWidth="0.6" />
-            <text x="21" y="8" textAnchor="middle" fontSize="6" fontWeight="700" letterSpacing="0.06em" fill={isLight ? "#2563eb" : "#93c5fd"}>{t("forecast.horizon")}</text>
+            <rect
+              width="42"
+              height="11"
+              rx="3.5"
+              fill={isNight ? (isLight ? "rgba(15, 23, 42, 0.72)" : "rgba(15,23,42,0.7)") : (isLight ? "rgba(255,255,255,0.88)" : "rgba(15,23,42,0.7)")}
+              stroke={isNight ? (isLight ? "rgba(147, 197, 253, 0.45)" : "rgba(255,255,255,0.12)") : (isLight ? "rgba(147,197,253,0.5)" : "rgba(255,255,255,0.12)")}
+              strokeWidth="0.6"
+            />
+            <text
+              x="21"
+              y="8"
+              textAnchor="middle"
+              fontSize="6"
+              fontWeight="700"
+              letterSpacing="0.06em"
+              fill={isNight ? "#93c5fd" : (isLight ? "#2563eb" : "#93c5fd")}
+            >
+              {t("forecast.horizon")}
+            </text>
           </g>
 
           {/* Night dashed arc (for moon) */}
           <path
             d={`M${arcX0} ${horizonY} Q${arcCtrlX} ${nightCtrlY} ${arcX1} ${horizonY}`}
             fill="none"
-            stroke={isLight ? "rgba(100, 116, 139, 0.25)" : "rgba(148, 163, 184, 0.2)"}
+            stroke={isNight ? (isLight ? "rgba(147, 197, 253, 0.55)" : "rgba(148, 163, 184, 0.35)") : (isLight ? "rgba(100, 116, 139, 0.25)" : "rgba(148, 163, 184, 0.2)")}
             strokeWidth="1.6"
             strokeDasharray="4 5"
           />
@@ -2275,7 +2345,7 @@ function SunArcCard({
           <path
             d={`M${arcX0} ${horizonY} Q${arcCtrlX} ${arcCtrlY} ${arcX1} ${horizonY}`}
             fill="none"
-            stroke={isLight ? "rgba(245, 158, 11, 0.25)" : "rgba(251, 191, 36, 0.22)"}
+            stroke={isNight && isLight ? "rgba(251, 191, 36, 0.42)" : (isLight ? "rgba(245, 158, 11, 0.28)" : "rgba(251, 191, 36, 0.22)")}
             strokeWidth="2.5"
             strokeDasharray="5 5"
           />
@@ -2318,10 +2388,10 @@ function SunArcCard({
           {/* MOON (when active at night) */}
           {isNight && (
             <g transform={`translate(${moonPos.x}, ${moonPos.y})`}>
-              <circle r="16" fill="rgba(180, 200, 255, 0.12)" filter="url(#sarc-orb-bloom)" />
-              <circle r="10" fill="rgba(180, 200, 255, 0.18)" />
+              <circle r="18" fill={isLight ? "rgba(190, 215, 255, 0.25)" : "rgba(180, 200, 255, 0.12)"} filter="url(#sarc-orb-bloom)" />
+              <circle r="11" fill={isLight ? "rgba(224, 235, 255, 0.32)" : "rgba(180, 200, 255, 0.18)"} />
               <circle r="7.5" fill="url(#sarc-moon-grad)" />
-              <circle cx="-2.5" cy="-2.5" r="2" fill="#ffffff" opacity="0.65" />
+              <circle cx="-2.5" cy="-2.5" r="2.2" fill="#ffffff" opacity="0.85" />
             </g>
           )}
 
@@ -2361,8 +2431,8 @@ function SunArcCard({
               width="88"
               height="16"
               rx="8"
-              fill={isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(15, 23, 42, 0.92)"}
-              stroke={isLight ? "rgba(245, 158, 11, 0.55)" : "rgba(251, 191, 36, 0.55)"}
+              fill={isNight && isLight ? "rgba(15, 23, 42, 0.9)" : (isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(15, 23, 42, 0.92)")}
+              stroke={isNight && isLight ? "rgba(147, 197, 253, 0.6)" : (isLight ? "rgba(245, 158, 11, 0.55)" : "rgba(251, 191, 36, 0.55)")}
               strokeWidth="0.85"
             />
             <text
@@ -2372,7 +2442,7 @@ function SunArcCard({
               fontSize="7.5"
               fontWeight="800"
               fontFamily="system-ui, -apple-system, sans-serif"
-              fill={isLight ? "#0f172a" : "#fef08a"}
+              fill={isNight && isLight ? "#ffffff" : (isLight ? "#0f172a" : "#fef08a")}
             >
               {isDay ? `${timeString} · ${elevationDeg}°` : timeString}
             </text>

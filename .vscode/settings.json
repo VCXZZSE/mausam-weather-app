@@ -5,5 +5,10 @@
     "**/android/.gradle/**": true,
     "**/android/build/**": true,
     "**/node_modules/**": true
-  }
+  },
+  "java.project.resourceFilters": [
+    "node_modules",
+    ".git"
+  ],
+  "java.import.gradle.wrapper.enabled": true
 }
