@@ -4,7 +4,7 @@ import {
   fetchWeatherDashboard,
   getWeatherHeroVariant,
   resolveWeatherIcon,
-} from "../src/weatherData"
+} from "@/services/weatherData"
 
 const LOCATION = {
   latitude: 22.5726,

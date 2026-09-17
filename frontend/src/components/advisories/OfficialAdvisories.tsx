@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { z } from "zod"
-import type { UserLocation } from "./location"
-import { formatDateTime, useTranslation, type Language } from "./i18n"
+import type { UserLocation } from "@/services/locationService"
+import { formatDateTime, useTranslation, type Language } from "@/i18n"
 import "./OfficialAdvisories.css"
 
 const alertSchema = z.object({

@@ -1,5 +1,5 @@
 import { useCallback, useState, type ReactNode } from "react"
-import type { InlineToken, MarkdownBlock } from "./markdown"
+import type { InlineToken, MarkdownBlock } from "@/services/markdownService"
 import "./documentPage.css"
 
 // Rendering primitives shared by the Markdown-backed document pages

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { ProfileSidebar } from "../src/ProfileSidebar"
-import type { Profile } from "../src/App"
+import { ProfileSidebar } from "@/components/layout/ProfileSidebar"
+import type { Profile } from "@/App"
 
 const profile: Profile = { name: "Aditi Roy", gender: "Female", age: 29, height: 168, weight: 64, activity: "Moderate", goals: ["Fitness"], sensitivities: ["Heat"], concerns: ["Allergies"] }
 const location = { latitude: 22.5, longitude: 88.3, locality: "Kolkata", region: "West Bengal", country: "India", timezone: "Asia/Kolkata", postalCode: "700150", source: "manual" as const }

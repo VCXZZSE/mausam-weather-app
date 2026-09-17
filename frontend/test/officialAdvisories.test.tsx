@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { LiveOfficialAdvisories as OfficialAdvisories } from "../src/OfficialAdvisories"
-import type { UserLocation } from "../src/location"
+import { LiveOfficialAdvisories as OfficialAdvisories } from "@/components/advisories/OfficialAdvisories"
+import type { UserLocation } from "@/services/locationService"
 
 const location: UserLocation = { latitude: 22.57, longitude: 88.36, postalCode: "700001", locality: "Kolkata", region: "West Bengal", country: "India", timezone: "Asia/Kolkata", source: "manual" }
 const nextLocation = { ...location, locality: "Mumbai", latitude: 19.07, longitude: 72.87, postalCode: "400001" }

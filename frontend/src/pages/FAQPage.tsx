@@ -7,15 +7,15 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react"
-import faqSource from "../../Mausam — Frequently Asked Questions.md?raw"
-import { blocksToPlainText, parseMarkdown } from "./markdown"
+import faqSource from "../../../Mausam — Frequently Asked Questions.md?raw"
+import { blocksToPlainText, parseMarkdown } from "@/services/markdownService"
 import {
   BackChevron,
   Blocks,
   CollapsibleSection,
   splitHeading,
   useDisclosure,
-} from "./markdownView"
+} from "@/components/common/MarkdownView"
 import "./FAQPage.css"
 
 // Bundled from Markdown at build time for the same reason as the privacy

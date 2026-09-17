@@ -11,8 +11,8 @@ import {
   type Language,
   type TranslationKey,
   type TranslationValues,
-} from "./translations"
-import { translateDynamic, translateDynamicList } from "./dynamicTranslations"
+} from "./bundles/coreTranslations"
+import { translateDynamic, translateDynamicList } from "./bundles/dynamicTranslations"
 import { formatMeasurement, formatNumber } from "./numberFormat"
 import {
   getLanguage,

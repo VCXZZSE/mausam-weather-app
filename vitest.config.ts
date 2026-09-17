@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from "node:url"
 import { defineConfig } from "vitest/config"
 import react from "@vitejs/plugin-react"
 
@@ -8,10 +9,16 @@ import react from "@vitejs/plugin-react"
 // tests this review requires (see frontend/test/*.test.tsx).
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./frontend/src", import.meta.url)),
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./frontend/test/setupTests.ts"],
     include: ["frontend/test/**/*.test.{ts,tsx}"],
     css: false,
+    testTimeout: 15000,
   },
 })

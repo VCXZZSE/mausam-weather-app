@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { LanguageSelector } from "../src/LanguageSelector"
-import { ProfileSidebar } from "../src/ProfileSidebar"
-import App from "../src/App"
-import { LanguageProvider, useTranslation } from "../src/i18n"
+import { LanguageSelector } from "@/components/language/LanguageSelector"
+import { ProfileSidebar } from "@/components/layout/ProfileSidebar"
+import App from "@/App"
+import { LanguageProvider, useTranslation } from "@/i18n"
 import {
   CATALOGUES,
   LANGUAGES,
   translate,
   type Language,
   type TranslationKey,
-} from "../src/i18n/translations"
-import { translateDynamic } from "../src/i18n/dynamicTranslations"
-import { LANGUAGE_STORAGE_KEY, setLanguage } from "../src/i18n/languageStore"
-import type { Profile } from "../src/App"
+} from "@/i18n/bundles/coreTranslations"
+import { translateDynamic } from "@/i18n/bundles/dynamicTranslations"
+import { LANGUAGE_STORAGE_KEY, setLanguage } from "@/i18n/languageStore"
+import type { Profile } from "@/App"
 
 const profile: Profile = {
   name: "Aditi Roy", gender: "Female", age: 29, activity: "Moderate",

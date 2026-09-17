@@ -1,4 +1,4 @@
-import { useTranslation } from "./i18n"
+import { useTranslation } from "@/i18n"
 
 // Comfort & Feel dial - a colour-coded thermometer/humidity mark that replaces
 // the comfort emoji, which rendered inconsistently across platform emoji fonts.

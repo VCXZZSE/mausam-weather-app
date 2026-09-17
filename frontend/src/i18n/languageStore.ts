@@ -10,7 +10,7 @@ import {
   isLanguage,
   LANGUAGES,
   type Language,
-} from "./translations"
+} from "./bundles/coreTranslations"
 
 export const LANGUAGE_STORAGE_KEY = "mausam-language"
 

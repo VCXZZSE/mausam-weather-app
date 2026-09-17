@@ -1,5 +1,5 @@
 import { registerPlugin, Capacitor } from '@capacitor/core';
-import type { DashboardWeatherData } from '../weatherData';
+import type { DashboardWeatherData } from '@/services/weatherData';
 import type { ConditionKey } from './minimal/WeatherIcon';
 
 export interface WidgetPayload {

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import "./PullToRefresh.css"
-import { useTranslation } from "./i18n"
+import { useTranslation } from "@/i18n"
 
 export interface PullToRefreshProps {
   onRefresh: () => Promise<void>

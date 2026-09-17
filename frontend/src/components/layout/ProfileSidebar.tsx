@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
-import type { Profile } from "./App"
-import { getPersonaById } from "./App"
-import type { UserLocation } from "./location"
-import { useTranslation } from "./i18n"
-import { LanguageSelector } from "./LanguageSelector"
+import type { Profile } from "@/App"
+import { getPersonaById } from "@/App"
+import type { UserLocation } from "@/services/locationService"
+import { useTranslation } from "@/i18n"
+import { LanguageSelector } from "@/components/language/LanguageSelector"
 import "./ProfileSidebar.css"
 
 function Icon({ name }: { name: "close" | "pin" | "spark" | "logout" | "arrow" | "shield" | "help" }) {

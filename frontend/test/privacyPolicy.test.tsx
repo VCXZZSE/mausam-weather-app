@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { PrivacyPolicyPage } from "../src/PrivacyPolicy"
-import { findMetaValue, parseMarkdown } from "../src/markdown"
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicy"
+import { findMetaValue, parseMarkdown } from "@/services/markdownService"
 
 const POLICY_EMAIL = "repome_maiml2024@msit.edu.in"
 

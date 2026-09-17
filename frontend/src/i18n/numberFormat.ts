@@ -16,7 +16,7 @@
 
 // Type-only import: translations.ts calls formatNumber from its own
 // interpolator, so a value import here would close a module cycle.
-import type { Language } from "./translations"
+import type { Language } from "./bundles/coreTranslations"
 
 /** Number locale per language. `-u-nu-latn` pins Latin digits (see above). */
 const NUMBER_LOCALES: Record<Language, string> = {

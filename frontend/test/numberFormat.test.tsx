@@ -9,8 +9,8 @@ import {
   formatNumber,
   isTightUnit,
 } from "../src/i18n/numberFormat"
-import { translate, type Language } from "../src/i18n/translations"
-import { translateDynamic } from "../src/i18n/dynamicTranslations"
+import { translate, type Language } from "@/i18n/bundles/coreTranslations"
+import { translateDynamic } from "@/i18n/bundles/dynamicTranslations"
 import { setLanguage } from "../src/i18n/languageStore"
 
 const LANGUAGES: Language[] = ["en", "hi", "bn"]

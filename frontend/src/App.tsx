@@ -1,8 +1,8 @@
-import { MausamMenuButton, ProfileSidebar } from "./ProfileSidebar"
-import { OfficialAdvisories } from "./OfficialAdvisories"
-import { ComfortIndicator, comfortTone } from "./ComfortIndicator"
-import { syncWeatherToWidget } from "./widgets/widgetBridge"
-import { PullToRefresh } from "./PullToRefresh"
+import { MausamMenuButton, ProfileSidebar } from "@/components/layout/ProfileSidebar"
+import { OfficialAdvisories } from "@/components/advisories/OfficialAdvisories"
+import { ComfortIndicator, comfortTone } from "@/components/common/ComfortIndicator"
+import { syncWeatherToWidget } from "@/widgets/widgetBridge"
+import { PullToRefresh } from "@/components/common/PullToRefresh"
 import {
   useState,
   useEffect,
@@ -19,13 +19,13 @@ import {
   isCurrentWeatherFresh,
   resolveWeatherIcon,
   type DashboardWeatherData,
-} from "./weatherData"
+} from "@/services/weatherData"
 import {
   adaptBriefingToPersonalizedWeather,
   fetchPersonalizedBriefing,
   mapProfileToPersona,
   mapProfileToSensitivity,
-} from "./personalizedBriefing"
+} from "@/services/personalizedBriefing"
 import {
   clearStoredLocation,
   defaultDemoLocation,
@@ -39,8 +39,8 @@ import {
   searchLocations,
   type LocationSearchResult,
   type UserLocation,
-} from "./location"
-import { getTimeGreeting } from "./timeGreeting"
+} from "@/services/locationService"
+import { getTimeGreeting } from "@/utils/timeGreeting"
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_STORAGE_KEY,
@@ -52,9 +52,9 @@ import {
   type Translator,
 } from "./i18n"
 import { I18nDebugOverlay } from "./i18n/I18nDebugOverlay"
-import { LanguageSelector } from "./LanguageSelector"
-import { PrivacyPolicyPage } from "./PrivacyPolicy"
-import { FAQPage } from "./FAQPage"
+import { LanguageSelector } from "@/components/language/LanguageSelector"
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicy"
+import { FAQPage } from "@/pages/FAQPage"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = "home" | "health" | "forecast" | "alerts"

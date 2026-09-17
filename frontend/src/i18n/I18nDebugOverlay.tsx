@@ -9,7 +9,7 @@ import {
   type UntranslatedHit,
 } from "./debug"
 import { useTranslation } from "./LanguageContext"
-import { LANGUAGES } from "./translations"
+import { LANGUAGES } from "./bundles/coreTranslations"
 
 // Inlined rather than imported from a .css file so the styles are dropped
 // along with the component in production: a stylesheet import is bundled

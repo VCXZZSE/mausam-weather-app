@@ -6,7 +6,7 @@ import type {
   PersonalizedTile,
   PersonalizedTone,
   PersonalizedWeather,
-} from "./App"
+} from "@/App"
 import type { DashboardWeatherData } from "./weatherData"
 
 export type Persona = "commuter" | "student" | "outdoor" | "health" | "general"

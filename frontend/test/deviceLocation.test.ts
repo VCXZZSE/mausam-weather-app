@@ -1,5 +1,5 @@
 import { afterEach,describe,expect,it,vi } from "vitest"
-import { requestDeviceLocation } from "../src/location"
+import { requestDeviceLocation } from "@/services/locationService"
 
 const position={ coords: { latitude: 22.57,longitude: 88.36,accuracy: 30 } } as GeolocationPosition
 

@@ -1,13 +1,13 @@
 import { useMemo } from "react"
-import policySource from "../../Mausam — Privacy Policy.md?raw"
-import { findMetaValue, parseMarkdown } from "./markdown"
+import policySource from "../../../Mausam — Privacy Policy.md?raw"
+import { findMetaValue, parseMarkdown } from "@/services/markdownService"
 import {
   BackChevron,
   Blocks,
   CollapsibleSection,
   splitHeading,
   useDisclosure,
-} from "./markdownView"
+} from "@/components/common/MarkdownView"
 import "./PrivacyPolicy.css"
 
 // The policy is bundled from its Markdown source at build time, so the page

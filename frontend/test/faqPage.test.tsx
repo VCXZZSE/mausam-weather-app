@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { FAQPage } from "../src/FAQPage"
+import { FAQPage } from "@/pages/FAQPage"
 
 const FAQ_EMAIL = "repome_maiml2024@msit.edu.in"
 

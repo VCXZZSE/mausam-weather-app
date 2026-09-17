@@ -12,8 +12,8 @@ export {
   type LanguageOption,
   type TranslationKey,
   type TranslationValues,
-} from "./translations"
-export { translateDynamic, translateDynamicList } from "./dynamicTranslations"
+} from "./bundles/coreTranslations"
+export { translateDynamic, translateDynamicList } from "./bundles/dynamicTranslations"
 export {
   formatClockTime,
   formatDateTime,

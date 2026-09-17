@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { LANGUAGES, useTranslation } from "./i18n"
+import { LANGUAGES, useTranslation } from "@/i18n"
 import "./LanguageSelector.css"
 
 /**
