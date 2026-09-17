@@ -223,7 +223,7 @@ export function toDashboardWeatherData(
   const bestWindowLabel =
     uv.index >= 6
       ? `before ${astronomy.sunrise !== "—" ? astronomy.sunrise : "9 AM"}`
-      : "most of the day"
+      : "Good all day"
 
   const overview = computeOverview({
     aqiIndex: airQuality?.index,

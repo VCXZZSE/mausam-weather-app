@@ -131,7 +131,10 @@ export function computeOverview(
     {
       icon: "↗",
       label: "Move",
-      value: `Best window ${input.bestWindowLabel}`,
+      value:
+        input.bestWindowLabel === "most of the day" || input.bestWindowLabel === "Good all day"
+          ? "Good all day"
+          : `Best window ${input.bestWindowLabel}`,
       tone: "focus-move",
     },
     {

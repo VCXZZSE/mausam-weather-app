@@ -505,8 +505,8 @@ function HomeTab({
         aria-label={t("home.briefingAria")}
       >
         <div className="insight-spark" aria-hidden="true">✦</div>
-        <div className="home-insight-single-line">
-          <strong className="home-insight-greeting">
+        <div className="home-insight-body">
+          <div className="home-insight-title">
             {profile.name ? (
               <>
                 {td(greeting)}, <span data-i18n-ignore>{profile.name}</span>
@@ -514,13 +514,17 @@ function HomeTab({
             ) : (
               td(greeting)
             )}
-          </strong>
-          <span className="home-insight-sep" aria-hidden="true">·</span>
-          <span className="home-insight-pref">
+          </div>
+          <div className="home-insight-subtitle">
             {profile.sensitivities.length
-              ? `${t("home.preferences")} (${profile.sensitivities.map((item) => td(item)).join(", ")})`
-              : t("home.preferences")}
-          </span>
+              ? t("home.watching", {
+                  items: profile.sensitivities
+                    .slice(0, 2)
+                    .map((item) => td(item))
+                    .join(" + "),
+                })
+              : t("sidebar.briefing")}
+          </div>
         </div>
         <div className="insight-arrow" aria-hidden="true">›</div>
       </button>

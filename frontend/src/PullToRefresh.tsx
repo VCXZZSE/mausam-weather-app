@@ -191,7 +191,10 @@ export function PullToRefresh({
           aria-live="polite"
         >
           <div className={`pull-to-refresh-pill is-${pullState}${theme ? ` theme-${theme}` : ""}`}>
-            <div className="pull-to-refresh-icon-box">
+            <div
+              className="pull-to-refresh-icon-box"
+              style={{ background: "transparent", border: "none", boxShadow: "none", outline: "none" }}
+            >
               {pullState === "refreshing" ? (
                 <div className="pull-to-refresh-spinner" />
               ) : pullState === "success" ? (
@@ -203,6 +206,7 @@ export function PullToRefresh({
                   strokeWidth="2.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  style={{ background: "transparent", border: "none", boxShadow: "none" }}
                 >
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -216,6 +220,10 @@ export function PullToRefresh({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   style={{
+                    background: "transparent",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
                     transform: `rotate(${rotation}deg)`,
                   }}
                 >

@@ -3227,59 +3227,54 @@ input:-webkit-autofill {
 #root .mausam-app .personal-insight.home-insight {
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 10px !important;
   padding: 8px 14px !important;
-  min-height: 38px !important;
-  margin: 0 0 12px !important;
-  border-radius: 999px !important;
+  min-height: 44px !important;
+  margin: 0 0 14px !important;
+  border-radius: 16px !important;
   overflow: hidden !important;
 }
 
-#root .mausam-app .personal-insight .home-insight-single-line {
+#root .mausam-app .personal-insight .home-insight-body {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1px;
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
+  text-align: left;
 }
 
-#root .mausam-app .personal-insight .home-insight-greeting {
-  flex-shrink: 0;
-  font-size: 12.5px;
+#root .mausam-app .personal-insight .home-insight-title {
+  font-size: 13px;
   font-weight: 600;
   color: #f7f4ed;
   white-space: nowrap;
-  display: inline;
-}
-
-#root .mausam-app .personal-insight .home-insight-sep {
-  flex-shrink: 0;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  display: inline;
-}
-
-#root .mausam-app .personal-insight .home-insight-pref {
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.65);
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.25;
+}
+
+#root .mausam-app .personal-insight .home-insight-subtitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.62);
   white-space: nowrap;
-  display: inline;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.25;
 }
 
-#root .mausam-app.theme-light .personal-insight .home-insight-greeting {
-  color: #1a2a3a;
+#root .mausam-app.theme-light .personal-insight .home-insight-title {
+  color: #111827;
 }
 
-#root .mausam-app.theme-light .personal-insight .home-insight-sep {
-  color: rgba(0, 0, 0, 0.35);
-}
-
-#root .mausam-app.theme-light .personal-insight .home-insight-pref {
-  color: rgba(30, 50, 70, 0.72);
+#root .mausam-app.theme-light .personal-insight .home-insight-subtitle {
+  color: rgba(31, 41, 55, 0.7);
 }
 
 #root .mausam-app .personalized-page {
