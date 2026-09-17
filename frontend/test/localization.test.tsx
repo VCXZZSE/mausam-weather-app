@@ -355,14 +355,33 @@ describe("dashboard renders in every language", () => {
     expect(screen.getByText(uv)).toBeInTheDocument()
   })
 
-  it("switches the live dashboard from the header selector", async () => {
+  it("switches the live dashboard from the sidebar selector", async () => {
     render(<App />)
     await waitFor(() =>
       expect(screen.getByText("Today's Metrics")).toBeInTheDocument(),
     )
-    pickLanguage(BN, screen.getByRole("banner", { name: "Mausam header" }))
+    fireEvent.click(screen.getByRole("button", { name: /open mausam menu|open profile and settings/i }))
+    const sidebar = await screen.findByRole("dialog")
+    pickLanguage(BN, sidebar)
     expect(screen.getByText("আজকের পরিমাপ")).toBeInTheDocument()
     // The API-sourced condition text is translated too, not just the chrome.
     expect(screen.getByText("ঝলমলে রোদ")).toBeInTheDocument()
+  })
+
+  it("resets language to English and clears all stored data on logout", async () => {
+    setLanguage("hi")
+    render(<App />)
+    await waitFor(() =>
+      expect(screen.getByText("आज के आँकड़े")).toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getByRole("button", { name: /open mausam menu|मौसम मेन्यू खोलें|open profile and settings/i }))
+    const sidebar = await screen.findByRole("dialog")
+    fireEvent.click(within(sidebar).getByRole("button", { name: "लॉग आउट" }))
+    await waitFor(() =>
+      expect(screen.getByText(/feel the/i)).toBeInTheDocument(),
+    )
+    expect(localStorage.getItem("mausam-language")).toBeNull()
+    expect(localStorage.getItem("mausam-profile")).toBeNull()
+    expect(localStorage.getItem("mausam-location")).toBeNull()
   })
 })

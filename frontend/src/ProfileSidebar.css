@@ -40,15 +40,39 @@
 .sidebar-section-heading { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
 .sidebar-section-heading h3 { margin: 0; font-size: 12px; font-weight: 650; }
 .sidebar-section-heading > span { font-size: 7px; letter-spacing: 1px; color: #5680a2; }
-.sidebar-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 17px 0; }
-.sidebar-metrics > div + div { border-left: 1px solid var(--side-line); padding-left: 14px; }
-.sidebar-metrics dt { color: var(--side-muted); font-size: 9px; margin-bottom: 5px; }
-.sidebar-metrics dd { margin: 0; font-size: 23px; line-height: 1.1; font-weight: 500; letter-spacing: -.8px; }
-.sidebar-metrics small { display: block; margin-top: 5px; color: var(--side-muted); font-size: 9px; letter-spacing: 0; font-weight: 400; }
-.sidebar-baseline { margin: 0; padding: 12px 0; display: flex; flex-direction: column; gap: 9px; border-top: 1px solid var(--side-line); font-size: 10px; }
-.sidebar-baseline > div { display: flex; justify-content: space-between; gap: 12px; }
-.sidebar-baseline dt { color: var(--side-muted); }
-.sidebar-baseline dd { margin: 0; font-weight: 550; text-align: right; }
+.sidebar-baseline {
+  margin: 10px 0 0;
+  padding: 12px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border-top: 1px solid var(--side-line);
+  font-size: 11px;
+}
+.sidebar-baseline > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.sidebar-baseline dt {
+  color: var(--side-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.sidebar-baseline dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  color: var(--side-ink);
+  font-size: 11px;
+}
+.sidebar-baseline dd small {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--side-muted);
+  margin-left: 3px;
+}
 .sidebar-preferences { border-top: 1px solid var(--side-line); }
 .sidebar-preferences summary { position: relative; padding: 13px 20px 14px 0; cursor: pointer; list-style: none; font-size: 11px; font-weight: 600; }
 .sidebar-preferences summary::-webkit-details-marker { display: none; }

@@ -115,8 +115,11 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
               </div>
             ) : null
           })()}
-          <dl className="sidebar-metrics"><div><dt>{t("sidebar.age")}</dt><dd>{profile.age}<small>{t("sidebar.years")}</small></dd></div></dl>
-          <dl className="sidebar-baseline"><div><dt>{t("sidebar.gender")}</dt><dd>{profile.gender ? td(profile.gender) : t("sidebar.notShared")}</dd></div><div><dt>{t("sidebar.activity")}</dt><dd>{td(profile.activity)}</dd></div></dl>
+          <dl className="sidebar-baseline">
+            <div><dt>{t("sidebar.age")}</dt><dd><span>{profile.age}</span> <small>{t("sidebar.years")}</small></dd></div>
+            <div><dt>{t("sidebar.gender")}</dt><dd>{profile.gender ? td(profile.gender) : t("sidebar.notShared")}</dd></div>
+            <div><dt>{t("sidebar.activity")}</dt><dd>{td(profile.activity)}</dd></div>
+          </dl>
           <details className="sidebar-preferences"><summary>{t("sidebar.preferences")} <span>{t("sidebar.preferencesHint")}</span><Icon name="arrow" /></summary><div className="sidebar-preference-content">{([
             ["sidebar.goals", profile.goals], ["sidebar.sensitivities", profile.sensitivities], ["sidebar.concerns", profile.concerns],
           ] as const).map(([labelKey, values]) => <div key={labelKey}><h4>{t(labelKey)}</h4><div className="sidebar-tags">{values.length ? values.map(value => <span key={value}>{td(value)}</span>) : <span>{t("sidebar.noneSelected")}</span>}</div></div>)}</div></details>

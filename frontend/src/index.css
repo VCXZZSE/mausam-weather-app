@@ -203,9 +203,9 @@ input:-webkit-autofill {
 .mausam-app .setup-slider-heading strong, .mausam-app [style*="font-size: 82px"] { font-family: 'DM Mono', monospace; }
 
 .mausam-nav-button { position: relative; color: rgba(255,255,255,.62); border-radius: 14px !important; transition: color .25s, background .25s, transform .25s; }.mausam-nav-button::before { content: ''; position: absolute; inset: 7px 10px; z-index: -1; border-radius: 20px; background: transparent; transition: background .25s, box-shadow .25s; }.mausam-nav-button.active { color: #fff; transform: translateY(-1px); }.mausam-nav-button.active::before { background: linear-gradient(135deg, rgba(255,255,255,.3), rgba(83,204,255,.17)); box-shadow: inset 0 1px rgba(255,255,255,.35), 0 0 20px rgba(52,184,255,.18); }.mausam-nav-button svg { position: relative; z-index: 1; }
-.welcome-glass { width: 100%; min-height: calc(100vh - 74px); box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; padding: 34px max(24px, calc((100% - 440px) / 2)); border: 0; border-radius: 0; background: linear-gradient(150deg, rgba(241,225,215,.73) 0%, rgba(89,202,232,.72) 43%, rgba(33,112,236,.82) 72%, rgba(201,106,185,.55) 100%); box-shadow: inset 0 1px rgba(255,255,255,.62), inset 0 -30px 70px rgba(34,74,169,.28); color: #fff; }.welcome-glass::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 54% 54%, rgba(118,250,255,.75), transparent 28%), radial-gradient(circle at 95% 88%, rgba(255,193,233,.6), transparent 28%); mix-blend-mode: screen; pointer-events: none; }.welcome-glass > * { position: relative; z-index: 1; }.welcome-glass .setup-eyebrow { color: rgba(255,255,255,.68); }.welcome-glass h1 { margin: 18px 0 12px; font-size: clamp(56px, 16vw, 82px); line-height: .87; letter-spacing: -.08em; text-shadow: 0 2px 25px rgba(0,65,150,.2); }.welcome-glass h1 em { color: rgba(255,255,255,.54); text-shadow: none; }.welcome-glass p { max-width: 330px; color: rgba(255,255,255,.82); font-size: 13px; line-height: 1.55; }.welcome-menu { position: absolute; top: 22px; left: max(24px, calc((100% - 440px) / 2)); right: max(24px, calc((100% - 440px) / 2)); display: flex; gap: 20px; overflow: hidden; color: rgba(255,255,255,.6); font: 10px 'DM Mono', monospace; white-space: nowrap; }.welcome-menu-active { color: #fff; }.welcome-reading { display: flex; align-items: center; gap: 10px; margin: 22px 0 15px; padding: 11px 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 14px; background: rgba(255,255,255,.17); backdrop-filter: blur(18px); }.reading-dot { width: 8px; height: 8px; border-radius: 50%; background: #c9ff71; box-shadow: 0 0 12px #c9ff71; }.welcome-reading div { flex: 1; }.welcome-reading small, .welcome-reading strong { display: block; }.welcome-reading small { color: rgba(255,255,255,.6); font: 8px 'DM Mono', monospace; }.welcome-reading strong { margin-top: 3px; font-size: 11px; }.welcome-reading b { font: 500 25px 'DM Mono', monospace; }.welcome-start { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 9px 8px 17px; border: 1px solid rgba(255,255,255,.5); border-radius: 24px; background: rgba(255,255,255,.88); color: #14264f; box-shadow: 0 8px 24px rgba(0,58,160,.2); font: 700 12px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }.welcome-start b { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: rgba(26,85,179,.1); font-size: 20px; font-weight: 400; }
+.welcome-glass { width: 100%; min-height: calc(100vh - 74px); box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; padding: 34px max(24px, calc((100% - 440px) / 2)); border: 0; border-radius: 0; background: linear-gradient(150deg, rgba(241,225,215,.73) 0%, rgba(89,202,232,.72) 43%, rgba(33,112,236,.82) 72%, rgba(201,106,185,.55) 100%); box-shadow: inset 0 1px rgba(255,255,255,.62), inset 0 -30px 70px rgba(34,74,169,.28); color: #fff; }.welcome-glass::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 54% 54%, rgba(118,250,255,.75), transparent 28%), radial-gradient(ellipse 36% 26% at 100% 100%, rgba(255,193,233,.38), transparent 70%); mix-blend-mode: screen; pointer-events: none; }.welcome-glass > * { position: relative; z-index: 1; }.welcome-glass .setup-eyebrow { color: rgba(255,255,255,.68); }.welcome-glass h1 { margin: 18px 0 12px; font-size: clamp(56px, 16vw, 82px); line-height: .87; letter-spacing: -.08em; text-shadow: 0 2px 25px rgba(0,65,150,.2); }.welcome-glass h1 em { color: rgba(255,255,255,.54); text-shadow: none; }.welcome-glass p { max-width: 330px; color: rgba(255,255,255,.82); font-size: 13px; line-height: 1.55; }.welcome-menu { position: absolute; top: 22px; left: max(24px, calc((100% - 440px) / 2)); right: max(24px, calc((100% - 440px) / 2)); display: flex; gap: 20px; overflow: hidden; color: rgba(255,255,255,.6); font: 10px 'DM Mono', monospace; white-space: nowrap; }.welcome-menu-active { color: #fff; }.welcome-reading { display: flex; align-items: center; gap: 10px; margin: 22px 0 15px; padding: 11px 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 14px; background: rgba(255,255,255,.17); backdrop-filter: blur(18px); }.reading-dot { width: 8px; height: 8px; border-radius: 50%; background: #c9ff71; box-shadow: 0 0 12px #c9ff71; }.welcome-reading div { flex: 1; }.welcome-reading small, .welcome-reading strong { display: block; }.welcome-reading small { color: rgba(255,255,255,.6); font: 8px 'DM Mono', monospace; }.welcome-reading strong { margin-top: 3px; font-size: 11px; }.welcome-reading b { font: 500 25px 'DM Mono', monospace; }.welcome-start { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 9px 8px 17px; border: 1px solid rgba(255,255,255,.5); border-radius: 24px; background: rgba(255,255,255,.88); color: #14264f; box-shadow: 0 8px 24px rgba(0,58,160,.2); font: 700 12px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }.welcome-start b { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: rgba(26,85,179,.1); font-size: 20px; font-weight: 400; }
 .setup-content:has(.welcome-glass) { padding: 0; min-height: calc(100vh - 74px); }
-.setup-shell:has(.welcome-glass) { background: radial-gradient(ellipse 34% 28% at 112% 112%, rgba(188,118,221,.5), transparent 72%), radial-gradient(circle at 50% 42%, rgba(116,244,255,.72), transparent 34%), linear-gradient(150deg, #bfe9e8 0%, #4db9df 42%, #2d78dc 100%); }
+.setup-shell:has(.welcome-glass) { background: radial-gradient(ellipse 36% 26% at 100% 100%, rgba(188,118,221,.48), transparent 70%), radial-gradient(circle at 50% 42%, rgba(116,244,255,.72), transparent 34%), linear-gradient(150deg, #bfe9e8 0%, #4db9df 42%, #2d78dc 100%); }
 .setup-shell:has(.welcome-glass)::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 45% 56%, rgba(255,255,255,.22), transparent 23%); pointer-events: none; }
 .setup-shell:has(.welcome-glass) .setup-noise { opacity: .23; }
 .setup-shell:has(.welcome-glass) .welcome-glass { background: transparent; box-shadow: none; }
@@ -572,21 +572,52 @@ input:-webkit-autofill {
 .entry-handle {
   position: absolute;
   z-index: 3;
-  left: calc(28px + (100% - 56px) * var(--entry-progress-ratio, 0));
+  left: calc(30px + (100% - 60px) * var(--entry-progress-ratio, 0));
   top: 50%;
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   place-items: center;
   transform: translate(-50%, -50%);
-  border: 4px solid rgba(255,255,255,.75);
+  border: 2px solid rgba(255, 255, 255, 0.9);
   border-radius: 50%;
-  background: #edf6ff;
-  color: #214678;
-  font-size: 22px;
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 55%, #bae6fd 100%);
+  color: #0284c7;
   font-style: normal;
-  box-shadow: 0 5px 16px rgba(0,35,110,.3);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.95),
+    inset 0 -2px 6px rgba(14, 165, 233, 0.3),
+    0 8px 22px rgba(3, 105, 161, 0.35),
+    0 0 16px rgba(56, 189, 248, 0.25);
   pointer-events: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.entry-slider:hover .entry-handle,
+.entry-slider input:focus-visible ~ .entry-handle {
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 1),
+    inset 0 -2px 6px rgba(14, 165, 233, 0.4),
+    0 10px 28px rgba(3, 105, 161, 0.45),
+    0 0 24px rgba(56, 189, 248, 0.4);
+}
+
+.entry-slider input:active ~ .entry-handle {
+  transform: translate(-50%, -50%) scale(1.08);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 1),
+    0 12px 32px rgba(3, 105, 161, 0.5),
+    0 0 28px rgba(56, 189, 248, 0.6);
+}
+
+.entry-handle svg {
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(2, 132, 199, 0.25));
+  transition: transform 0.2s ease;
+}
+
+.entry-slider input:active ~ .entry-handle svg {
+  transform: translateX(2px);
 }
 
 /* ── Premium frosted glass weather dashboard ───────────────── */
@@ -994,6 +1025,339 @@ input:-webkit-autofill {
   .sun-detail-tile { min-height: 78px; }
 }
 
+/* ── SunArcCard — hybrid arc tracker ─────────────────────────────────── */
+.sun-arc-card {
+  overflow: hidden;
+  padding: 18px 16px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  background: linear-gradient(165deg, #0d1b38 0%, #060d1e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 20px 48px rgba(0, 0, 0, 0.35);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sun-arc-card .sun-times-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sun-arc-card .sun-time-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 10px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  text-align: center;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.sun-arc-card .sun-time-tile:hover {
+  transform: translateY(-2px);
+}
+
+.sun-arc-card .sun-time-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  margin: 0 auto 4px;
+}
+
+.sun-arc-card .sunrise-icon {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22), rgba(217, 119, 6, 0.12));
+  border: 1px solid rgba(251, 191, 36, 0.28);
+}
+
+.sun-arc-card .sunset-icon {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(220, 38, 38, 0.12));
+  border: 1px solid rgba(249, 115, 22, 0.28);
+}
+
+.sun-arc-time {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.sun-arc-time.sunrise-val {
+  color: #fbbf24;
+}
+
+.sun-arc-time.sunset-val {
+  color: #fb923c;
+}
+
+.sun-arc-label-sm {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Interactive Controls Bar */
+.sun-arc-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 2px;
+  gap: 8px;
+}
+
+.sun-arc-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+  letter-spacing: 0.03em;
+}
+
+.sun-arc-status-badge.live {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.32);
+}
+
+.sun-arc-status-badge.simulating {
+  background: rgba(251, 191, 36, 0.18);
+  color: #fde047;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  animation: sun-status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sun-status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+.sun-arc-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sun-arc-btn {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
+  line-height: 1.3;
+}
+
+.sun-arc-btn.reset-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+.sun-arc-btn.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+
+/* Arc SVG Stage */
+.sun-arc-stage {
+  position: relative;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.sun-arc-svg {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  overflow: visible;
+  display: block;
+}
+
+/* Rotating corona rays */
+.sun-corona-rays {
+  transform-origin: 0 0;
+  animation: sun-rays-spin 14s linear infinite;
+}
+
+@keyframes sun-rays-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Glowing orb pulse */
+@keyframes sun-arc-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.88; transform: scale(1.05); }
+}
+
+.sun-arc-orb {
+  animation: sun-arc-pulse 3s ease-in-out infinite;
+}
+
+.sun-arc-prompt-hint {
+  text-align: center;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+/* Timeline labels beneath the SVG */
+.sun-arc-timeline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding: 0 4px;
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+}
+
+.timeline-noon-pill {
+  padding: 2.5px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fde047;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.sun-arc-timeline .timeline-label {
+  opacity: 0.85;
+}
+
+/* Detail tiles grid */
+.sun-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sun-arc-card .sun-detail-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  text-align: center;
+  min-height: 84px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.sun-arc-card .sun-detail-tile:hover {
+  transform: translateY(-2px);
+}
+
+.sun-arc-card .sun-detail-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  margin-bottom: 2px;
+}
+
+.sun-arc-card .moon-icon-badge {
+  background: rgba(99, 102, 241, 0.16);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.sun-arc-card .golden-icon-badge {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+}
+
+.sun-arc-card .moonrise-icon-badge {
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.sun-arc-card .day-length-icon-badge {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.sun-detail-val {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.2;
+}
+
+.sun-detail-lbl {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+/* Golden hour tile highlight */
+.sun-arc-card .golden-hour-tile {
+  background: linear-gradient(155deg, rgba(255, 194, 45, 0.16), rgba(109, 74, 15, 0.12));
+  border: 1px solid rgba(255, 213, 72, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 16px rgba(255, 185, 31, 0.08);
+}
+
+.golden-progress {
+  width: 76%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 213, 72, 0.2);
+  margin-top: 2px;
+  overflow: hidden;
+}
+
+.golden-progress span {
+  display: block;
+  height: 100%;
+  width: 70%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+@media (max-width: 390px) {
+  .sun-detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .sun-arc-time { font-size: 17px; }
+}
+
+
+
 /* Responsive tile behavior and legible badge placement. */
 .interactive-tile,
 .audience-focus-card,
@@ -1256,7 +1620,7 @@ input:-webkit-autofill {
   .setup-shell:has(.welcome-glass) {
     background:
       radial-gradient(circle at 50% 42%, rgba(81, 222, 235, .66), transparent 27%),
-      radial-gradient(ellipse at 145% 128%, rgba(188, 118, 221, .34), transparent 32%),
+      radial-gradient(ellipse 36% 26% at 100% 100%, rgba(188, 118, 221, .45), transparent 70%),
       linear-gradient(160deg, #bfe9e8 0%, #4db9df 46%, #2d78dc 82%, #8662cb 100%);
   }
   .setup-content:has(.welcome-glass) {
@@ -1267,6 +1631,11 @@ input:-webkit-autofill {
     min-height: calc(100dvh - 20px);
     justify-content: flex-end;
     padding: 28px 24px 24px;
+  }
+  .welcome-glass::before {
+    background:
+      radial-gradient(circle at 54% 50%, rgba(118,250,255,.6), transparent 28%),
+      radial-gradient(ellipse 34% 24% at 100% 100%, rgba(255,193,233,.35), transparent 65%);
   }
   .welcome-menu {
     top: 22px;
@@ -1703,45 +2072,86 @@ input:-webkit-autofill {
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
 }
+.mausam-app.theme-light .sun-arc-card {
+  background: linear-gradient(160deg, #f0f7ff 0%, #e1effc 100%) !important;
+  border-color: rgba(147, 197, 253, 0.55) !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 16px 36px rgba(59, 130, 246, 0.1) !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-time-tile {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(191, 219, 254, 0.6) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08), inset 0 1px 0 #ffffff !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-time-tile .sunrise-val {
+  color: #b45309 !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-time-tile .sunset-val {
+  color: #c2410c !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-arc-label-sm {
+  color: #64748b !important;
+}
+.mausam-app.theme-light .sun-arc-card .sunrise-icon {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+.mausam-app.theme-light .sun-arc-card .sunset-icon {
+  background: linear-gradient(135deg, #ffedd5, #fed7aa) !important;
+  border-color: rgba(234, 88, 12, 0.4) !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-arc-btn.reset-btn {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #0f172a !important;
+  border-color: rgba(147, 197, 253, 0.6) !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-arc-prompt-hint {
+  color: rgba(71, 85, 105, 0.7) !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-arc-timeline {
+  color: #475569 !important;
+}
+.mausam-app.theme-light .sun-arc-card .timeline-noon-pill {
+  background: rgba(254, 243, 199, 0.9) !important;
+  color: #92400e !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-detail-grid {
+  border-top-color: rgba(147, 197, 253, 0.35) !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-detail-tile {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(191, 219, 254, 0.55) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06), inset 0 1px 0 #ffffff !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-detail-val {
+  color: #0f172a !important;
+}
+.mausam-app.theme-light .sun-arc-card .sun-detail-lbl {
+  color: #64748b !important;
+}
+.mausam-app.theme-light .sun-arc-card .moon-icon-badge {
+  background: #e0e7ff !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+.mausam-app.theme-light .sun-arc-card .golden-icon-badge {
+  background: #fef3c7 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+.mausam-app.theme-light .sun-arc-card .moonrise-icon-badge {
+  background: #e0e7fe !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+.mausam-app.theme-light .sun-arc-card .day-length-icon-badge {
+  background: #d1fae5 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+.mausam-app.theme-light .sun-arc-card .golden-hour-tile {
+  background: linear-gradient(155deg, rgba(254, 243, 199, 0.95), rgba(253, 230, 138, 0.85)) !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+}
 .mausam-app.theme-light .sun-moon-card {
   background: linear-gradient(145deg, rgba(235, 251, 255, .9), rgba(190, 226, 244, .72)) !important;
   border-color: rgba(44, 123, 165, .28) !important;
-}
-.mausam-app.theme-light .sun-moon-card .sun-time-tile,
-.mausam-app.theme-light .sun-moon-card .sun-detail-tile {
-  background: rgba(225, 247, 255, .62) !important;
-  border-color: rgba(105, 178, 208, .18) !important;
-}
-.mausam-app.theme-light .sun-moon-card .sunrise-icon {
-  color: #b77900 !important;
-  background: rgba(255, 211, 91, .3) !important;
-}
-.mausam-app.theme-light .sun-moon-card .sunset-icon {
-  color: #c45819 !important;
-  background: rgba(255, 157, 92, .28) !important;
-}
-.mausam-app.theme-light .sun-moon-card .sun-detail-icon {
-  color: #153b5b !important;
-}
-.mausam-app.theme-light .sun-moon-card .golden-hour-tile {
-  background: linear-gradient(155deg, rgba(255, 215, 112, .55), rgba(255, 177, 83, .34)) !important;
-  border-color: rgba(213, 151, 43, .45) !important;
-}
-.mausam-app.theme-light .sun-moon-card .golden-hour-tile .sun-detail-icon {
-  color: #a25b00 !important;
-}
-.mausam-app.theme-light .sun-moon-card .golden-progress {
-  background: rgba(65, 102, 120, .18) !important;
-}
-.mausam-app.theme-light .sun-moon-card .golden-progress span {
-  background: linear-gradient(90deg, #f5b51b, #ed7c22) !important;
-  box-shadow: 0 0 8px rgba(236, 139, 29, .45);
-}
-.mausam-app.theme-light .sun-moon-card .sun-path path {
-  stroke: rgba(176, 119, 17, .38) !important;
-}
-.mausam-app.theme-light .sun-moon-card .sun-path line {
-  stroke: rgba(35, 83, 109, .2) !important;
 }
 .mausam-app.theme-light .weather-hero-card .rain-drop {
   width: 2px !important;
@@ -2100,7 +2510,7 @@ input:-webkit-autofill {
 @media (max-width: 600px) {
   .setup-shell:has(.welcome-glass) {
     background:
-      radial-gradient(ellipse 42% 32% at 118% 116%, rgba(188, 118, 221, .58), transparent 72%),
+      radial-gradient(ellipse 34% 24% at 100% 100%, rgba(188, 118, 221, .52), transparent 70%),
       linear-gradient(160deg, #bfe9e8 0%, #4db9df 48%, #2d78dc 100%) !important;
   }
 }

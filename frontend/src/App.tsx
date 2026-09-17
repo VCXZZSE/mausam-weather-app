@@ -41,6 +41,7 @@ import {
 import { getTimeGreeting } from "./timeGreeting"
 import {
   DEFAULT_LANGUAGE,
+  LANGUAGE_STORAGE_KEY,
   isTightUnit,
   LanguageProvider,
   translate,
@@ -434,7 +435,6 @@ function HomeTab({
       <header className="app-top-header" aria-label={t("home.headerAria")}>
         <div className="app-header-group">
           <MausamMenuButton onClick={onOpenMenu} expanded={menuOpen} />
-          <LanguageSelector />
           <button
             className={`theme-toggle theme-toggle-${theme}`}
             type="button"
@@ -1829,9 +1829,617 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
   )
 }
 
+// ── Sun Arc Card — hybrid arc tracker (Design 2 structure × Design 3 visuals) ──
+
+/** Parse a time string like "5:21 AM" or "6:14 PM" into minutes since midnight. */
+function parseTimeToMinutes(timeStr: string): number {
+  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return 0
+  let h = parseInt(m[1], 10)
+  const min = parseInt(m[2], 10)
+  const period = m[3].toUpperCase()
+  if (period === "PM" && h !== 12) h += 12
+  if (period === "AM" && h === 12) h = 0
+  return h * 60 + min
+}
+
+/** Format minutes difference as "Xh Ym" */
+function formatDuration(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  return `${h}h ${m}m`
+}
+
+/**
+ * Get a point on quadratic bezier Q(P0, P1, P2) at parameter t ∈ [0,1].
+ * Returns {x, y}.
+ */
+function quadBezierPoint(
+  x0: number, y0: number,
+  cx: number, cy: number,
+  x1: number, y1: number,
+  t: number
+): { x: number; y: number } {
+  const mt = 1 - t
+  return {
+    x: mt * mt * x0 + 2 * mt * t * cx + t * t * x1,
+    y: mt * mt * y0 + 2 * mt * t * cy + t * t * y1,
+  }
+}
+
+function SunArcCard({
+  astronomy,
+  theme,
+}: {
+  astronomy: DashboardWeatherData["astronomy"]
+  theme?: "dark" | "light"
+}) {
+  const { t, td } = useTranslation()
+  const isLight = theme === "light"
+
+  // Live wall-clock tick every 20 seconds
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const timer = window.setInterval(() => setTick((v) => v + 1), 20_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  // Interactive scrubbing & simulation state
+  const [scrubT, setScrubT] = useState<number | null>(null)
+  const svgRef = useRef<SVGSVGElement | null>(null)
+
+  // Times
+  const sunriseMin = parseTimeToMinutes(astronomy.sunrise)
+  const sunsetMin = parseTimeToMinutes(astronomy.sunset)
+  const now = new Date()
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+
+  // Real progress along day arc (0 = sunrise, 1 = sunset)
+  const realProgress = (nowMin - sunriseMin) / Math.max(1, sunsetMin - sunriseMin)
+  const activeProgress = scrubT !== null ? scrubT : realProgress
+  const isDay = activeProgress >= 0 && activeProgress <= 1
+  const isNight = !isDay
+
+  // Day length
+  const dayLengthMin = Math.max(0, sunsetMin - sunriseMin)
+  const dayLength = formatDuration(dayLengthMin)
+
+  // SVG Geometry - spacious coordinates with NO overlap
+  const W = 320
+  const H = 135
+  const horizonY = 86
+  const arcX0 = 44
+  const arcX1 = 276
+  const arcCtrlX = (arcX0 + arcX1) / 2 // 160
+  const arcCtrlY = 16 // Apex height
+  const nightCtrlY = horizonY + 28 // 114 (well inside H=135)
+
+  // Sun position on day arc
+  const tClamped = Math.max(0, Math.min(1, activeProgress))
+  const sunPos = quadBezierPoint(arcX0, horizonY, arcCtrlX, arcCtrlY, arcX1, horizonY, tClamped)
+
+  // Moon position on night arc
+  const moonT = isNight
+    ? activeProgress < 0
+      ? Math.max(0, Math.min(1, 1 + activeProgress))
+      : Math.max(0, Math.min(1, activeProgress - 1))
+    : 0.5
+  const moonPos = quadBezierPoint(arcX0, horizonY, arcCtrlX, nightCtrlY, arcX1, horizonY, moonT)
+
+  // Active orb position (sun or moon)
+  const activeOrbPos = isDay ? sunPos : moonPos
+
+  // Simulated time string when scrubbing
+  const displayMin = scrubT !== null
+    ? Math.round(sunriseMin + scrubT * (sunsetMin - sunriseMin))
+    : nowMin
+  const normMin = ((displayMin % 1440) + 1440) % 1440
+  const dHour24 = Math.floor(normMin / 60)
+  const dMinute = normMin % 60
+  const dPeriod = dHour24 >= 12 ? "PM" : "AM"
+  const dHour12 = dHour24 % 12 || 12
+  const timeString = `${dHour12}:${dMinute.toString().padStart(2, "0")} ${dPeriod}`
+
+  // Stage name
+  let stageLabel = t("forecast.solarNoon", { time: astronomy.solarNoon })
+  if (activeProgress < -0.05 || activeProgress > 1.05) stageLabel = t("forecast.stageNight")
+  else if (activeProgress < 0.05) stageLabel = t("forecast.sunrise")
+  else if (activeProgress < 0.25) stageLabel = t("forecast.stageMorning")
+  else if (activeProgress < 0.45) stageLabel = t("forecast.stageMidday")
+  else if (activeProgress <= 0.55) stageLabel = t("forecast.solarNoon", { time: astronomy.solarNoon })
+  else if (activeProgress < 0.8) stageLabel = t("forecast.stageAfternoon")
+  else if (activeProgress <= 0.95) stageLabel = t("forecast.goldenHour")
+  else if (activeProgress <= 1.05) stageLabel = t("forecast.sunset")
+
+  // Sun elevation angle estimate
+  const elevationDeg = isDay ? Math.round(Math.sin(tClamped * Math.PI) * 72) : 0
+
+  // Pointer scrubbing logic
+  const handlePointer = (clientX: number) => {
+    if (!svgRef.current) return
+    const rect = svgRef.current.getBoundingClientRect()
+    const relX = ((clientX - rect.left) / rect.width) * W
+    const tVal = (relX - arcX0) / (arcX1 - arcX0)
+    setScrubT(Math.max(-0.06, Math.min(1.06, tVal)))
+  }
+
+  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    handlePointer(e.clientX)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.buttons > 0 || e.pointerType === "touch") {
+      handlePointer(e.clientX)
+    }
+  }
+
+  // Dynamic sky colors per time phase & theme
+  type SkyPhase = { top: string; mid: string; bottom: string }
+  function getSkyColors(): SkyPhase {
+    if (isLight) {
+      if (activeProgress < -0.05 || activeProgress > 1.05) {
+        // Twilight / Night in Light Mode
+        return { top: "#1e293b", mid: "#334155", bottom: "#475569" }
+      }
+      if (activeProgress < 0.08) {
+        // Sunrise in Light Mode
+        return { top: "#fed7aa", mid: "#fef08a", bottom: "#e0f2fe" }
+      }
+      if (activeProgress < 0.2) {
+        // Early Morning in Light Mode
+        return { top: "#bae6fd", mid: "#e0f2fe", bottom: "#fef3c7" }
+      }
+      if (activeProgress < 0.8) {
+        // Radiant Day in Light Mode
+        return { top: "#93c5fd", mid: "#c7dcfc", bottom: "#e0f2fe" }
+      }
+      if (activeProgress < 0.95) {
+        // Golden Hour in Light Mode
+        return { top: "#fdba74", mid: "#fef08a", bottom: "#fed7aa" }
+      }
+      // Sunset in Light Mode
+      return { top: "#f472b6", mid: "#fed7aa", bottom: "#fef3c7" }
+    } else {
+      if (activeProgress < -0.05 || activeProgress > 1.05) {
+        // Night in Dark Mode
+        return { top: "#030712", mid: "#07122b", bottom: "#0f1d42" }
+      }
+      if (activeProgress < 0.08) {
+        // Sunrise in Dark Mode
+        return { top: "#1e0902", mid: "#5c1d04", bottom: "#8a2c08" }
+      }
+      if (activeProgress < 0.2) {
+        // Early Morning in Dark Mode
+        return { top: "#0a1936", mid: "#122a57", bottom: "#23497d" }
+      }
+      if (activeProgress < 0.8) {
+        // Daytime in Dark Mode
+        return { top: "#081b3d", mid: "#0f2e63", bottom: "#1a4687" }
+      }
+      if (activeProgress < 0.95) {
+        // Golden Hour in Dark Mode
+        return { top: "#240e02", mid: "#5a2704", bottom: "#7c3707" }
+      }
+      // Sunset in Dark Mode
+      return { top: "#1a0814", mid: "#4a1228", bottom: "#6e1d2c" }
+    }
+  }
+  const sky = getSkyColors()
+
+  return (
+    <div className="sun-arc-card sun-moon-card">
+      {/* Top Header: Sunrise & Sunset high-contrast tiles */}
+      <div className="sun-times-grid">
+        <div className="sun-time-tile sunrise-tile">
+          <div className="sun-time-icon sunrise-icon">
+            <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+              <defs>
+                <linearGradient id="sr-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fef08a" />
+                  <stop offset="60%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#d97706" />
+                </linearGradient>
+              </defs>
+              <circle cx="16" cy="17" r="6" fill="url(#sr-grad)" />
+              <path d="M16 5v4M7.5 8.5l2.8 2.8M24.5 8.5l-2.8 2.8M5 18h3M24 18h3" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+              <path d="M3 24h26" stroke="#fbbf24" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M16 14l-3 3h6l-3-3z" fill="#ffffff" opacity="0.9" />
+            </svg>
+          </div>
+          <div className="sun-arc-time sunrise-val">{astronomy.sunrise}</div>
+          <div className="sun-arc-label-sm">{t("forecast.sunrise")}</div>
+        </div>
+
+        <div className="sun-time-tile sunset-tile">
+          <div className="sun-time-icon sunset-icon">
+            <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+              <defs>
+                <linearGradient id="ss-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fed7aa" />
+                  <stop offset="50%" stopColor="#f97316" />
+                  <stop offset="100%" stopColor="#dc2626" />
+                </linearGradient>
+              </defs>
+              <circle cx="16" cy="19" r="6" fill="url(#ss-grad)" />
+              <path d="M16 7v3M7.5 10.5l2.8 2.8M24.5 10.5l-2.8 2.8M5 20h3M24 20h3" stroke="#f97316" strokeWidth="2" strokeLinecap="round" />
+              <path d="M3 24h26" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M16 22l-3-3h6l-3 3z" fill="#ffffff" opacity="0.9" />
+            </svg>
+          </div>
+          <div className="sun-arc-time sunset-val">{astronomy.sunset}</div>
+          <div className="sun-arc-label-sm">{t("forecast.sunset")}</div>
+        </div>
+      </div>
+
+      {/* Interactive Controls Bar */}
+      <div className="sun-arc-controls-bar">
+        <div className={`sun-arc-status-badge ${scrubT !== null ? "simulating" : "live"}`}>
+          <span className="status-dot" />
+          <span className="status-text">
+            {scrubT !== null ? `${timeString} · ${stageLabel}` : `${t("forecast.live")} · ${stageLabel}`}
+          </span>
+        </div>
+        {scrubT !== null && (
+          <button
+            type="button"
+            className="sun-arc-btn reset-btn"
+            onClick={() => setScrubT(null)}
+            aria-label={t("forecast.resetNow")}
+          >
+            ↺ {t("forecast.resetNow")}
+          </button>
+        )}
+      </div>
+
+      {/* Main 3D / Interactive Arc SVG Stage */}
+      <div className="sun-arc-stage" data-i18n-ignore="true">
+        <svg
+          ref={svgRef}
+          className="sun-arc-svg"
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="xMidYMid meet"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          style={{ cursor: "grab", touchAction: "none" }}
+          data-i18n-ignore="true"
+        >
+          <defs>
+            {/* 3-stop dynamic sky gradient */}
+            <linearGradient id="sarc-sky-dyn" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={sky.top} />
+              <stop offset="55%" stopColor={sky.mid} />
+              <stop offset="100%" stopColor={sky.bottom} />
+            </linearGradient>
+
+            {/* Underground gradient */}
+            <linearGradient id="sarc-ground-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={isLight ? "rgba(215, 232, 250, 0.7)" : "rgba(10, 18, 38, 0.75)"} />
+              <stop offset="100%" stopColor={isLight ? "rgba(190, 218, 245, 0.85)" : "rgba(3, 7, 18, 0.92)"} />
+            </linearGradient>
+
+            {/* Arc glowing beam filter */}
+            <filter id="sarc-arc-glow" x="-20%" y="-40%" width="140%" height="180%">
+              <feGaussianBlur stdDeviation="3" result="glow" />
+              <feMerge>
+                <feMergeNode in="glow" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* Orb bloom filter */}
+            <filter id="sarc-orb-bloom" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="4.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* 3D Sun radial gradient with specular core */}
+            <radialGradient id="sarc-sun-grad" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="25%" stopColor="#fef08a" />
+              <stop offset="65%" stopColor="#f59e0b" />
+              <stop offset="100%" stopColor="#d97706" />
+            </radialGradient>
+
+            {/* Moon gradient */}
+            <radialGradient id="sarc-moon-grad" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="45%" stopColor="#cbd5e1" />
+              <stop offset="100%" stopColor="#64748b" />
+            </radialGradient>
+
+            {/* Drop shadow for floating tooltip */}
+            <filter id="sarc-tooltip-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="rgba(0,0,0,0.3)" />
+            </filter>
+          </defs>
+
+          {/* Sky background */}
+          <rect x="0" y="0" width={W} height={H} fill="url(#sarc-sky-dyn)" rx="12" />
+
+          {/* Twinkling stars (visible at night or during dark sky) */}
+          {(isNight || !isLight) && (
+            <g opacity={isNight ? 0.75 : 0.35}>
+              <circle cx="35" cy="22" r="1" fill="#ffffff" opacity="0.8" />
+              <circle cx="85" cy="15" r="0.8" fill="#ffffff" opacity="0.6" />
+              <circle cx="140" cy="32" r="1.1" fill="#ffffff" opacity="0.7" />
+              <circle cx="190" cy="18" r="0.9" fill="#ffffff" opacity="0.5" />
+              <circle cx="240" cy="28" r="1" fill="#ffffff" opacity="0.8" />
+              <circle cx="285" cy="16" r="0.8" fill="#ffffff" opacity="0.6" />
+            </g>
+          )}
+
+          {/* Underground area */}
+          <rect x="0" y={horizonY} width={W} height={H - horizonY} fill="url(#sarc-ground-grad)" />
+
+          {/* Horizon reference line */}
+          <line
+            x1="8"
+            y1={horizonY}
+            x2={W - 8}
+            y2={horizonY}
+            stroke={isLight ? "rgba(59, 130, 246, 0.32)" : "rgba(255, 255, 255, 0.16)"}
+            strokeWidth="1.2"
+            strokeDasharray="4 3"
+          />
+
+          {/* Left badge: EAST */}
+          <g transform="translate(12, 72)">
+            <rect width="28" height="11" rx="3.5" fill={isLight ? "rgba(255,255,255,0.85)" : "rgba(15,23,42,0.7)"} stroke={isLight ? "rgba(147,197,253,0.5)" : "rgba(255,255,255,0.12)"} strokeWidth="0.6" />
+            <text x="14" y="8" textAnchor="middle" fontSize="6" fontWeight="700" letterSpacing="0.05em" fill={isLight ? "#d97706" : "#fbbf24"}>{t("forecast.east")}</text>
+          </g>
+
+          {/* Right badge: HORIZON (placed completely outside curve to prevent overlap!) */}
+          <g transform={`translate(${W - 52}, 72)`}>
+            <rect width="42" height="11" rx="3.5" fill={isLight ? "rgba(255,255,255,0.85)" : "rgba(15,23,42,0.7)"} stroke={isLight ? "rgba(147,197,253,0.5)" : "rgba(255,255,255,0.12)"} strokeWidth="0.6" />
+            <text x="21" y="8" textAnchor="middle" fontSize="6" fontWeight="700" letterSpacing="0.06em" fill={isLight ? "#2563eb" : "#93c5fd"}>{t("forecast.horizon")}</text>
+          </g>
+
+          {/* Night dashed arc (for moon) */}
+          <path
+            d={`M${arcX0} ${horizonY} Q${arcCtrlX} ${nightCtrlY} ${arcX1} ${horizonY}`}
+            fill="none"
+            stroke={isLight ? "rgba(100, 116, 139, 0.25)" : "rgba(148, 163, 184, 0.2)"}
+            strokeWidth="1.6"
+            strokeDasharray="4 5"
+          />
+
+          {/* Day arc base track */}
+          <path
+            d={`M${arcX0} ${horizonY} Q${arcCtrlX} ${arcCtrlY} ${arcX1} ${horizonY}`}
+            fill="none"
+            stroke={isLight ? "rgba(245, 158, 11, 0.25)" : "rgba(251, 191, 36, 0.22)"}
+            strokeWidth="2.5"
+            strokeDasharray="5 5"
+          />
+
+          {/* Glowing trajectory traveled up to current sun position */}
+          {isDay && (
+            <path
+              d={`M${arcX0} ${horizonY} Q${arcCtrlX} ${arcCtrlY} ${arcX1} ${horizonY}`}
+              fill="none"
+              stroke={isLight ? "#f59e0b" : "#fbbf24"}
+              strokeWidth="3.2"
+              strokeDasharray={`${tClamped * 260} 300`}
+              strokeLinecap="round"
+              filter="url(#sarc-arc-glow)"
+            />
+          )}
+
+          {/* Sunrise drop marker */}
+          <line x1={arcX0} y1={horizonY - 5} x2={arcX0} y2={horizonY + 12}
+            stroke={isLight ? "#f59e0b" : "#fbbf24"} strokeWidth="1.4" strokeDasharray="2 2" opacity="0.75" />
+
+          {/* Sunset drop marker */}
+          <line x1={arcX1} y1={horizonY - 5} x2={arcX1} y2={horizonY + 12}
+            stroke={isLight ? "#f97316" : "#fb923c"} strokeWidth="1.4" strokeDasharray="2 2" opacity="0.75" />
+
+          {/* Zenith / Solar noon reference marker */}
+          <circle cx={arcCtrlX} cy={arcCtrlY} r="2.5" fill={isLight ? "#f59e0b" : "#fbbf24"} opacity="0.6" />
+
+          {/* 3D Sun Shadow projection on horizon */}
+          {isDay && (
+            <ellipse
+              cx={sunPos.x}
+              cy={horizonY + 3}
+              rx={Math.max(6, 14 * (1 - (elevationDeg / 72) * 0.45))}
+              ry={2.4}
+              fill={isLight ? "rgba(30, 58, 138, 0.2)" : "rgba(0, 0, 0, 0.45)"}
+            />
+          )}
+
+          {/* MOON (when active at night) */}
+          {isNight && (
+            <g transform={`translate(${moonPos.x}, ${moonPos.y})`}>
+              <circle r="16" fill="rgba(180, 200, 255, 0.12)" filter="url(#sarc-orb-bloom)" />
+              <circle r="10" fill="rgba(180, 200, 255, 0.18)" />
+              <circle r="7.5" fill="url(#sarc-moon-grad)" />
+              <circle cx="-2.5" cy="-2.5" r="2" fill="#ffffff" opacity="0.65" />
+            </g>
+          )}
+
+          {/* SUN (interactive glowing 3D orb) */}
+          {!isNight && (
+            <g transform={`translate(${sunPos.x}, ${sunPos.y})`}>
+              {/* Solar ambient bloom */}
+              <circle r="22" fill={isLight ? "rgba(245, 158, 11, 0.18)" : "rgba(255, 200, 50, 0.14)"} filter="url(#sarc-orb-bloom)" />
+              {/* Rotating corona rays */}
+              <g className="sun-corona-rays">
+                <line x1="0" y1="-12" x2="0" y2="-15" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="0" y1="12" x2="0" y2="15" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="-12" y1="0" x2="-15" y2="0" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="12" y1="0" x2="15" y2="0" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="-8.5" y1="-8.5" x2="-10.5" y2="-10.5" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.4" strokeLinecap="round" />
+                <line x1="8.5" y1="8.5" x2="10.5" y2="10.5" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.4" strokeLinecap="round" />
+                <line x1="-8.5" y1="8.5" x2="-10.5" y2="10.5" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.4" strokeLinecap="round" />
+                <line x1="8.5" y1="-8.5" x2="10.5" y2="-10.5" stroke={isLight ? "#f59e0b" : "#fde047"} strokeWidth="1.4" strokeLinecap="round" />
+              </g>
+              {/* Mid corona halo */}
+              <circle r="12" fill={isLight ? "rgba(245, 158, 11, 0.25)" : "rgba(251, 191, 36, 0.28)"} />
+              {/* 3D Sun Sphere */}
+              <circle r="8.5" fill="url(#sarc-sun-grad)" className="sun-arc-orb" />
+              {/* Specular highlight */}
+              <circle cx="-2.5" cy="-2.5" r="2.8" fill="#ffffff" opacity="0.8" />
+            </g>
+          )}
+
+          {/* Interactive Floating Tooltip (follows active sun / moon position) */}
+          <g
+            transform={`translate(${Math.max(48, Math.min(W - 48, activeOrbPos.x))}, ${Math.max(14, activeOrbPos.y - 19)})`}
+            filter="url(#sarc-tooltip-shadow)"
+          >
+            <rect
+              x="-44"
+              y="-13"
+              width="88"
+              height="16"
+              rx="8"
+              fill={isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(15, 23, 42, 0.92)"}
+              stroke={isLight ? "rgba(245, 158, 11, 0.55)" : "rgba(251, 191, 36, 0.55)"}
+              strokeWidth="0.85"
+            />
+            <text
+              x="0"
+              y="-2"
+              textAnchor="middle"
+              fontSize="7.5"
+              fontWeight="800"
+              fontFamily="system-ui, -apple-system, sans-serif"
+              fill={isLight ? "#0f172a" : "#fef08a"}
+            >
+              {isDay ? `${timeString} · ${elevationDeg}°` : timeString}
+            </text>
+          </g>
+        </svg>
+
+        {/* User drag invitation hint */}
+        <div className="sun-arc-prompt-hint">
+          <span>{t("forecast.scrubPrompt")}</span>
+        </div>
+
+        {/* Bottom Timeline with icons */}
+        <div className="sun-arc-timeline">
+          <div className="timeline-item timeline-left">
+            <span className="timeline-label">{astronomy.sunrise}</span>
+          </div>
+          <div className="timeline-item timeline-center">
+            <span className="timeline-noon-pill">
+              ☀️ {t("forecast.solarNoon", { time: astronomy.solarNoon })}
+            </span>
+          </div>
+          <div className="timeline-item timeline-right">
+            <span className="timeline-label">{astronomy.sunset}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Detail Tiles: Moon Phase · Golden Hour · Moonrise · Day Length */}
+      <div className="sun-detail-grid">
+        {/* 1. Moon Phase */}
+        <div className="sun-detail-tile moon-detail-tile">
+          <div className="sun-detail-icon moon-icon-badge">
+            <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+              <defs>
+                <radialGradient id="moon-tile-grad" cx="40%" cy="40%" r="60%">
+                  <stop offset="0%" stopColor="#334155" />
+                  <stop offset="100%" stopColor="#0f172a" />
+                </radialGradient>
+                <linearGradient id="cres-tile-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="60%" stopColor="#cbd5e1" />
+                  <stop offset="100%" stopColor="#94a3b8" />
+                </linearGradient>
+              </defs>
+              <circle cx="16" cy="16" r="12" fill="url(#moon-tile-grad)" />
+              <circle cx="12" cy="14" r="2" fill="#1e293b" opacity="0.6" />
+              <circle cx="15" cy="21" r="1.5" fill="#1e293b" opacity="0.6" />
+              <path d="M16 4a12 12 0 0 1 12 12 12 12 0 0 1-12 12c4-3 6-7 6-12s-2-9-6-12z" fill="url(#cres-tile-grad)" />
+              <path d="M22 8a10 10 0 0 1 4 8c0 3-1 6-3 8" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+            </svg>
+          </div>
+          <div className="sun-detail-val">{td(astronomy.moonPhase)}</div>
+          <div className="sun-detail-lbl">{t("forecast.moonPhase")}</div>
+        </div>
+
+        {/* 2. Golden Hour */}
+        <div className="sun-detail-tile golden-hour-tile">
+          <div className="sun-detail-icon golden-icon-badge">
+            <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+              <defs>
+                <radialGradient id="gh-tile-grad" cx="40%" cy="40%" r="60%">
+                  <stop offset="0%" stopColor="#fffbeb" />
+                  <stop offset="40%" stopColor="#fde047" />
+                  <stop offset="80%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#d97706" />
+                </radialGradient>
+              </defs>
+              <circle cx="16" cy="16" r="6" fill="url(#gh-tile-grad)" />
+              <path d="M16 3v3M16 26v3M3 16h3M26 16h3M6.8 6.8l2.1 2.1M23.1 23.1l2.1 2.1M6.8 25.2l2.1-2.1M23.1 8.9l2.1-2.1" stroke="#f59e0b" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M16 7l1 2 2-1-1 2 2 1-2 1 1 2-2-1-1 2-1-2-2 1 1-2-2-1 2-1-1-2 2 1z" fill="#fbbf24" opacity="0.8" />
+            </svg>
+          </div>
+          <div className="sun-detail-val">{astronomy.goldenHour}</div>
+          <div className="sun-detail-lbl">{t("forecast.goldenHour")}</div>
+          <div className="golden-progress"><span /></div>
+        </div>
+
+        {/* 3. Moonrise */}
+        <div className="sun-detail-tile moonrise-tile">
+          <div className="sun-detail-icon moonrise-icon-badge">
+            <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+              <defs>
+                <linearGradient id="mr-tile-arrow" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="100%" stopColor="#818cf8" />
+                </linearGradient>
+              </defs>
+              <path d="M19 6a9 9 0 1 0 7 13.5c-4.2 0-7.8-3.2-8.3-7.4A8.9 8.9 0 0 1 19 6z" fill="#93c5fd" />
+              <line x1="4" y1="26" x2="28" y2="26" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 2" />
+              <path d="M10 23V11M6 15l4-4 4 4" stroke="url(#mr-tile-arrow)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="26" cy="8" r="1.5" fill="#e0f2fe" />
+            </svg>
+          </div>
+          <div className="sun-detail-val">{astronomy.moonrise}</div>
+          <div className="sun-detail-lbl">{t("forecast.moonrise")}</div>
+        </div>
+
+        {/* 4. Day Length */}
+        <div className="sun-detail-tile day-length-tile">
+          <div className="sun-detail-icon day-length-icon-badge">
+            <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+              <defs>
+                <linearGradient id="dl-tile-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#34d399" />
+                  <stop offset="100%" stopColor="#059669" />
+                </linearGradient>
+              </defs>
+              <circle cx="16" cy="16" r="11" stroke="#34d399" strokeWidth="2" strokeDasharray="3 3" opacity="0.4" />
+              <path d="M6 16a10 10 0 0 1 20 0" stroke="url(#dl-tile-grad)" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="16" cy="6" r="2.2" fill="#fbbf24" />
+              <circle cx="16" cy="16" r="2" fill="#10b981" />
+              <path d="M16 16V10M16 16l4 2.5" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="sun-detail-val">{dayLength}</div>
+          <div className="sun-detail-lbl">{t("forecast.dayLength")}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Forecast Tab ───────────────────────────────────────────────────────────────
 
-function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
+function ForecastTab({
+  weather,
+  theme,
+}: {
+  weather: DashboardWeatherData
+  theme?: "dark" | "light"
+}) {
   const { t, td, n, nu } = useTranslation()
   const rainfallHistory = weather.rainfall.history
   const maxRainfall = rainfallHistory
@@ -1964,158 +2572,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
       {/* Sun & Moon */}
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>{t("forecast.sunMoon")}</SectionLabel>
-        <Card
-          className="sun-moon-card"
-          grad="linear-gradient(140deg,#1a2a4a 0%,#0d1730 100%)"
-          border="rgba(255,255,255,0.06)"
-          pad={20}
-        >
-          <div
-            className="sun-times-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-              marginBottom: 16,
-            }}
-          >
-            <div className="sun-time-tile">
-              <div className="sun-time-icon sunrise-icon">☼</div>
-              <div
-                style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: "#fbbf24",
-                  marginTop: 6,
-                }}
-              >
-                {weather.astronomy.sunrise}
-              </div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>
-                {t("forecast.sunrise")}
-              </div>
-            </div>
-            <div className="sun-time-tile">
-              <div className="sun-time-icon sunset-icon">◒</div>
-              <div
-                style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: "#f97316",
-                  marginTop: 6,
-                }}
-              >
-                {weather.astronomy.sunset}
-              </div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>
-                {t("forecast.sunset")}
-              </div>
-            </div>
-          </div>
-          <svg
-            className="sun-path"
-            viewBox="0 0 280 68"
-            style={{ width: "100%", height: 58, marginBottom: 4 }}
-          >
-            <path
-              d="M10 60 Q140 -12 270 60"
-              fill="none"
-              stroke="rgba(251,191,36,0.22)"
-              strokeWidth="2"
-              strokeDasharray="5 4"
-            />
-            <circle cx="140" cy="18" r="9" fill="#fbbf24" />
-            <circle cx="140" cy="18" r="15" fill="rgba(251,191,36,0.14)" />
-            <line
-              x1="0"
-              y1="61"
-              x2="280"
-              y2="61"
-              stroke="rgba(255,255,255,0.06)"
-              strokeWidth="1"
-            />
-          </svg>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 9,
-              color: "rgba(255,255,255,0.22)",
-              marginBottom: 16,
-            }}
-          >
-            <span>{weather.astronomy.sunrise}</span>
-            <span style={{ color: "#fbbf24", fontWeight: 700 }}>
-              {t("forecast.solarNoon", { time: weather.astronomy.solarNoon })}
-            </span>
-            <span>{weather.astronomy.sunset}</span>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 8,
-              paddingTop: 14,
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            {[
-              {
-                icon: "◐",
-                id: "moon-phase",
-                label: t("forecast.moonPhase"),
-                val: td(weather.astronomy.moonPhase),
-                className: "moon-detail-tile",
-              },
-              {
-                icon: "☼",
-                id: "golden-hour",
-                label: t("forecast.goldenHour"),
-                val: weather.astronomy.goldenHour,
-                className: "golden-hour-tile",
-              },
-              {
-                icon: "◔",
-                id: "moonrise",
-                label: t("forecast.moonrise"),
-                val: weather.astronomy.moonrise,
-                className: "moon-detail-tile",
-              },
-            ].map((m) => (
-              <div
-                key={m.id}
-                className={`sun-detail-tile ${m.className}`}
-                style={{ textAlign: "center" }}
-              >
-                <div className="sun-detail-icon">{m.icon}</div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: "white",
-                    marginTop: 5,
-                  }}
-                >
-                  {m.val}
-                </div>
-                <div
-                  style={{
-                    fontSize: 9,
-                    color: "rgba(255,255,255,0.28)",
-                    marginTop: 2,
-                  }}
-                >
-                  {m.label}
-                </div>
-                {m.id === "golden-hour" && (
-                  <div className="golden-progress">
-                    <span />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
+        <SunArcCard astronomy={weather.astronomy} theme={theme} />
       </div>
 
       {/* Monthly Rainfall */}
@@ -4549,7 +5006,6 @@ function Setup({
         <div className="brand-mark">
           <span>✦</span> MAUSAM
         </div>
-        <LanguageSelector className="setup-language-selector" />
         {step !== "welcome" && (
           <div className="setup-progress">
             <span style={{ width: `${Math.max(9, (stepIndex / 4) * 100)}%` }} />
@@ -5178,7 +5634,6 @@ function Ready({
         <div className="brand-mark">
           <span>✦</span> MAUSAM
         </div>
-        <LanguageSelector className="setup-language-selector" />
         {onBack && (
           <button
             className="setup-back"
@@ -5225,7 +5680,21 @@ function Ready({
             <strong>
               {t("ready.slide")} <b>→</b>
             </strong>
-            <i className="entry-handle">→</i>
+            <i className="entry-handle" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </i>
           </div>
           <div className="setup-consent">{t("ready.consent")}</div>
         </section>
@@ -5409,7 +5878,6 @@ export function LocationSetup({
         <div className="brand-mark">
           <span>✦</span> MAUSAM
         </div>
-        <LanguageSelector className="setup-language-selector" />
         {onBack && (
           <button
             className="setup-back"
@@ -5557,7 +6025,7 @@ export default function App() {
 }
 
 function MausamApp() {
-  const { t } = useTranslation()
+  const { t, setLanguage } = useTranslation()
   // Development-only, one-shot route for reviewing the complete onboarding
   // without manually clearing browser storage. The query parameter is
   // removed immediately so completing onboarding still persists normally.
@@ -5606,6 +6074,10 @@ function MausamApp() {
   const logout = () => {
     changeLocation()
     localStorage.removeItem(PROFILE_STORAGE_KEY)
+    localStorage.removeItem("mausam-theme")
+    setTheme("dark")
+    setLanguage(DEFAULT_LANGUAGE)
+    localStorage.removeItem(LANGUAGE_STORAGE_KEY)
     setProfile(null)
     setProfileSetupComplete(false)
   }
@@ -5761,7 +6233,7 @@ function MausamApp() {
   if (!weather || weatherLocationKey !== `${userLocation.latitude},${userLocation.longitude}`) {
     const failed = weatherSource === "error"
     return <main className="setup-shell" data-weather-source={failed ? "error" : "loading"}>
-      <div className="setup-topbar"><LanguageSelector className="setup-language-selector" /></div>
+      <div className="setup-topbar" />
       <div className="setup-content"><section className="setup-panel">
         <div className="setup-eyebrow">{t("gate.liveWeather", { place: userLocation.locality })}</div>
         <h2>{t(failed ? "gate.errorTitle" : "gate.loadingTitle")}</h2>
@@ -5845,7 +6317,7 @@ function MausamApp() {
                 />
               )}
               {tab === "health" && <HealthTab weather={weather} />}
-              {tab === "forecast" && <ForecastTab weather={weather} />}
+              {tab === "forecast" && <ForecastTab weather={weather} theme={theme} />}
               {tab === "alerts" && <AlertsTab weather={weather} />}
             </>
           )}
