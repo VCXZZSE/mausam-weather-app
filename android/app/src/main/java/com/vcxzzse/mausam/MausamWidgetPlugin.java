@@ -43,6 +43,7 @@ public class MausamWidgetPlugin extends Plugin {
         // Refresh all active home screen widgets
         MausamWidgetProvider.updateAllWidgets(context);
         MausamMinimalAProvider.updateAllWidgets(context);
+        MausamTypographic1x1Provider.updateAllWidgets(context);
 
         JSObject ret = new JSObject();
         ret.put("success", true);
