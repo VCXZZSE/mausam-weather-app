@@ -2426,39 +2426,42 @@ input:-webkit-autofill {
 
 /* Keep the header measured from the page edge instead of inherited scroll padding. */
 #root .mausam-app > div > .no-scrollbar { padding: 0 !important; }
-#root .mausam-app .home-screen {
+#root .mausam-app .home-screen,
+#root .mausam-app .health-screen,
+#root .mausam-app .forecast-screen,
+#root .mausam-app .alerts-screen {
   padding: max(44px, calc(env(safe-area-inset-top) + 20px)) clamp(24px, 6.2vw, 40px) 24px !important;
 }
 #root .mausam-app .secondary-menu-header {
   padding: max(44px, calc(env(safe-area-inset-top) + 20px)) clamp(24px, 6.2vw, 40px) 0 !important;
 }
-#root .mausam-app .home-screen .app-top-header {
+#root .mausam-app .app-page .app-top-header {
   padding: 0 !important;
-  margin: 0 0 68px !important;
+  margin: 0 0 24px !important;
 }
-#root .mausam-app .home-screen .app-header-group {
+#root .mausam-app .app-page .app-header-group {
   min-height: 52px;
   justify-content: flex-start;
   gap: 18px;
 }
-#root .mausam-app .home-screen .app-weather-mark {
+#root .mausam-app .app-page .app-weather-mark {
   width: 50px;
   height: 50px;
   flex: 0 0 50px;
   margin: 0;
   border-radius: 15px;
 }
-#root .mausam-app .home-screen .app-weather-mark svg {
+#root .mausam-app .app-page .app-weather-mark svg {
   width: 34px;
   height: 34px;
 }
-#root .mausam-app .home-screen .app-header-title {
+#root .mausam-app .app-page .app-header-title {
   margin: 0;
   font-size: clamp(36px, 8.9vw, 56px);
   line-height: .9;
   letter-spacing: -.075em;
 }
-#root .mausam-app .home-screen .theme-toggle {
+#root .mausam-app .app-page .theme-toggle {
   position: relative;
   right: auto;
   top: auto;
@@ -2468,8 +2471,8 @@ input:-webkit-autofill {
   margin-left: auto;
   transform: none;
 }
-#root .mausam-app .home-screen .theme-toggle:hover { transform: scale(1.04); }
-#root .mausam-app .home-screen .theme-toggle:focus-visible {
+#root .mausam-app .app-page .theme-toggle:hover { transform: scale(1.04); }
+#root .mausam-app .app-page .theme-toggle:focus-visible {
   outline: 3px solid rgba(69, 166, 211, .62);
   outline-offset: 3px;
 }
@@ -2536,17 +2539,20 @@ input:-webkit-autofill {
 }
 
 @media (max-width: 390px) {
-  #root .mausam-app .home-screen { padding-inline: 20px !important; }
+  #root .mausam-app .home-screen,
+  #root .mausam-app .health-screen,
+  #root .mausam-app .forecast-screen,
+  #root .mausam-app .alerts-screen { padding-inline: 20px !important; }
   #root .mausam-app .secondary-menu-header { padding-inline: 20px !important; }
-  #root .mausam-app .home-screen .app-top-header { margin-bottom: 40px !important; }
-  #root .mausam-app .home-screen .app-header-group { min-height: 42px; gap: 12px; }
-  #root .mausam-app .home-screen .app-weather-mark { width: 42px; height: 42px; flex-basis: 42px; border-radius: 13px; }
-  #root .mausam-app .home-screen .app-weather-mark svg { width: 28px; height: 28px; }
-  #root .mausam-app .home-screen .theme-toggle { width: 42px; height: 42px; flex-basis: 42px; }
+  #root .mausam-app .app-page .app-top-header { margin-bottom: 24px !important; }
+  #root .mausam-app .app-page .app-header-group { min-height: 42px; gap: 12px; }
+  #root .mausam-app .app-page .app-weather-mark { width: 42px; height: 42px; flex-basis: 42px; border-radius: 13px; }
+  #root .mausam-app .app-page .app-weather-mark svg { width: 28px; height: 28px; }
+  #root .mausam-app .app-page .theme-toggle { width: 42px; height: 42px; flex-basis: 42px; }
 }
 
 /* ── Home hero: one immersive weather moment, not three competing cards ── */
-#root .mausam-app .home-screen .app-top-header { margin-bottom: 24px !important; }
+#root .mausam-app .app-page .app-top-header { margin-bottom: 24px !important; }
 #root .mausam-app .weather-hero-card {
   isolation: isolate;
   min-height: 0;
@@ -3255,11 +3261,20 @@ input:-webkit-autofill {
   font-size: 13px;
   font-weight: 600;
   color: #f7f4ed;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   max-width: 100%;
   line-height: 1.25;
+}
+
+#root .mausam-app .personal-insight .home-insight-title span {
+  display: inline !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font: inherit !important;
+  color: inherit !important;
 }
 
 #root .mausam-app .personal-insight .home-insight-subtitle {
