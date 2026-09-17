@@ -7,6 +7,7 @@ export interface PullToRefreshProps {
   children: React.ReactNode
   scrollRef: React.RefObject<HTMLDivElement | null>
   disabled?: boolean
+  theme?: "light" | "dark"
 }
 
 type PullState = "idle" | "pulling" | "ready" | "refreshing" | "success"
@@ -19,6 +20,7 @@ export function PullToRefresh({
   children,
   scrollRef,
   disabled = false,
+  theme,
 }: PullToRefreshProps) {
   const { t } = useTranslation()
   const [pullDistance, setPullDistance] = useState(0)
@@ -188,7 +190,7 @@ export function PullToRefresh({
           }}
           aria-live="polite"
         >
-          <div className={`pull-to-refresh-pill is-${pullState}`}>
+          <div className={`pull-to-refresh-pill is-${pullState}${theme ? ` theme-${theme}` : ""}`}>
             <div className="pull-to-refresh-icon-box">
               {pullState === "refreshing" ? (
                 <div className="pull-to-refresh-spinner" />

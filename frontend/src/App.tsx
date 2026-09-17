@@ -6371,7 +6371,7 @@ function MausamApp() {
           className="no-scrollbar app-scroll"
           style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
         >
-          <PullToRefresh scrollRef={scrollRef} onRefresh={handlePullRefresh}>
+          <PullToRefresh scrollRef={scrollRef} onRefresh={handlePullRefresh} theme={theme}>
             {(tab !== "home" || overlay !== "none") && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
             {overlay === "privacy" ? (
               <PrivacyPolicyPage

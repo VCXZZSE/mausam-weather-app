@@ -120,3 +120,113 @@
   width: 100%;
   will-change: transform;
 }
+
+/* ==========================================================================
+   Light Mode Pull-to-Refresh Theme Customizations
+   (Dark mode colors are strictly preserved above)
+   ========================================================================== */
+
+.theme-light .pull-to-refresh-pill,
+[data-theme="light"] .pull-to-refresh-pill,
+.pull-to-refresh-pill.theme-light,
+.mausam-app.theme-light .pull-to-refresh-pill {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 10px 30px rgba(18, 59, 97, 0.18), 0 2px 10px rgba(56, 189, 248, 0.15) !important;
+  color: #0f2744 !important;
+}
+
+.theme-light .pull-to-refresh-pill .pull-to-refresh-text,
+[data-theme="light"] .pull-to-refresh-pill .pull-to-refresh-text,
+.pull-to-refresh-pill.theme-light .pull-to-refresh-text,
+.mausam-app.theme-light .pull-to-refresh-pill .pull-to-refresh-text {
+  color: #0f2744 !important;
+  font-weight: 600 !important;
+}
+
+.theme-light .pull-to-refresh-pill .pull-to-refresh-arrow,
+[data-theme="light"] .pull-to-refresh-pill .pull-to-refresh-arrow,
+.pull-to-refresh-pill.theme-light .pull-to-refresh-arrow,
+.mausam-app.theme-light .pull-to-refresh-pill .pull-to-refresh-arrow {
+  color: #0284c7 !important;
+}
+
+/* Light Mode: Ready to release ("Release to refresh") */
+.theme-light .pull-to-refresh-pill.is-ready,
+[data-theme="light"] .pull-to-refresh-pill.is-ready,
+.pull-to-refresh-pill.theme-light.is-ready,
+.mausam-app.theme-light .pull-to-refresh-pill.is-ready {
+  background: #ffffff !important;
+  border-color: rgba(2, 132, 199, 0.6) !important;
+  box-shadow: 0 14px 36px rgba(2, 132, 199, 0.25), 0 0 24px rgba(56, 189, 248, 0.3) !important;
+  color: #0284c7 !important;
+}
+
+.theme-light .pull-to-refresh-pill.is-ready .pull-to-refresh-text,
+[data-theme="light"] .pull-to-refresh-pill.is-ready .pull-to-refresh-text,
+.pull-to-refresh-pill.theme-light.is-ready .pull-to-refresh-text,
+.mausam-app.theme-light .pull-to-refresh-pill.is-ready .pull-to-refresh-text {
+  color: #0284c7 !important;
+  font-weight: 600 !important;
+}
+
+.theme-light .pull-to-refresh-pill.is-ready .pull-to-refresh-arrow,
+[data-theme="light"] .pull-to-refresh-pill.is-ready .pull-to-refresh-arrow,
+.pull-to-refresh-pill.theme-light.is-ready .pull-to-refresh-arrow,
+.mausam-app.theme-light .pull-to-refresh-pill.is-ready .pull-to-refresh-arrow {
+  color: #0284c7 !important;
+}
+
+/* Light Mode: Refreshing state ("Refreshing weather, alerts & GPS…") */
+.theme-light .pull-to-refresh-pill.is-refreshing,
+[data-theme="light"] .pull-to-refresh-pill.is-refreshing,
+.pull-to-refresh-pill.theme-light.is-refreshing,
+.mausam-app.theme-light .pull-to-refresh-pill.is-refreshing {
+  background: #ffffff !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 14px 36px rgba(99, 102, 241, 0.2) !important;
+  color: #312e81 !important;
+}
+
+.theme-light .pull-to-refresh-pill.is-refreshing .pull-to-refresh-text,
+[data-theme="light"] .pull-to-refresh-pill.is-refreshing .pull-to-refresh-text,
+.pull-to-refresh-pill.theme-light.is-refreshing .pull-to-refresh-text,
+.mausam-app.theme-light .pull-to-refresh-pill.is-refreshing .pull-to-refresh-text {
+  color: #312e81 !important;
+  font-weight: 600 !important;
+}
+
+.theme-light .pull-to-refresh-pill.is-refreshing .pull-to-refresh-spinner,
+[data-theme="light"] .pull-to-refresh-pill.is-refreshing .pull-to-refresh-spinner,
+.pull-to-refresh-pill.theme-light.is-refreshing .pull-to-refresh-spinner,
+.mausam-app.theme-light .pull-to-refresh-pill.is-refreshing .pull-to-refresh-spinner {
+  border-color: rgba(2, 132, 199, 0.25) !important;
+  border-top-color: #0284c7 !important;
+  border-right-color: #6366f1 !important;
+}
+
+/* Light Mode: Success state ("All feeds updated" / Refreshed) */
+.theme-light .pull-to-refresh-pill.is-success,
+[data-theme="light"] .pull-to-refresh-pill.is-success,
+.pull-to-refresh-pill.theme-light.is-success,
+.mausam-app.theme-light .pull-to-refresh-pill.is-success {
+  background: rgba(236, 253, 245, 0.98) !important;
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  box-shadow: 0 14px 36px rgba(16, 185, 129, 0.22) !important;
+  color: #065f46 !important;
+}
+
+.theme-light .pull-to-refresh-pill.is-success .pull-to-refresh-text,
+[data-theme="light"] .pull-to-refresh-pill.is-success .pull-to-refresh-text,
+.pull-to-refresh-pill.theme-light.is-success .pull-to-refresh-text,
+.mausam-app.theme-light .pull-to-refresh-pill.is-success .pull-to-refresh-text {
+  color: #065f46 !important;
+  font-weight: 600 !important;
+}
+
+.theme-light .pull-to-refresh-pill.is-success .pull-to-refresh-check,
+[data-theme="light"] .pull-to-refresh-pill.is-success .pull-to-refresh-check,
+.pull-to-refresh-pill.theme-light.is-success .pull-to-refresh-check,
+.mausam-app.theme-light .pull-to-refresh-pill.is-success .pull-to-refresh-check {
+  color: #059669 !important;
+}
