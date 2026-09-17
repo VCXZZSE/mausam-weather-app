@@ -401,51 +401,55 @@ function AppHeader({
   menuOpen,
   theme,
   setTheme,
+  showThemeToggle = false,
 }: {
   onOpenMenu: () => void
   menuOpen: boolean
-  theme: "dark" | "light"
-  setTheme: (theme: "dark" | "light") => void
+  theme?: "dark" | "light"
+  setTheme?: (theme: "dark" | "light") => void
+  showThemeToggle?: boolean
 }) {
   const { t } = useTranslation()
   return (
     <header className="app-top-header" aria-label={t("home.headerAria")}>
       <div className="app-header-group">
         <MausamMenuButton onClick={onOpenMenu} expanded={menuOpen} />
-        <button
-          className={`theme-toggle theme-toggle-${theme}`}
-          type="button"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label={t("home.themeSwitch", {
-            theme: t(theme === "dark" ? "theme.light" : "theme.dark"),
-          })}
-          aria-pressed={theme === "dark"}
-        >
-          <span className="theme-toggle-thumb" aria-hidden="true" />
-          <svg
-            className="theme-icon theme-icon-sun"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            aria-hidden="true"
+        {showThemeToggle && theme && setTheme && (
+          <button
+            className={`theme-toggle theme-toggle-${theme}`}
+            type="button"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label={t("home.themeSwitch", {
+              theme: t(theme === "dark" ? "theme.light" : "theme.dark"),
+            })}
+            aria-pressed={theme === "dark"}
           >
-            <circle cx="12" cy="12" r="3.5" />
-            <path d="M12 2.5v2M12 19.5v2M4.7 4.7l1.4 1.4M17.9 17.9l1.4 1.4M2.5 12h2M19.5 12h2M4.7 19.3l1.4-1.4M17.9 6.1l1.4-1.4" />
-          </svg>
-          <svg
-            className="theme-icon theme-icon-moon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
-          </svg>
-        </button>
+            <span className="theme-toggle-thumb" aria-hidden="true" />
+            <svg
+              className="theme-icon theme-icon-sun"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3.5" />
+              <path d="M12 2.5v2M12 19.5v2M4.7 4.7l1.4 1.4M17.9 17.9l1.4 1.4M2.5 12h2M19.5 12h2M4.7 19.3l1.4-1.4M17.9 6.1l1.4-1.4" />
+            </svg>
+            <svg
+              className="theme-icon theme-icon-moon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
+            </svg>
+          </button>
+        )}
       </div>
     </header>
   )
@@ -483,25 +487,35 @@ function HomeTab({
   const greeting = getTimeGreeting(now, locationTimeZone)
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000)
-    return () => clearInterval(timer)
+    const timer = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(timer)
   }, [])
 
-  const isNightEffective =
-    !current.isDay ||
-    current.stage === "sunset" ||
-    current.stage === "dusk" ||
-    current.stage === "night"
+  const isNightEffective = (() => {
+    if (current.isDay === false) return true
+    const sunsetStr = weather.astronomy?.sunset
+    if (sunsetStr) {
+      const match = sunsetStr.match(/(\d+):(\d+)\s*(am|pm)?/i)
+      if (match) {
+        let h = parseInt(match[1], 10)
+        const m = parseInt(match[2], 10)
+        const meridian = match[3]?.toLowerCase()
+        if (meridian === "pm" && h < 12) h += 12
+        if (meridian === "am" && h === 12) h = 0
+        const sunsetMin = h * 60 + m
+        const currentMin = now.getHours() * 60 + now.getMinutes()
+        if (currentMin >= sunsetMin || currentMin < 5 * 60 + 30) return true
+      }
+    }
+    const hour = now.getHours() + now.getMinutes() / 60
+    return hour >= 18 || hour < 5.5
+  })()
 
   // Rain has its own buddy in either daylight state. Any non-rainy night
   // uses the lunar preset, including older API payloads that still say
   // heroVariant="sunny" but correctly expose isDay=false.
   const weatherHeroVariant =
-    current.isPrecipitating ||
-    current.precipitationChance > 40 ||
-    /rain|drizzle|thunderstorm|shower/i.test(
-      `${current.conditionCode} ${current.condition}`,
-    )
+    current.heroVariant === "rainy"
       ? "rainy"
       : isNightEffective
         ? "night"
@@ -522,6 +536,7 @@ function HomeTab({
         menuOpen={menuOpen}
         theme={theme}
         setTheme={setTheme}
+        showThemeToggle={true}
       />
 
       <button
@@ -1424,14 +1439,10 @@ function HomeTab({
 
 function HealthTab({
   weather,
-  theme,
-  setTheme,
   onOpenMenu,
   menuOpen,
 }: {
   weather: DashboardWeatherData
-  theme: "dark" | "light"
-  setTheme: (theme: "dark" | "light") => void
   onOpenMenu: () => void
   menuOpen: boolean
 }) {
@@ -1441,8 +1452,6 @@ function HealthTab({
       <AppHeader
         onOpenMenu={onOpenMenu}
         menuOpen={menuOpen}
-        theme={theme}
-        setTheme={setTheme}
       />
       <div
         style={{
@@ -2595,13 +2604,11 @@ function SunArcCard({
 function ForecastTab({
   weather,
   theme = "dark",
-  setTheme,
   onOpenMenu,
   menuOpen,
 }: {
   weather: DashboardWeatherData
   theme?: "dark" | "light"
-  setTheme: (theme: "dark" | "light") => void
   onOpenMenu: () => void
   menuOpen: boolean
 }) {
@@ -2627,8 +2634,6 @@ function ForecastTab({
       <AppHeader
         onOpenMenu={onOpenMenu}
         menuOpen={menuOpen}
-        theme={theme}
-        setTheme={setTheme}
       />
       <div
         style={{
@@ -2960,14 +2965,10 @@ function ForecastTab({
 
 function AlertsTab({
   weather,
-  theme,
-  setTheme,
   onOpenMenu,
   menuOpen,
 }: {
   weather: DashboardWeatherData
-  theme: "dark" | "light"
-  setTheme: (theme: "dark" | "light") => void
   onOpenMenu: () => void
   menuOpen: boolean
 }) {
@@ -2977,8 +2978,6 @@ function AlertsTab({
       <AppHeader
         onOpenMenu={onOpenMenu}
         menuOpen={menuOpen}
-        theme={theme}
-        setTheme={setTheme}
       />
       <div
         style={{
@@ -6553,8 +6552,6 @@ function MausamApp() {
                 {tab === "health" && (
                   <HealthTab
                     weather={weather}
-                    theme={theme}
-                    setTheme={setTheme}
                     onOpenMenu={() => setMenuOpen(true)}
                     menuOpen={menuOpen}
                   />
@@ -6563,7 +6560,6 @@ function MausamApp() {
                   <ForecastTab
                     weather={weather}
                     theme={theme}
-                    setTheme={setTheme}
                     onOpenMenu={() => setMenuOpen(true)}
                     menuOpen={menuOpen}
                   />
@@ -6571,8 +6567,6 @@ function MausamApp() {
                 {tab === "alerts" && (
                   <AlertsTab
                     weather={weather}
-                    theme={theme}
-                    setTheme={setTheme}
                     onOpenMenu={() => setMenuOpen(true)}
                     menuOpen={menuOpen}
                   />
