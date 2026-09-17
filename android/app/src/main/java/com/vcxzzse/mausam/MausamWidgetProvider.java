@@ -105,6 +105,15 @@ public class MausamWidgetProvider extends AppWidgetProvider {
         views.setTextColor(R.id.widget_high, labelColor);
         views.setTextColor(R.id.widget_low, labelColor);
         views.setTextColor(R.id.widget_condition, subColor);
+        views.setTextColor(R.id.widget_feels_like, subColor);
+
+        String feelsLike = prefs.getString("feelsLike", "");
+        if (feelsLike != null && !feelsLike.isEmpty() && !feelsLike.equals("--°")) {
+            views.setTextViewText(R.id.widget_feels_like, "Feels " + feelsLike);
+            views.setViewVisibility(R.id.widget_feels_like, android.view.View.VISIBLE);
+        } else {
+            views.setViewVisibility(R.id.widget_feels_like, android.view.View.GONE);
+        }
 
         // Click to launch Mausam app
         Intent launchIntent = new Intent(context, MainActivity.class);
