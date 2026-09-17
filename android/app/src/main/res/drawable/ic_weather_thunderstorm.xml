@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Cloud -->
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M48,34 H16 C11.58,34 8,30.42 8,26 C8,22.13 10.85,18.93 14.6,18.14 C14.21,17.14 14,16.09 14,15 C14,10.58 17.58,7 22,7 C23.93,7 25.7,7.67 27.1,8.78 C29.04,7.01 31.65,6 34.5,6 C40.3,6 45,10.7 45,16.5 C45,16.73 44.99,16.96 44.97,17.18 C46.27,16.44 47.79,16 49.5,16 C54.19,16 58,19.81 58,24.5 C58,29.74 53.74,34 48.5,34 H48 Z" />
+    <!-- Rain drops -->
+    <path
+        android:strokeColor="#60A5FA"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M16,42 L14,48 M48,42 L46,48" />
+    <!-- Lightning bolt -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M34,26 L24,40 H31 L28,52 L40,36 H33 L34,26 Z" />
+</vector>

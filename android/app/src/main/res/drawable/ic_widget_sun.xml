@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Glow aura -->
+    <path
+        android:fillColor="#33FFC83C"
+        android:pathData="M32,32m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0" />
+    <!-- Rays -->
+    <!-- Top & Bottom -->
+    <path
+        android:fillColor="#FFCA28"
+        android:pathData="M30.5,3 h3 v10 h-3 z" />
+    <path
+        android:fillColor="#FFCA28"
+        android:pathData="M30.5,51 h3 v10 h-3 z" />
+    <!-- Left & Right -->
+    <path
+        android:fillColor="#FFCA28"
+        android:pathData="M3,30.5 h10 v3 h-10 z" />
+    <path
+        android:fillColor="#FFCA28"
+        android:pathData="M51,30.5 h10 v3 h-10 z" />
+    <!-- Diagonals -->
+    <group
+        android:pivotX="32"
+        android:pivotY="32"
+        android:rotation="45">
+        <path
+            android:fillColor="#FFB300"
+            android:pathData="M30.5,5 h3 v9 h-3 z" />
+        <path
+            android:fillColor="#FFB300"
+            android:pathData="M30.5,50 h3 v9 h-3 z" />
+        <path
+            android:fillColor="#FFB300"
+            android:pathData="M5,30.5 h9 v3 h-9 z" />
+        <path
+            android:fillColor="#FFB300"
+            android:pathData="M50,30.5 h9 v3 h-9 z" />
+    </group>
+    <!-- Core sun disc -->
+    <path
+        android:fillColor="#FFA000"
+        android:pathData="M32,32m-16,0a16,16 0,1 1,32 0a16,16 0,1 1,-32 0" />
+    <path
+        android:fillColor="#FFE082"
+        android:pathData="M32,32m-13,0a13,13 0,1 1,26 0a13,13 0,1 1,-26 0" />
+</vector>

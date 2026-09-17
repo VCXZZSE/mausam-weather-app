@@ -1,0 +1,10 @@
+{
+  "description": "Provides a sleek, animated 2x2 weather widget with glassmorphism design for clear, stylish weather updates in both dark and light modes.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

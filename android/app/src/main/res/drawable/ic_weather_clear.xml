@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Center sun -->
+    <path
+        android:fillColor="#FFD60A"
+        android:pathData="M32,32m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0" />
+    <!-- 8 Rays -->
+    <path
+        android:strokeColor="#FFD60A"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M32,5 L32,13 M32,51 L32,59 M5,32 L13,32 M51,32 L59,32 M13,13 L19,19 M45,45 L51,51 M51,13 L45,19 M13,51 L19,45" />
+</vector>

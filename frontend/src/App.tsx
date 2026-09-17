@@ -1,6 +1,7 @@
 import { MausamMenuButton, ProfileSidebar } from "./ProfileSidebar"
 import { OfficialAdvisories } from "./OfficialAdvisories"
 import { ComfortIndicator, comfortTone } from "./ComfortIndicator"
+import { syncWeatherToWidget } from "./widgets/widgetBridge"
 import {
   useState,
   useEffect,
@@ -6059,6 +6060,13 @@ function MausamApp() {
   const prefetchedLocationKey = useRef<string | null>(null)
   const [weatherLocationKey, setWeatherLocationKey] = useState<string | null>(null)
   const [weatherRetry, setWeatherRetry] = useState(0)
+
+  // Synchronize latest weather state to the native Android widget
+  useEffect(() => {
+    if (weather) {
+      void syncWeatherToWidget(weather, theme === "dark")
+    }
+  }, [weather, theme])
 
   const changeLocation = () => {
     setMenuOpen(false)

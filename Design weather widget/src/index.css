@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Glass morphism base */
+.glass-light {
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.glass-dark {
+  background: rgba(20, 20, 30, 0.45);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ── Sun animations ── */
+@keyframes sun-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.92; }
+}
+
+@keyframes sun-ray-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sun-glow {
+  0%, 100% { box-shadow: 0 0 24px 8px rgba(255, 200, 50, 0.5), 0 0 60px 20px rgba(255, 160, 20, 0.25); }
+  50% { box-shadow: 0 0 36px 14px rgba(255, 210, 70, 0.65), 0 0 80px 30px rgba(255, 170, 30, 0.35); }
+}
+
+@keyframes ray-extend {
+  0%, 100% { opacity: 0.7; transform: scaleX(1); }
+  50% { opacity: 1; transform: scaleX(1.15); }
+}
+
+/* ── Lightning animations ── */
+@keyframes lightning-flash {
+  0%, 90%, 100% { opacity: 0; }
+  92%, 96% { opacity: 1; }
+  94%, 98% { opacity: 0.4; }
+}
+
+@keyframes cloud-drift {
+  0%, 100% { transform: translateX(0px); }
+  50% { transform: translateX(3px); }
+}
+
+@keyframes rain-fall {
+  0% { transform: translateY(-100%) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(160px) translateX(-12px); opacity: 0; }
+}
+
+@keyframes rain-fall-2 {
+  0% { transform: translateY(-100%) translateX(0); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { transform: translateY(160px) translateX(-10px); opacity: 0; }
+}
+
+/* ── Moon / star animations ── */
+@keyframes moon-glow {
+  0%, 100% { box-shadow: 0 0 20px 6px rgba(180, 200, 255, 0.3), 0 0 50px 16px rgba(140, 170, 255, 0.15); }
+  50% { box-shadow: 0 0 30px 10px rgba(200, 215, 255, 0.45), 0 0 70px 24px rgba(160, 190, 255, 0.25); }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes star-twinkle-slow {
+  0%, 100% { opacity: 0.15; transform: scale(0.7); }
+  50% { opacity: 0.85; transform: scale(1.1); }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ── Widget entrance ── */
+@keyframes widget-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.widget-enter {
+  animation: widget-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Sun element classes */
+.sun-core {
+  animation: sun-pulse 3s ease-in-out infinite, sun-glow 3s ease-in-out infinite;
+}
+
+.sun-rays-ring {
+  animation: sun-ray-spin 12s linear infinite;
+}
+
+.sun-ray {
+  animation: ray-extend 3s ease-in-out infinite;
+}
+
+/* Lightning */
+.lightning-bolt {
+  animation: lightning-flash 3.5s ease-in-out infinite;
+}
+
+.lightning-bolt-2 {
+  animation: lightning-flash 3.5s ease-in-out infinite 0.15s;
+}
+
+.cloud-main {
+  animation: cloud-drift 4s ease-in-out infinite;
+}
+
+/* Rain drop classes with staggered delays */
+.rain-drop { animation: rain-fall 1.2s linear infinite; }
+.rain-drop:nth-child(1) { animation-delay: 0s; }
+.rain-drop:nth-child(2) { animation-delay: 0.15s; }
+.rain-drop:nth-child(3) { animation-delay: 0.3s; }
+.rain-drop:nth-child(4) { animation-delay: 0.08s; }
+.rain-drop:nth-child(5) { animation-delay: 0.22s; }
+.rain-drop:nth-child(6) { animation-delay: 0.38s; }
+.rain-drop:nth-child(7) { animation-delay: 0.05s; }
+.rain-drop:nth-child(8) { animation-delay: 0.28s; }
+.rain-drop:nth-child(9) { animation-delay: 0.42s; }
+.rain-drop:nth-child(10) { animation-delay: 0.12s; }
+.rain-drop:nth-child(11) { animation-delay: 0.35s; }
+.rain-drop:nth-child(12) { animation-delay: 0.18s; }
+
+/* Moon */
+.moon-body {
+  animation: moon-glow 4s ease-in-out infinite, float-gentle 6s ease-in-out infinite;
+}
+
+.star-1 { animation: star-twinkle 2.1s ease-in-out infinite; }
+.star-2 { animation: star-twinkle-slow 3.4s ease-in-out infinite 0.8s; }
+.star-3 { animation: star-twinkle 2.7s ease-in-out infinite 1.2s; }
+.star-4 { animation: star-twinkle-slow 1.9s ease-in-out infinite 0.3s; }
+.star-5 { animation: star-twinkle 3.1s ease-in-out infinite 0.6s; }
+.star-6 { animation: star-twinkle-slow 2.4s ease-in-out infinite 1.5s; }

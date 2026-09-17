@@ -1,0 +1,10 @@
+{
+  "description": "Create customizable 2x2 widgets with dynamic data integration, featuring light and dark themes, glassmorphism design, and optimized mobile spacing.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -4,4 +4,8 @@
     <string name="title_activity_main">Mausam</string>
     <string name="package_name">com.vcxzzse.mausam</string>
     <string name="custom_url_scheme">com.vcxzzse.mausam</string>
+    <string name="widget_name">Mausam Weather</string>
+    <string name="widget_description">Current temperature and weather at a glance</string>
+    <string name="widget_a_name">Mausam Typographic</string>
+    <string name="widget_a_description">Minimalist typography showing current and upcoming weather</string>
 </resources>
