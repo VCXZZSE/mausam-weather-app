@@ -28,6 +28,7 @@ Choose a location using device coordinates or place/PIN search, complete onboard
 | Profile sidebar | Frosted-glass menu with onboarding details, a gender-aware avatar, location controls, briefing access, and local logout |
 | Interface | Light/dark themes, animated weather companions, responsive layouts, and reduced-motion support |
 | Android | Capacitor wrapper around the web application |
+| Android Widgets | Native 2×2 Home Screen Widgets featuring dynamic sky gradients (Sunny, Thunderstorm, Moon) and minimalist typography (`24° now`, `in [City]`, `feels [X]°`, `next [X] hrs`), synced in real-time |
 
 ## How the data works
 
@@ -169,6 +170,15 @@ Three things are worth knowing up front:
   (committed, no secrets) points the build at the deployed Vercel API instead,
   and `scripts/verify-android-bundle.mjs` fails the build if a development URL
   survives into the bundle.
+
+### Native Home Screen Widgets
+
+Mausam includes native Android 2×2 Home Screen Widgets built using native `AppWidgetProvider`, vector drawables, and custom XML layouts:
+
+- **Mausam Weather (Dynamic)**: Features rich ambient sky gradients (`Sunny`, `Thunderstorm`, `Clear Night / Moon`) in both Light and Dark themes, matching 28dp corner radiuses, and vector weather icons.
+- **Mausam Typographic (Minimalist)**: Editorial mixed-weight typographic card (`24° now`, `in [City]`, `feels [X]°`, `[Icon] [Condition] next [X] hrs`).
+
+Both widgets are kept in sync with live weather observations and theme toggles via a lightweight native Capacitor bridge plugin (`MausamWidgetPlugin`). Tapping any home screen widget instantly launches the Mausam app.
 
 Requires Android Studio Narwhal or newer, JDK 21, and Android SDK API 36.
 Physical-device GPS and a signed native release still require verification. Keep
