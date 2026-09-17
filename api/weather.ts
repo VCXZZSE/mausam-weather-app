@@ -28,6 +28,7 @@ const weatherQuerySchema = z.object({
   region: z.string().trim().max(120).optional(),
   country: z.string().trim().max(120).optional(),
   source: z.enum(["device", "manual"]).optional(),
+  refresh: z.preprocess((v) => v === "true" || v === "1" || v === true, z.boolean().optional()),
 })
 
 let sharedForecastCache: KeyedMemoryCache<Awaited<ReturnType<typeof fetchOpenMeteoData>>> | null = null
@@ -78,6 +79,8 @@ export default async function handler(req: any, res: any) {
       : "default"
     const cacheKey = coordinateCacheKey(coordinates.latitude, coordinates.longitude)
 
+    const forceRefresh = Boolean(query.refresh)
+
     // Same rationale as the Fastify route: the forecast and CPCB station
     // feed are independent providers, started together so AQI latency is
     // never added on top of weather latency.
@@ -85,12 +88,13 @@ export default async function handler(req: any, res: any) {
       const data = await fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates })
       assertCurrentForecastFresh(data)
       return data
-    }, { allowStale: false })
+    }, { allowStale: false, force: forceRefresh })
     const airQualityPromise = resolveAirQuality(
       env,
       airQualityCaches,
       coordinates,
       { warn: (obj: unknown, msg?: string) => console.warn(msg ?? "", obj) },
+      { force: forceRefresh },
     )
 
     let forecast

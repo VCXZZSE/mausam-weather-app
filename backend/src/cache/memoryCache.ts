@@ -24,8 +24,11 @@ export class MemoryCache<T> {
    * On fetch failure, falls back to the last known-good value (even if
    * stale) rather than propagating the error, when one exists.
    */
-  async getOrFetch(fetcher: () => Promise<T>): Promise<T> {
-    if (this.isFresh()) {
+  async getOrFetch(
+    fetcher: () => Promise<T>,
+    options: { force?: boolean } = {},
+  ): Promise<T> {
+    if (!options.force && this.isFresh()) {
       return this.entry!.value
     }
 

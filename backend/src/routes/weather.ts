@@ -40,6 +40,7 @@ const weatherQuerySchema = z.object({
   region: z.string().trim().max(120).optional(),
   country: z.string().trim().max(120).optional(),
   source: z.enum(["device", "manual"]).optional(),
+  refresh: z.preprocess((v) => v === "true" || v === "1" || v === true, z.boolean().optional()),
 })
 
 export async function weatherRoute(
@@ -75,18 +76,21 @@ export async function weatherRoute(
       coordinates.longitude,
     )
 
+    const forceRefresh = Boolean(query.refresh)
+
     // The forecast and CPCB station feed are independent providers. Start
     // both together so AQI latency is not added after weather latency.
     const forecastPromise = caches.forecast.getOrFetch(cacheKey, async () => {
       const data = await fetchOpenMeteoData({ baseUrl: env.OPEN_METEO_BASE_URL, coordinates })
       assertCurrentForecastFresh(data)
       return data
-    }, { allowStale: false })
+    }, { allowStale: false, force: forceRefresh })
     const airQualityPromise = resolveAirQuality(
       env,
       caches.airQuality,
       coordinates,
       request.log,
+      { force: forceRefresh },
     )
 
     let forecast: OpenMeteoResponse

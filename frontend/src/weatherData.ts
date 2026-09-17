@@ -749,6 +749,7 @@ export function isLiveWeatherEnabled(): boolean {
 export async function fetchWeatherDashboard(
   location: WeatherLocationParam | undefined,
   signal?: AbortSignal,
+  forceRefresh = false,
 ): Promise<DashboardWeatherData> {
   // Falls back to the relative Vercel serverless function when no explicit
   // backend URL is configured (production build) — VITE_WEATHER_API_URL is
@@ -774,6 +775,11 @@ export async function fetchWeatherDashboard(
     "source",
     location.source === "default" ? "manual" : location.source,
   )
+
+  if (forceRefresh) {
+    url.searchParams.set("refresh", "true")
+    url.searchParams.set("_t", String(Date.now()))
+  }
 
   try {
     const response = await fetch(url.toString(), {

@@ -45,6 +45,7 @@ export async function resolveAirQuality(
   caches: AirQualityCaches,
   coordinates: { latitude: number; longitude: number },
   log: MinimalLogger,
+  options: { force?: boolean } = {},
 ): Promise<DashboardWeatherData["airQuality"] | undefined> {
   if (!env.DATA_GOV_IN_API_KEY) {
     // Previously a silent return, which made a missing key indistinguishable
@@ -60,11 +61,13 @@ export async function resolveAirQuality(
   }
 
   try {
-    const records = await caches.cpcbBulk.getOrFetch(() =>
-      fetchCpcbRecords({
-        baseUrl: env.DATA_GOV_IN_BASE_URL,
-        apiKey: env.DATA_GOV_IN_API_KEY,
-      }),
+    const records = await caches.cpcbBulk.getOrFetch(
+      () =>
+        fetchCpcbRecords({
+          baseUrl: env.DATA_GOV_IN_BASE_URL,
+          apiKey: env.DATA_GOV_IN_API_KEY,
+        }),
+      options,
     )
     const result = normalizeCpcbAirQuality(
       records,

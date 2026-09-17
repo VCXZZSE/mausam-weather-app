@@ -32,9 +32,9 @@ export class KeyedMemoryCache<T> {
   async getOrFetch(
     key: string,
     fetcher: () => Promise<T>,
-    options: { allowStale?: boolean } = {},
+    options: { allowStale?: boolean; force?: boolean } = {},
   ): Promise<T> {
-    if (this.isFresh(key)) {
+    if (!options.force && this.isFresh(key)) {
       return this.entries.get(key)!.value
     }
 

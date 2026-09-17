@@ -6269,8 +6269,8 @@ function MausamApp() {
     const controller = new AbortController()
     const timeout = window.setTimeout(() => controller.abort(), 18_000)
     try {
-      // 1. Fetch live weather directly
-      const weatherPromise = fetchWeatherDashboard(userLocation, controller.signal)
+      // 1. Fetch live weather directly with forced upstream refresh
+      const weatherPromise = fetchWeatherDashboard(userLocation, controller.signal, true)
 
       // 2. Refresh device location coordinates / reverse-geocoded locality if device GPS
       const locationPromise = (async () => {
