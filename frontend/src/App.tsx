@@ -368,15 +368,29 @@ function AudienceFocus({ items }: { items: DashboardWeatherData["overview"] }) {
     <div className="audience-focus">
       <div className="audience-focus-heading">{t("audience.heading")}</div>
       <div className="audience-focus-grid">
-        {items.map((item) => (
-          <div key={item.label} className={`audience-focus-card ${item.tone}`}>
-            <span className="audience-focus-icon">{item.icon}</span>
-            <div>
-              <strong>{td(item.label)}</strong>
-              <small>{td(item.value)}</small>
+        {items.map((item) => {
+          let val = item.value
+          if (item.label === "Move") {
+            if (
+              val === "Best window most of the day" ||
+              val.toLowerCase().includes("most of the day")
+            ) {
+              val = "Good all day"
+            } else if (val.startsWith("Best window ")) {
+              val = val.replace(/^Best window\s+/i, "Best: ")
+            }
+          }
+
+          return (
+            <div key={item.label} className={`audience-focus-card ${item.tone}`}>
+              <span className="audience-focus-icon">{item.icon}</span>
+              <div>
+                <strong>{td(item.label)}</strong>
+                <small>{td(val)}</small>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

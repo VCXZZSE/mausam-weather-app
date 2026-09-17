@@ -808,6 +808,25 @@ export async function fetchWeatherDashboard(
     if (!isCurrentWeatherFresh(rawPayload)) {
       throw new Error("Current weather estimate is out of date")
     }
+    if (Array.isArray(rawPayload.overview)) {
+      for (const item of rawPayload.overview) {
+        if (
+          item &&
+          typeof item === "object" &&
+          item.label === "Move" &&
+          typeof item.value === "string"
+        ) {
+          if (
+            item.value === "Best window most of the day" ||
+            item.value.toLowerCase().includes("most of the day")
+          ) {
+            item.value = "Good all day"
+          } else if (item.value.startsWith("Best window ")) {
+            item.value = item.value.replace(/^Best window\s+/i, "Best: ")
+          }
+        }
+      }
+    }
     return rawPayload
   } catch (error) {
     // Never silently substitute demo data for a real request failure —
