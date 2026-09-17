@@ -2171,15 +2171,13 @@ function SunArcCard({
         </div>
       </div>
 
-      {/* Interactive Controls Bar */}
-      <div className="sun-arc-controls-bar">
-        <div className={`sun-arc-status-badge ${scrubT !== null ? "simulating" : "live"}`}>
-          <span className="status-dot" />
-          <span className="status-text">
-            {scrubT !== null ? `${timeString} · ${stageLabel}` : `${t("forecast.live")} · ${stageLabel}`}
-          </span>
-        </div>
-        {scrubT !== null && (
+      {/* Interactive Controls Bar - only shown when scrubbing/simulating */}
+      {scrubT !== null && (
+        <div className="sun-arc-controls-bar">
+          <div className="sun-arc-status-badge simulating">
+            <span className="status-dot" />
+            <span className="status-text">{`${timeString} · ${stageLabel}`}</span>
+          </div>
           <button
             type="button"
             className="sun-arc-btn reset-btn"
@@ -2188,8 +2186,8 @@ function SunArcCard({
           >
             ↺ {t("forecast.resetNow")}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main 3D / Interactive Arc SVG Stage */}
       <div className="sun-arc-stage" data-i18n-ignore="true">
