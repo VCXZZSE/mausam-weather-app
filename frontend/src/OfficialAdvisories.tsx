@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { z } from "zod"
 import type { UserLocation } from "./location"
-import { useTranslation } from "./i18n"
+import { formatDateTime, useTranslation, type Language } from "./i18n"
 import "./OfficialAdvisories.css"
 
 const alertSchema = z.object({
@@ -24,12 +24,12 @@ function currentCategory(category: z.infer<typeof categorySchema> | undefined, n
   return { alerts, status: alerts.length < category.alerts.length ? "unavailable" : category.status }
 }
 
-// Bulletin timestamps are rendered with the active language's own numerals and
-// month names; the IST time zone is fixed because the feeds are Indian.
-const DATE_LOCALES = { en: "en-IN", hi: "hi-IN", bn: "bn-IN" } as const
-function dateLabel(value: string, language: keyof typeof DATE_LOCALES = "en") {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date.toLocaleString(DATE_LOCALES[language], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })
+// Bulletin timestamps go through the same formatter as every other reading, so
+// a bulletin's month names follow the active language while its digits stay
+// Latin like the rest of the chrome (see i18n/numberFormat.ts). The IST time
+// zone is fixed there because these feeds are Indian.
+function dateLabel(value: string, language: Language = "en") {
+  return formatDateTime(value, language)
 }
 function officialLink(value: string) {
   try { const url = new URL(value); return url.protocol === "https:" ? url.href : undefined } catch { return undefined }
@@ -97,7 +97,7 @@ export function LiveOfficialAdvisories({ location }: { location: UserLocation })
   const checked = data?.checkedAt && dateLabel(data.checkedAt, language)
   return <section className="official-advisories" aria-label={t("advisories.aria")}>
     <header className="official-advisories-header">
-      <div className="official-advisories-title"><span className="official-shield"><Shield /></span><div><h2>{t("advisories.title")}</h2><p>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div></div>
+      <div className="official-advisories-title"><span className="official-shield"><Shield /></span><div><h2>{t("advisories.title")}</h2><p data-i18n-ignore>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div></div>
       <span className="official-government-label">{t("advisories.govLabel")}</span>
     </header>
     <div className="official-general" aria-live="polite" aria-busy={loading}>
@@ -134,7 +134,7 @@ export function OfficialAdvisories({ location }: { location: UserLocation }) {
     <header className="official-advisories-header">
       <div className="official-advisories-title">
         <span className="official-shield"><Shield /></span>
-        <div><h2>{t("advisories.title")}</h2><p>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div>
+        <div><h2>{t("advisories.title")}</h2><p data-i18n-ignore>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</p></div>
       </div>
       <span className="official-government-label">{t("advisories.unavailableLabel")}</span>
     </header>

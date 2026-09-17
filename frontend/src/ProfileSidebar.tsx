@@ -37,7 +37,7 @@ function Avatar({ profile }: { profile: Profile }) {
   const { t, td } = useTranslation()
   const female = profile.gender === "Female"
   const gendered = female || profile.gender === "Male"
-  if (!gendered) return <div className="sidebar-avatar sidebar-avatar-initials" role="img" aria-label={t("sidebar.avatarNeutral")}>{profile.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase()}</div>
+  if (!gendered) return <div className="sidebar-avatar sidebar-avatar-initials" role="img" aria-label={t("sidebar.avatarNeutral")} data-i18n-ignore>{profile.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase()}</div>
   return <div className="sidebar-avatar"><svg viewBox="0 0 88 88" role="img" aria-label={t("sidebar.avatarGendered", { gender: td(profile.gender ?? "") })}>
     <circle cx="44" cy="44" r="44" fill={female ? "#e0dcff" : "#d6ecff"} />
     {female && <path d="M22 60V35c0-30 44-30 44 0v29Z" fill="#34324e" />}
@@ -88,7 +88,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
         <section className="sidebar-identity">
           <div className="sidebar-avatar-wrap"><Avatar profile={profile} /><span className="sidebar-avatar-spark" aria-hidden="true">✦</span></div>
           <p className="sidebar-eyebrow">{t("sidebar.eyebrow")}</p>
-          <h2 id="sidebar-title">{profile.name}</h2>
+          <h2 id="sidebar-title" data-i18n-ignore>{profile.name}</h2>
           <p className="sidebar-subtitle">{t("sidebar.subtitle")}</p>
           {profile.persona && (() => {
             const persona = getPersonaById(profile.persona)
@@ -128,7 +128,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
           <LanguageSelector size="full" />
         </div>
         <nav className="sidebar-actions" aria-label={t("sidebar.settingsAria")}>
-          <button className="sidebar-action" type="button" onClick={onChangeLocation}><span className="sidebar-action-icon"><Icon name="pin" /></span><span><strong>{t("sidebar.changeLocation")}</strong><small>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onChangeLocation}><span className="sidebar-action-icon"><Icon name="pin" /></span><span><strong>{t("sidebar.changeLocation")}</strong><small data-i18n-ignore>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</small></span><Icon name="arrow" /></button>
           <button className="sidebar-action" type="button" onClick={onBriefing}><span className="sidebar-action-icon sidebar-icon-violet"><Icon name="spark" /></span><span><strong>{t("sidebar.briefing")}</strong><small>{t("sidebar.briefingHint")}</small></span><Icon name="arrow" /></button>
           <button className="sidebar-action" type="button" onClick={onPrivacy}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="shield" /></span><span><strong>{t("sidebar.privacy")}</strong><small>{t("sidebar.privacyHint")}</small></span><Icon name="arrow" /></button>
           <button className="sidebar-action" type="button" onClick={onFAQ}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="help" /></span><span><strong>{t("sidebar.faq")}</strong><small>{t("sidebar.faqHint")}</small></span><Icon name="arrow" /></button>

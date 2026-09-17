@@ -13,6 +13,7 @@ import {
   type TranslationValues,
 } from "./translations"
 import { translateDynamic, translateDynamicList } from "./dynamicTranslations"
+import { formatMeasurement, formatNumber } from "./numberFormat"
 import {
   getLanguage,
   setLanguage as setStoredLanguage,
@@ -31,6 +32,20 @@ export type Translator = {
   }
   /** `td` over an array — chips, tags, scale labels. */
   tdList: (values: readonly string[]) => string[]
+  /** One reading, in the active language's numerals and separators: `n(9.2)`. */
+  n: (
+    value: number | string | null | undefined,
+    options?: Intl.NumberFormatOptions,
+  ) => string
+  /**
+   * A reading with its unit, both localised: `nu(6, "unit.kmh")` renders
+   * "6 km/h", "6 किमी/घंटा" or "6 কিমি/ঘন্টা".
+   */
+  nu: (
+    value: number | string | null | undefined,
+    unitKey: TranslationKey,
+    options?: Intl.NumberFormatOptions,
+  ) => string
 }
 
 const LanguageContext = createContext<Translator | null>(null)
@@ -54,9 +69,22 @@ function useLanguageValue(): Translator {
     (values: readonly string[]) => translateDynamicList(language, values),
     [language],
   )
+  const n = useCallback(
+    (value: number | string | null | undefined, options?: Intl.NumberFormatOptions) =>
+      formatNumber(value, language, options),
+    [language],
+  )
+  const nu = useCallback(
+    (
+      value: number | string | null | undefined,
+      unitKey: TranslationKey,
+      options?: Intl.NumberFormatOptions,
+    ) => formatMeasurement(value, language, translate(language, unitKey), options),
+    [language],
+  )
   return useMemo(
-    () => ({ language, setLanguage: setStoredLanguage, t, td, tdList }),
-    [language, t, td, tdList],
+    () => ({ language, setLanguage: setStoredLanguage, t, td, tdList, n, nu }),
+    [language, t, td, tdList, n, nu],
   )
 }
 

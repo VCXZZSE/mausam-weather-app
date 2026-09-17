@@ -8,6 +8,13 @@
 // API or the rules engine (condition names, AQI categories, advice sentences)
 // are translated at render time by ./dynamicTranslations.
 
+import {
+  GENERATED_BRIEFING_BN,
+  GENERATED_BRIEFING_EN,
+  GENERATED_BRIEFING_HI,
+} from "./generatedBriefing"
+import { formatNumber } from "./numberFormat"
+
 export type Language = "en" | "hi" | "bn"
 
 export type LanguageOption = {
@@ -32,7 +39,7 @@ export function isLanguage(value: unknown): value is Language {
   return LANGUAGES.some((option) => option.code === value)
 }
 
-const en = {
+const coreEn = {
   // ── Brand & navigation ─────────────────────────────────────────────────────
   "app.name": "Mausam",
   "nav.home": "Home",
@@ -64,7 +71,9 @@ const en = {
   "stat.visibility": "Visibility",
   "unit.kmh": "km/h",
   "unit.km": "km",
+  "unit.mm": "mm",
   "unit.percent": "%",
+  "unit.degree": "°",
   "audience.heading": "Today, at a glance",
   "section.hourlyRain": "Hourly · Rain Chance",
   "section.todaysMetrics": "Today's Metrics",
@@ -333,11 +342,16 @@ const en = {
   "setup.nextProfile": "Next profile",
 } as const
 
+// The briefing generator's keys live in their own module for size; merging
+// them here keeps one catalogue, so the "every key in every language" check
+// below covers them too.
+const en = { ...coreEn, ...GENERATED_BRIEFING_EN }
+
 export type TranslationKey = keyof typeof en
 
 type Catalogue = Record<TranslationKey, string>
 
-const hi: Catalogue = {
+const coreHi = {
   "app.name": "मौसम",
   "nav.home": "होम",
   "nav.health": "स्वास्थ्य",
@@ -364,9 +378,11 @@ const hi: Catalogue = {
   "stat.wind": "हवा · {direction}",
   "stat.humidity": "आर्द्रता",
   "stat.visibility": "दृश्यता",
-  "unit.kmh": "किमी/घं",
+  "unit.kmh": "किमी/घंटा",
   "unit.km": "किमी",
+  "unit.mm": "मिमी",
   "unit.percent": "%",
+  "unit.degree": "°",
   "audience.heading": "आज, एक नज़र में",
   "section.hourlyRain": "प्रति घंटा · वर्षा संभावना",
   "section.todaysMetrics": "आज के आँकड़े",
@@ -624,7 +640,9 @@ const hi: Catalogue = {
   "setup.nextProfile": "अगली प्रोफ़ाइल",
 }
 
-const bn: Catalogue = {
+const hi: Catalogue = { ...coreHi, ...GENERATED_BRIEFING_HI }
+
+const coreBn = {
   "app.name": "মৌসম",
   "nav.home": "হোম",
   "nav.health": "স্বাস্থ্য",
@@ -653,7 +671,9 @@ const bn: Catalogue = {
   "stat.visibility": "দৃশ্যমানতা",
   "unit.kmh": "কিমি/ঘন্টা",
   "unit.km": "কিমি",
+  "unit.mm": "মিমি",
   "unit.percent": "%",
+  "unit.degree": "°",
   "audience.heading": "আজ, এক নজরে",
   "section.hourlyRain": "ঘণ্টাভিত্তিক · বৃষ্টির সম্ভাবনা",
   "section.todaysMetrics": "আজকের পরিমাপ",
@@ -913,16 +933,33 @@ const bn: Catalogue = {
   "setup.nextProfile": "পরের প্রোফাইল",
 }
 
+const bn: Catalogue = { ...coreBn, ...GENERATED_BRIEFING_BN }
+
 export const CATALOGUES: Record<Language, Catalogue> = { en, hi, bn }
 
 export type TranslationValues = Record<string, string | number>
 
-/** Fills `{placeholder}` slots. Unknown placeholders are left untouched. */
-function interpolate(template: string, values?: TranslationValues): string {
+/**
+ * Fills `{placeholder}` slots. Unknown placeholders are left untouched.
+ *
+ * A numeric value is run through the language's number format rather than
+ * String(): this is the one place every `t()` call site meets its readings, so
+ * localising here moves the digits, grouping and decimal separator in all of
+ * them at once ("{value}°C", "{chance}% rain", "INDIA AQI {index}") instead of
+ * asking each caller to remember. Callers that need control over precision
+ * format the value themselves and pass a string, which is used verbatim.
+ */
+function interpolate(
+  language: Language,
+  template: string,
+  values?: TranslationValues,
+): string {
   if (!values) return template
-  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
-    name in values ? String(values[name]) : match,
-  )
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => {
+    if (!(name in values)) return match
+    const value = values[name]
+    return typeof value === "number" ? formatNumber(value, language) : value
+  })
 }
 
 /**
@@ -935,5 +972,5 @@ export function translate(
   values?: TranslationValues,
 ): string {
   const template = CATALOGUES[language]?.[key] ?? en[key] ?? key
-  return interpolate(template, values)
+  return interpolate(language, template, values)
 }

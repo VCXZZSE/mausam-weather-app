@@ -75,13 +75,33 @@ describe("translation catalogues", () => {
     expect(mismatched).toEqual([])
   })
 
+  // Templates made only of numbers, symbols and already-translated slots —
+  // "{value}°C", "{index} · {label}", the AQI and UV acronyms. Everything else
+  // must differ from its English source, or it was never actually translated.
+  const SYMBOLS_ONLY = new Set<string>([
+    "unit.percent",
+    "unit.degree",
+    "gen.degC",
+    "gen.percent",
+    "gen.tempRange",
+    "gen.window",
+    "gen.windowOnDay",
+    "gen.indexWithLabel",
+    "gen.uvWithLabel",
+    "gen.aqiValue",
+    "gen.pollutantValue",
+    "gen.rainAmount",
+    "gen.label.uv",
+    "gen.label.aqi",
+  ])
+
   it.each(OTHER_LANGUAGES)("actually translates, rather than copying English, in %s", (language) => {
-    // A handful of keys are legitimately identical across languages (units,
-    // brand marks). Everything else must differ from the English source.
     const identical = englishKeys.filter(
-      (key) => CATALOGUES[language][key] === CATALOGUES.en[key],
+      (key) =>
+        CATALOGUES[language][key] === CATALOGUES.en[key] &&
+        !SYMBOLS_ONLY.has(key),
     )
-    expect(identical).toEqual(["unit.percent"])
+    expect(identical).toEqual([])
   })
 
   it("interpolates values and falls back to English for an unknown language", () => {

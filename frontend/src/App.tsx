@@ -39,7 +39,16 @@ import {
   type UserLocation,
 } from "./location"
 import { getTimeGreeting } from "./timeGreeting"
-import { LanguageProvider, useTranslation, type TranslationKey } from "./i18n"
+import {
+  DEFAULT_LANGUAGE,
+  isTightUnit,
+  LanguageProvider,
+  translate,
+  useTranslation,
+  type TranslationKey,
+  type Translator,
+} from "./i18n"
+import { I18nDebugOverlay } from "./i18n/I18nDebugOverlay"
 import { LanguageSelector } from "./LanguageSelector"
 import { PrivacyPolicyPage } from "./PrivacyPolicy"
 import { FAQPage } from "./FAQPage"
@@ -391,7 +400,7 @@ function HomeTab({
   menuOpen: boolean
   weather: DashboardWeatherData
 }) {
-  const { t, td } = useTranslation()
+  const { t, td, n, nu } = useTranslation()
   const { current } = weather
   // Rain has its own buddy in either daylight state. Any non-rainy night
   // uses the lunar preset, including older API payloads that still say
@@ -472,10 +481,18 @@ function HomeTab({
         <div className="insight-spark">✦</div>
         <div>
           <strong>
-            {profile.name ? `${td(greeting)}, ${profile.name}` : td(greeting)}
+            {profile.name ? (
+              <>
+                {td(greeting)}, <span data-i18n-ignore>{profile.name}</span>
+              </>
+            ) : (
+              td(greeting)
+            )}
           </strong>
           <span>
-            {t("home.personalisedFor", { place: location.locality })}
+            <span data-i18n-ignore>
+              {t("home.personalisedFor", { place: location.locality })}
+            </span>
             {profile.sensitivities.length
               ? ` · ${t("home.watching", {
                   items: profile.sensitivities
@@ -548,7 +565,9 @@ function HomeTab({
                 <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
               </svg>
             </span>
-            <span className="hero-location-name">{locationLabel}</span>
+            <span className="hero-location-name" data-i18n-ignore>
+              {locationLabel}
+            </span>
 
           </div>
 
@@ -574,7 +593,7 @@ function HomeTab({
                   gap: 6,
                 }}
               >
-                <span>{current.temperature}</span>
+                <span>{n(current.temperature)}</span>
                 <span
                   style={{
                     fontSize: 38,
@@ -583,7 +602,7 @@ function HomeTab({
                     transform: "translateY(8px)",
                   }}
                 >
-                  °
+                  {t("unit.degree")}
                 </span>
               </div>
               <div
@@ -610,7 +629,7 @@ function HomeTab({
               </div>
               <div className="weather-estimate-note" style={{ fontSize: 11, marginTop: 8, opacity: 0.7 }}>
                 {isLiveWeatherEnabled()
-                  ? t("hero.areaEstimate", { time: weather.updatedAt })
+                  ? t("hero.areaEstimate", { time: td(weather.updatedAt) })
                   : t("hero.demoPreview")}
               </div>
             </div>
@@ -865,12 +884,20 @@ function HomeTab({
           >
             {[
               {
-                v: `${current.windSpeed}`,
+                v: n(current.windSpeed),
                 u: t("unit.kmh"),
-                l: t("stat.wind", { direction: current.windDirection }),
+                l: t("stat.wind", { direction: td(current.windDirection) }),
               },
-              { v: `${current.humidity}`, u: t("unit.percent"), l: t("stat.humidity") },
-              { v: `${current.visibility}`, u: t("unit.km"), l: t("stat.visibility") },
+              {
+                v: n(current.humidity),
+                u: t("unit.percent"),
+                l: t("stat.humidity"),
+              },
+              {
+                v: n(current.visibility),
+                u: t("unit.km"),
+                l: t("stat.visibility"),
+              },
             ].map((s, i) => (
               <div
                 className="weather-stat"
@@ -893,6 +920,7 @@ function HomeTab({
                       fontSize: 9,
                       fontWeight: 400,
                       color: "rgba(255,255,255,0.35)",
+                      marginInlineStart: isTightUnit(s.u) ? 0 : 2,
                     }}
                   >
                     {s.u}
@@ -943,7 +971,7 @@ function HomeTab({
                   marginBottom: 6,
                 }}
               >
-                {hour.time}
+                {td(hour.time)}
               </div>
               <div
                 data-testid={i === 0 ? "hourly-now-icon" : undefined}
@@ -966,7 +994,7 @@ function HomeTab({
                   marginTop: 4,
                 }}
               >
-                {hour.temperature}°
+                {nu(hour.temperature, "unit.degree")}
               </div>
               <div
                 style={{
@@ -976,7 +1004,7 @@ function HomeTab({
                   fontWeight: 700,
                 }}
               >
-                {hour.rainChance}%
+                {nu(hour.rainChance, "unit.percent")}
               </div>
             </div>
           ))}
@@ -1025,7 +1053,7 @@ function HomeTab({
                           className="aqi-pollutant-value"
                           style={{ color: pollutant.color }}
                         >
-                          {pollutant.value}
+                          {n(pollutant.value)}
                         </div>
                       </div>
                     ))}
@@ -1057,7 +1085,7 @@ function HomeTab({
             </Badge>
             <CardLabel>{t("card.uvIndex")}</CardLabel>
             <div className="metric-card-number metric-index">
-              {weather.uv.index}
+              {n(weather.uv.index)}
             </div>
             <div className="metric-card-emphasis">
               {td(weather.uv.recommendation)}
@@ -1107,12 +1135,12 @@ function HomeTab({
             border="rgba(96,165,250,0.1)"
           >
             <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">
-              {weather.rainfall.chance}%
+              {nu(weather.rainfall.chance, "unit.percent")}
             </Badge>
             <CardLabel>{t("card.rainfallToday")}</CardLabel>
             <div className="metric-card-number metric-rainfall">
-              {weather.rainfall.today}
-              <span> {weather.rainfall.unit}</span>
+              {n(weather.rainfall.today)}
+              <span> {td(weather.rainfall.unit)}</span>
             </div>
             <div className="metric-card-emphasis">
               {td(weather.rainfall.periodLabel)}
@@ -1121,7 +1149,7 @@ function HomeTab({
               {t("rainfall.month", {
                 value:
                   weather.rainfall.month !== undefined
-                    ? `${weather.rainfall.month} ${td(weather.rainfall.unit)}`
+                    ? `${n(weather.rainfall.month)} ${td(weather.rainfall.unit)}`
                     : t("common.unavailable"),
               })}
             </div>
@@ -1137,7 +1165,9 @@ function HomeTab({
               {td(weather.commute.status)}
             </Badge>
             <CardLabel>
-              {t("card.commuteStatus", { location: weather.commute.location })}
+              <span data-i18n-ignore>
+                {t("card.commuteStatus", { location: weather.commute.location })}
+              </span>
             </CardLabel>
             <div
               style={{
@@ -1266,7 +1296,7 @@ function HomeTab({
                     padding: "2px 5px",
                   }}
                 >
-                  {day.rainChance}%
+                  {nu(day.rainChance, "unit.percent")}
                 </span>
                 <span
                   style={{
@@ -1275,7 +1305,7 @@ function HomeTab({
                     minWidth: 22,
                   }}
                 >
-                  {day.low}°
+                  {nu(day.low, "unit.degree")}
                 </span>
                 <div
                   style={{
@@ -1303,7 +1333,7 @@ function HomeTab({
                     minWidth: 22,
                   }}
                 >
-                  {day.high}°
+                  {nu(day.high, "unit.degree")}
                 </span>
               </div>
             </div>
@@ -1317,7 +1347,7 @@ function HomeTab({
 // ── Health Tab ─────────────────────────────────────────────────────────────────
 
 function HealthTab({ weather }: { weather: DashboardWeatherData }) {
-  const { t, td, tdList } = useTranslation()
+  const { t, td, tdList, n, nu } = useTranslation()
   return (
     <div
       className="app-page health-screen"
@@ -1342,7 +1372,9 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
         pad={20}
       >
         <CardLabel>
-          {t("health.aqiCard", { city: weather.current.city })}
+          <span data-i18n-ignore>
+            {t("health.aqiCard", { city: weather.current.city })}
+          </span>
         </CardLabel>
         {weather.airQuality ? (
           <>
@@ -1363,7 +1395,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                     lineHeight: 1,
                   }}
                 >
-                  {weather.airQuality.index}
+                  {n(weather.airQuality.index)}
                 </div>
                 <div
                   style={{
@@ -1443,7 +1475,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                     <span
                       style={{ fontSize: 11, fontWeight: 800, color: p.color }}
                     >
-                      {p.value}
+                      {n(p.value)}
                     </span>
                   </div>
                   <Bar
@@ -1458,7 +1490,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                       marginTop: 3,
                     }}
                   >
-                    {p.unit}
+                    {td(p.unit)}
                   </div>
                 </div>
               ))}
@@ -1534,7 +1566,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
               lineHeight: 1,
             }}
           >
-            {weather.uv.index}
+            {n(weather.uv.index)}
           </div>
           <div style={{ marginBottom: 4 }}>
             <div style={{ fontSize: 19, fontWeight: 800, color: "#fb923c" }}>
@@ -1739,7 +1771,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 lineHeight: 1,
               }}
             >
-              {weather.current.heatIndex}°
+              {nu(weather.current.heatIndex, "unit.degree")}
             </div>
             <div
               style={{
@@ -1767,7 +1799,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
                 lineHeight: 1,
               }}
             >
-              {weather.current.humidity}%
+              {nu(weather.current.humidity, "unit.percent")}
             </div>
             <div
               style={{
@@ -1800,7 +1832,7 @@ function HealthTab({ weather }: { weather: DashboardWeatherData }) {
 // ── Forecast Tab ───────────────────────────────────────────────────────────────
 
 function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
-  const { t, td } = useTranslation()
+  const { t, td, n, nu } = useTranslation()
   const rainfallHistory = weather.rainfall.history
   const maxRainfall = rainfallHistory
     ? Math.max(1, ...rainfallHistory.map((item) => item.value))
@@ -1900,7 +1932,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span style={{ fontSize: 12, color: "rgba(255,255,255,0.32)" }}>
-                  {day.low}°
+                  {nu(day.low, "unit.degree")}
                 </span>
                 <div
                   style={{
@@ -1921,7 +1953,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                   />
                 </div>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-                  {day.high}°
+                  {nu(day.high, "unit.degree")}
                 </span>
               </div>
             </div>
@@ -2117,7 +2149,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                       lineHeight: 1,
                     }}
                   >
-                    {weather.rainfall.month}{" "}
+                    {n(weather.rainfall.month)}{" "}
                     <span
                       style={{
                         fontSize: 14,
@@ -2125,7 +2157,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                         color: "rgba(255,255,255,0.35)",
                       }}
                     >
-                      {weather.rainfall.unit}
+                      {td(weather.rainfall.unit)}
                     </span>
                   </div>
                   <div
@@ -2145,7 +2177,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 <div
                   style={{ fontSize: 11, color: "#60a5fa", fontWeight: 800 }}
                 >
-                  {Math.round(monthlyRainfallPercent)}%
+                  {nu(Math.round(monthlyRainfallPercent), "unit.percent")}
                 </div>
               </div>
               <Bar
@@ -2225,7 +2257,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
                 lineHeight: 1,
               }}
             >
-              {weather.comfort.index}
+              {n(weather.comfort.index)}
             </div>
             <div
               style={{
@@ -2302,7 +2334,7 @@ function ForecastTab({ weather }: { weather: DashboardWeatherData }) {
 // ── Alerts Tab ─────────────────────────────────────────────────────────────────
 
 function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
-  const { t, td } = useTranslation()
+  const { t, td, nu } = useTranslation()
   return (
     <div
       className="app-page alerts-screen"
@@ -2368,7 +2400,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                         flexShrink: 0,
                       }}
                     >
-                      {a.time}
+                      {td(a.time)}
                     </div>
                   </div>
                   <div
@@ -2395,7 +2427,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                   >
                     {t("alerts.badge", {
                       level: td(a.level).toUpperCase(),
-                      source: a.source,
+                      source: td(a.source),
                     })}
                   </div>
                 </div>
@@ -2459,7 +2491,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                   marginBottom: 2,
                 }}
               >
-                {location.name}
+                <span data-i18n-ignore>{location.name}</span>
               </div>
               <div
                 style={{
@@ -2471,7 +2503,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                 {td(location.condition)}
               </div>
               <div style={{ fontSize: 26, fontWeight: 800, color: "white" }}>
-                {location.temperature}°
+                {nu(location.temperature, "unit.degree")}
               </div>
             </div>
           ))}
@@ -2494,7 +2526,7 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
               marginBottom: 14,
             }}
           >
-            {td(weather.packing.title)}
+            <span data-i18n-ignore>{td(weather.packing.title)}</span>
           </div>
           {weather.packing.items.map((p, i, arr) => (
             <div
@@ -2564,10 +2596,11 @@ function AlertsTab({ weather }: { weather: DashboardWeatherData }) {
                 marginBottom: 3,
               }}
             >
-              {weather.event.icon} {td(weather.event.title)}
+              {weather.event.icon}{" "}
+              <span data-i18n-ignore>{td(weather.event.title)}</span>
             </div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.38)" }}>
-              {weather.event.dateRange} ·{" "}
+              <span data-i18n-ignore>{weather.event.dateRange}</span> ·{" "}
               {t("event.startsIn", { days: weather.event.daysAway })}
             </div>
           </div>
@@ -3316,10 +3349,23 @@ const PERSONALIZATION_PRIORITY: Array<{
   { variant: "general", matches: () => true },
 ]
 
+/**
+ * Builds the local, deterministic briefing.
+ *
+ * Every sentence here interpolates a live reading, so none of them can be
+ * translated by dictionary lookup after the fact. The caller passes its
+ * translator in and the copy is composed in the active language from the
+ * outset; `td` covers the API vocabulary (conditions, AQI bands) mixed in.
+ */
 export function getPersonalizedWeather(
   profile: Profile,
   weather: DashboardWeatherData = DEMO_WEATHER_DATA,
+  translator: Pick<Translator, "t" | "td"> = {
+    t: (key, values) => translate(DEFAULT_LANGUAGE, key, values),
+    td: ((value: string | undefined) => value) as Translator["td"],
+  },
 ): PersonalizedWeather {
+  const { t, td } = translator
   let variant =
     PERSONALIZATION_PRIORITY.find((rule) => rule.matches(profile))?.variant ??
     "general"
@@ -3330,68 +3376,100 @@ export function getPersonalizedWeather(
   const base = PERSONALIZED_VARIANTS[variant]
   const { current, airQuality, uv, rainfall, running, astronomy } = weather
   const primaryPollutant = airQuality?.pollutants[0]
-  const temperatureRange = `${current.low}–${current.high}°C`
+  const temperatureRange = t("gen.tempRange", {
+    low: current.low,
+    high: current.high,
+  })
   const outdoorWindow = running.start
-    ? `${running.dayLabel ? `${running.dayLabel} · ` : ""}${running.start}–${running.end}`
-    : "No suitable morning window"
+    ? running.dayLabel
+      ? t("gen.windowOnDay", {
+          day: td(running.dayLabel),
+          start: running.start,
+          end: running.end,
+        })
+      : t("gen.window", { start: running.start, end: running.end })
+    : t("gen.noWindow")
+  const condition = td(current.condition)
+  const uvLabel = td(uv.label)
+  const peakHours = td(uv.peakHours)
+  const runningSummary = td(running.summary)
+  const windValue = t("gen.windValue", {
+    value: current.windSpeed,
+    direction: td(current.windDirection),
+  })
+  const periodLower = td(rainfall.periodLabel).toLowerCase()
 
   if (variant === "skin-sun") {
     return {
       variant,
       ...base,
-      headline: `${uv.label} UV calls for a gentler outdoor plan.`,
-      overview: `${current.condition} conditions are around ${current.temperature}°C, with UV at ${uv.index}. Since you marked skin sensitivity, plan longer outdoor time outside the ${uv.peakHours} peak and follow today’s protection guidance.`,
+      headline: t("gen.headline.skinSun", { label: uvLabel }),
+      overview: t("gen.overview.skinSun", {
+        condition,
+        temperature: current.temperature,
+        uv: uv.index,
+        peak: peakHours,
+      }),
       window: outdoorWindow,
       factors: [
-        { label: "UV", value: `${uv.index} · ${uv.label}` },
-        { label: "Humidity", value: `${current.humidity}%` },
-        { label: "Temperature", value: `${current.temperature}°C` },
+        {
+          label: t("gen.label.uv"),
+          value: t("gen.indexWithLabel", { index: uv.index, label: uvLabel }),
+        },
+        {
+          label: t("gen.label.humidity"),
+          value: t("gen.percent", { value: current.humidity }),
+        },
+        {
+          label: t("gen.label.temperature"),
+          value: t("gen.degC", { value: current.temperature }),
+        },
       ],
       tiles: [
         {
           icon: "shield",
-          title: "Skin & Sun",
-          value: `UV ${uv.index} · ${uv.label}`,
-          detail: uv.recommendation,
+          title: t("gen.tile.skinSun"),
+          value: t("gen.uvWithLabel", { index: uv.index, label: uvLabel }),
+          detail: td(uv.recommendation),
           tone: "rose",
         },
         {
           icon: "sun",
-          title: "Exposure",
-          value: `Peak ${uv.peakHours}`,
-          detail: `Burn time ${uv.burnTime}`,
+          title: t("gen.tile.exposure"),
+          value: t("gen.peak", { hours: peakHours }),
+          detail: t("gen.burnTime", { value: td(uv.burnTime) }),
           tone: "amber",
         },
         {
           icon: "outdoor",
-          title: "Safer window",
+          title: t("gen.tile.saferWindow"),
           value: outdoorWindow,
-          detail: running.summary,
+          detail: runningSummary,
           tone: "green",
         },
         {
           icon: "evening",
-          title: "Evening",
+          title: t("gen.tile.evening"),
           value: astronomy.goldenHour,
-          detail: `Sunset ${astronomy.sunset}`,
+          detail: t("gen.sunsetAt", { time: astronomy.sunset }),
           tone: "violet",
         },
       ],
       recommendations: [
         {
           icon: "outdoor",
-          title: `Use ${outdoorWindow} for outdoor plans`,
-          reason: running.summary,
+          title: t("gen.rec.useWindow", { window: outdoorWindow }),
+          reason: runningSummary,
         },
         {
           icon: "shield",
-          title: uv.recommendation,
-          reason: `UV is ${uv.index} (${uv.label}) today.`,
+          title: td(uv.recommendation),
+          reason: t("gen.rec.uvToday", { index: uv.index, label: uvLabel }),
         },
         {
           icon: "evening",
-          title: "Choose a calmer evening window",
-          reason: `Golden hour begins around ${astronomy.goldenHour}.`,
+          title: t("gen.rec.calmerEvening"),
+          reason: t("gen.rec.goldenBegins", { time: astronomy.goldenHour }),
         },
       ],
     }
@@ -3401,59 +3479,75 @@ export function getPersonalizedWeather(
     return {
       variant,
       ...base,
-      headline: `${current.condition}, with heat and UV worth planning around.`,
-      overview: `It is ${current.temperature}°C and feels like ${current.feelsLike}°C. UV is ${uv.index} (${uv.label}), peaking ${uv.peakHours}. Your better activity window is ${outdoorWindow}.`,
+      headline: t("gen.headline.uvHeat", { condition }),
+      overview: t("gen.overview.uvHeat", {
+        temperature: current.temperature,
+        feels: current.feelsLike,
+        uv: uv.index,
+        label: uvLabel,
+        peak: peakHours,
+        window: outdoorWindow,
+      }),
       window: outdoorWindow,
       factors: [
-        { label: "UV", value: `${uv.index} · ${uv.label}` },
-        { label: "Feels like", value: `${current.feelsLike}°C` },
-        { label: "Humidity", value: `${current.humidity}%` },
+        {
+          label: t("gen.label.uv"),
+          value: t("gen.indexWithLabel", { index: uv.index, label: uvLabel }),
+        },
+        {
+          label: t("gen.label.feelsLike"),
+          value: t("gen.degC", { value: current.feelsLike }),
+        },
+        {
+          label: t("gen.label.humidity"),
+          value: t("gen.percent", { value: current.humidity }),
+        },
       ],
       tiles: [
         {
           icon: "sun",
-          title: "UV & Heat",
-          value: `UV ${uv.index} · ${uv.label}`,
-          detail: `Peak ${uv.peakHours}`,
+          title: t("gen.tile.uvHeat"),
+          value: t("gen.uvWithLabel", { index: uv.index, label: uvLabel }),
+          detail: t("gen.peak", { hours: peakHours }),
           tone: "amber",
         },
         {
           icon: "outdoor",
-          title: "Outdoor",
+          title: t("gen.tile.outdoor"),
           value: outdoorWindow,
-          detail: running.summary,
+          detail: runningSummary,
           tone: "green",
         },
         {
           icon: "comfort",
-          title: "Comfort",
-          value: `Feels ${current.feelsLike}°C`,
-          detail: `Heat index ${current.heatIndex}°C`,
+          title: t("gen.tile.comfort"),
+          value: t("gen.feelsAt", { value: current.feelsLike }),
+          detail: t("gen.heatIndexAt", { value: current.heatIndex }),
           tone: "rose",
         },
         {
           icon: "sun",
-          title: "Sun",
-          value: `Sunrise ${astronomy.sunrise}`,
-          detail: `Sunset ${astronomy.sunset}`,
+          title: t("gen.tile.sun"),
+          value: t("gen.sunriseAt", { time: astronomy.sunrise }),
+          detail: t("gen.sunsetAt", { time: astronomy.sunset }),
           tone: "violet",
         },
       ],
       recommendations: [
         {
           icon: "outdoor",
-          title: `Use ${outdoorWindow} for longer activity`,
-          reason: running.summary,
+          title: t("gen.rec.useWindowLonger", { window: outdoorWindow }),
+          reason: runningSummary,
         },
         {
           icon: "comfort",
-          title: "Keep the peak heat lighter",
-          reason: `It may feel close to ${current.feelsLike}°C.`,
+          title: t("gen.rec.peakHeatLighter"),
+          reason: t("gen.rec.feelClose", { value: current.feelsLike }),
         },
         {
           icon: "shield",
-          title: uv.recommendation,
-          reason: `Peak exposure is ${uv.peakHours}.`,
+          title: td(uv.recommendation),
+          reason: t("gen.rec.peakExposure", { hours: peakHours }),
         },
       ],
     }
@@ -3463,59 +3557,67 @@ export function getPersonalizedWeather(
     return {
       variant,
       ...base,
-      headline: `${uv.label} UV, with a softer outdoor window.`,
-      overview: `${current.condition} conditions are expected today. UV is ${uv.index}, with peak exposure ${uv.peakHours}; the suggested activity window is ${outdoorWindow}.`,
+      headline: t("gen.headline.uvSun", { label: uvLabel }),
+      overview: t("gen.overview.uvSun", {
+        condition,
+        uv: uv.index,
+        peak: peakHours,
+        window: outdoorWindow,
+      }),
       window: outdoorWindow,
       factors: [
-        { label: "UV", value: `${uv.index} · ${uv.label}` },
-        { label: "Sunrise", value: astronomy.sunrise },
-        { label: "Sunset", value: astronomy.sunset },
+        {
+          label: t("gen.label.uv"),
+          value: t("gen.indexWithLabel", { index: uv.index, label: uvLabel }),
+        },
+        { label: t("gen.label.sunrise"), value: astronomy.sunrise },
+        { label: t("gen.label.sunset"), value: astronomy.sunset },
       ],
       tiles: [
         {
           icon: "sun",
-          title: "UV",
-          value: `${uv.index} · ${uv.label}`,
-          detail: `Peak ${uv.peakHours}`,
+          title: t("gen.label.uv"),
+          value: t("gen.indexWithLabel", { index: uv.index, label: uvLabel }),
+          detail: t("gen.peak", { hours: peakHours }),
           tone: "amber",
         },
         {
           icon: "evening",
-          title: "Sun",
+          title: t("gen.tile.sun"),
           value: astronomy.goldenHour,
-          detail: `Sunset ${astronomy.sunset}`,
+          detail: t("gen.sunsetAt", { time: astronomy.sunset }),
           tone: "violet",
         },
         {
           icon: "outdoor",
-          title: "Outdoors",
+          title: t("gen.tile.outdoors"),
           value: outdoorWindow,
-          detail: running.summary,
+          detail: runningSummary,
           tone: "green",
         },
         {
           icon: "shield",
-          title: "Sun protection",
-          value: uv.recommendation,
-          detail: `Burn time ${uv.burnTime}`,
+          title: t("gen.tile.sunProtection"),
+          value: td(uv.recommendation),
+          detail: t("gen.burnTime", { value: td(uv.burnTime) }),
           tone: "rose",
         },
       ],
       recommendations: [
         {
           icon: "outdoor",
-          title: `Plan activity for ${outdoorWindow}`,
-          reason: running.summary,
+          title: t("gen.rec.planActivity", { window: outdoorWindow }),
+          reason: runningSummary,
         },
         {
           icon: "shield",
-          title: uv.recommendation,
-          reason: `UV is expected to reach ${uv.index}.`,
+          title: td(uv.recommendation),
+          reason: t("gen.rec.uvReach", { index: uv.index }),
         },
         {
           icon: "evening",
-          title: "Use the golden-hour window",
-          reason: `Gentler light begins around ${astronomy.goldenHour}.`,
+          title: t("gen.rec.goldenWindow"),
+          reason: t("gen.rec.gentlerLight", { time: astronomy.goldenHour }),
         },
       ],
     }
@@ -3525,59 +3627,72 @@ export function getPersonalizedWeather(
     return {
       variant,
       ...base,
-      headline: `${current.condition}, ranging from ${temperatureRange}.`,
-      overview: `Today is ${current.temperature}°C with a low of ${current.low}°C. Since you marked cold sensitivity, use the suggested ${outdoorWindow} window and keep a layer ready around the cooler edges of the day.`,
+      headline: t("gen.headline.cold", { condition, range: temperatureRange }),
+      overview: t("gen.overview.cold", {
+        temperature: current.temperature,
+        low: current.low,
+        window: outdoorWindow,
+      }),
       window: outdoorWindow,
       factors: [
-        { label: "Low", value: `${current.low}°C` },
-        { label: "Now", value: `${current.temperature}°C` },
-        { label: "High", value: `${current.high}°C` },
+        {
+          label: t("gen.label.low"),
+          value: t("gen.degC", { value: current.low }),
+        },
+        {
+          label: t("gen.label.now"),
+          value: t("gen.degC", { value: current.temperature }),
+        },
+        {
+          label: t("gen.label.high"),
+          value: t("gen.degC", { value: current.high }),
+        },
       ],
       tiles: [
         {
           icon: "cold",
-          title: "Cold",
-          value: `${current.low}°C low`,
-          detail: "Coolest forecast reading",
+          title: t("gen.tile.cold"),
+          value: t("gen.lowDeg", { value: current.low }),
+          detail: t("gen.detail.coolest"),
           tone: "blue",
         },
         {
           icon: "comfort",
-          title: "Comfort",
-          value: `${current.feelsLike}°C feel`,
-          detail: weather.comfort.label,
+          title: t("gen.tile.comfort"),
+          value: t("gen.feelDeg", { value: current.feelsLike }),
+          detail: td(weather.comfort.label),
           tone: "green",
         },
         {
           icon: "temperature",
-          title: "Temperature",
-          value: `${current.high}°C high`,
-          detail: current.condition,
+          title: t("gen.label.temperature"),
+          value: t("gen.highDeg", { value: current.high }),
+          detail: condition,
           tone: "amber",
         },
         {
           icon: "evening",
-          title: "Evening",
-          value: `Sunset ${astronomy.sunset}`,
-          detail: `Range ${temperatureRange}`,
+          title: t("gen.tile.evening"),
+          value: t("gen.sunsetAt", { time: astronomy.sunset }),
+          detail: t("gen.rangeLabel", { range: temperatureRange }),
           tone: "violet",
         },
       ],
       recommendations: [
         {
           icon: "outdoor",
-          title: `Use ${outdoorWindow} for outdoor plans`,
-          reason: running.summary,
+          title: t("gen.rec.useWindow", { window: outdoorWindow }),
+          reason: runningSummary,
         },
         {
           icon: "cold",
-          title: "Keep a light extra layer ready",
-          reason: `The forecast low is ${current.low}°C.`,
+          title: t("gen.rec.extraLayer"),
+          reason: t("gen.rec.forecastLow", { value: current.low }),
         },
         {
           icon: "evening",
-          title: "Recheck conditions near sunset",
-          reason: `Sunset is at ${astronomy.sunset}.`,
+          title: t("gen.rec.recheckSunset"),
+          reason: t("gen.rec.sunsetAt", { time: astronomy.sunset }),
         },
       ],
     }
@@ -3587,66 +3702,90 @@ export function getPersonalizedWeather(
     return {
       variant,
       ...base,
-      headline: `Air quality is ${airQuality.label.toLowerCase()} today.`,
-      overview: `AQI is ${airQuality.index}. ${airQuality.advice}`,
+      headline: t("gen.headline.airQuality", {
+        label: td(airQuality.label).toLowerCase(),
+      }),
+      overview: t("gen.overview.airQuality", {
+        index: airQuality.index,
+        advice: td(airQuality.advice),
+      }),
       window: outdoorWindow,
       factors: [
-        { label: "AQI", value: `${airQuality.index} · ${airQuality.label}` },
         {
-          label: primaryPollutant?.label ?? "Pollutant",
-          value: primaryPollutant
-            ? `${primaryPollutant.value} ${primaryPollutant.unit}`
-            : "Not available",
+          label: t("gen.label.aqi"),
+          value: t("gen.indexWithLabel", {
+            index: airQuality.index,
+            label: td(airQuality.label),
+          }),
         },
-        { label: "Visibility", value: `${current.visibility} km` },
+        {
+          label: primaryPollutant
+            ? td(primaryPollutant.label)
+            : t("gen.label.pollutant"),
+          value: primaryPollutant
+            ? t("gen.pollutantValue", {
+                value: primaryPollutant.value,
+                unit: td(primaryPollutant.unit),
+              })
+            : t("gen.notAvailable"),
+        },
+        {
+          label: t("gen.label.visibility"),
+          value: t("gen.km", { value: current.visibility }),
+        },
       ],
       tiles: [
         {
           icon: "air",
-          title: "Air quality",
-          value: `AQI ${airQuality.index}`,
-          detail: airQuality.label,
+          title: t("gen.tile.airQuality"),
+          value: t("gen.aqiValue", { index: airQuality.index }),
+          detail: td(airQuality.label),
           tone: "rose",
         },
         {
           icon: "air",
-          title: primaryPollutant?.label ?? "Pollution",
+          title: primaryPollutant
+            ? td(primaryPollutant.label)
+            : t("gen.tile.pollution"),
           value: primaryPollutant
-            ? `${primaryPollutant.value} ${primaryPollutant.unit}`
-            : "Not available",
-          detail: "Primary reported pollutant",
+            ? t("gen.pollutantValue", {
+                value: primaryPollutant.value,
+                unit: td(primaryPollutant.unit),
+              })
+            : t("gen.notAvailable"),
+          detail: t("gen.detail.primaryPollutant"),
           tone: "amber",
         },
         {
           icon: "indoor",
-          title: "Guidance",
-          value: airQuality.label,
-          detail: airQuality.updatedLabel,
+          title: t("gen.tile.guidance"),
+          value: td(airQuality.label),
+          detail: td(airQuality.updatedLabel),
           tone: "green",
         },
         {
           icon: "outdoor",
-          title: "Activity window",
+          title: t("gen.tile.activityWindow"),
           value: outdoorWindow,
-          detail: running.summary,
+          detail: runningSummary,
           tone: "violet",
         },
       ],
       recommendations: [
         {
           icon: "air",
-          title: `Plan for AQI ${airQuality.index}`,
-          reason: airQuality.advice,
+          title: t("gen.rec.planAqi", { index: airQuality.index }),
+          reason: td(airQuality.advice),
         },
         {
           icon: "outdoor",
-          title: `Use ${outdoorWindow} if heading out`,
-          reason: running.summary,
+          title: t("gen.rec.useWindowIfOut", { window: outdoorWindow }),
+          reason: runningSummary,
         },
         {
           icon: "indoor",
-          title: "Recheck the latest reading",
-          reason: airQuality.updatedLabel,
+          title: t("gen.rec.recheckReading"),
+          reason: td(airQuality.updatedLabel),
         },
       ],
     }
@@ -3655,64 +3794,84 @@ export function getPersonalizedWeather(
   return {
     variant,
     ...base,
-    headline: `${current.condition}, with today’s details in one place.`,
-    overview: `It is ${current.temperature}°C and feels like ${current.feelsLike}°C. Rain chance is ${rainfall.chance}%, humidity is ${current.humidity}%, and winds are ${current.windSpeed} km/h ${current.windDirection}.`,
+    headline: t("gen.headline.general", { condition }),
+    overview: t("gen.overview.general", {
+      temperature: current.temperature,
+      feels: current.feelsLike,
+      rain: rainfall.chance,
+      humidity: current.humidity,
+      wind: windValue,
+    }),
     window: outdoorWindow,
-    basis: `Today’s ${current.city} conditions`,
+    basis: t("gen.basis.general", { city: current.city }),
     factors: [
-      { label: "Temperature", value: `${current.temperature}°C` },
-      { label: "Rain", value: `${rainfall.chance}%` },
-      { label: "Humidity", value: `${current.humidity}%` },
       {
-        label: "Wind",
-        value: `${current.windSpeed} km/h ${current.windDirection}`,
+        label: t("gen.label.temperature"),
+        value: t("gen.degC", { value: current.temperature }),
       },
+      {
+        label: t("gen.label.rain"),
+        value: t("gen.percent", { value: rainfall.chance }),
+      },
+      {
+        label: t("gen.label.humidity"),
+        value: t("gen.percent", { value: current.humidity }),
+      },
+      { label: t("gen.label.wind"), value: windValue },
     ],
     tiles: [
       {
         icon: "rain",
-        title: "Rain",
-        value: `${rainfall.chance}% chance`,
-        detail: `${rainfall.today} ${rainfall.unit} ${rainfall.periodLabel.toLowerCase()}`,
+        title: t("gen.label.rain"),
+        value: t("gen.chancePct", { value: rainfall.chance }),
+        detail: t("gen.rainAmount", {
+          value: rainfall.today,
+          unit: td(rainfall.unit),
+          period: periodLower,
+        }),
         tone: "blue",
       },
       {
         icon: "comfort",
-        title: "Comfort",
-        value: `Feels ${current.feelsLike}°C`,
-        detail: `${current.humidity}% humidity`,
+        title: t("gen.tile.comfort"),
+        value: t("gen.feelsAt", { value: current.feelsLike }),
+        detail: t("gen.humidityPct", { value: current.humidity }),
         tone: "rose",
       },
       {
         icon: "wind",
-        title: "Wind",
-        value: `${current.windSpeed} km/h ${current.windDirection}`,
-        detail: `Gusts ${current.windGust} km/h`,
+        title: t("gen.label.wind"),
+        value: windValue,
+        detail: t("gen.gusts", { value: current.windGust }),
         tone: "green",
       },
       {
         icon: "evening",
-        title: "Sun",
-        value: `Sunset ${astronomy.sunset}`,
-        detail: `Golden hour ${astronomy.goldenHour}`,
+        title: t("gen.tile.sun"),
+        value: t("gen.sunsetAt", { time: astronomy.sunset }),
+        detail: t("gen.goldenHourAt", { time: astronomy.goldenHour }),
         tone: "violet",
       },
     ],
     recommendations: [
       {
         icon: "outdoor",
-        title: `Use ${outdoorWindow} for outdoor plans`,
-        reason: running.summary,
+        title: t("gen.rec.useWindow", { window: outdoorWindow }),
+        reason: runningSummary,
       },
       {
         icon: "rain",
-        title: `Plan for a ${rainfall.chance}% rain chance`,
-        reason: `${rainfall.today} ${rainfall.unit} is reported ${rainfall.periodLabel.toLowerCase()}.`,
+        title: t("gen.rec.planRain", { chance: rainfall.chance }),
+        reason: t("gen.rec.rainReported", {
+          value: rainfall.today,
+          unit: td(rainfall.unit),
+          period: periodLower,
+        }),
       },
       {
         icon: "comfort",
-        title: `Expect it to feel like ${current.feelsLike}°C`,
-        reason: `Humidity is ${current.humidity}%.`,
+        title: t("gen.rec.expectFeel", { value: current.feelsLike }),
+        reason: t("gen.rec.humidityIs", { value: current.humidity }),
       },
     ],
   }
@@ -4334,7 +4493,7 @@ function Setup({
   weather: DashboardWeatherData | null
   onComplete: (profile: Profile) => void
 }) {
-  const { t, td } = useTranslation()
+  const { t, td, nu } = useTranslation()
   const [step, setStep] = useState<SetupStep>("welcome")
   const [name, setName] = useState("")
   const [dob, setDob] = useState("1995-02-18")
@@ -4435,7 +4594,7 @@ function Setup({
                     : t("setup.chooseArea")}
                 </strong>
               </div>
-              {weather && <b>{weather.current.temperature}°</b>}
+              {weather && <b>{nu(weather.current.temperature, "unit.degree")}</b>}
             </div>
             <button className="welcome-start" onClick={next} type="button">
               <span>{t("setup.start")}</span>
@@ -4724,8 +4883,8 @@ function PersonalizedWeatherPage({
 }) {
   const { t, td } = useTranslation()
   const localFallback = useMemo(
-    () => getPersonalizedWeather(profile, weather),
-    [profile, weather],
+    () => getPersonalizedWeather(profile, weather, { t, td }),
+    [profile, weather, t, td],
   )
   const [personalized, setPersonalized] =
     useState<PersonalizedWeather>(localFallback)
@@ -4789,13 +4948,13 @@ function PersonalizedWeatherPage({
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
             </svg>
-            {formatUserLocation(location)}
+            <span data-i18n-ignore>{formatUserLocation(location)}</span>
           </span>
         </div>
       </header>
 
       <section className="personalized-intro">
-        <span className="personalized-eyebrow">
+        <span className="personalized-eyebrow" data-i18n-ignore>
           {t("briefing.for", { name: profile.name || t("briefing.you") })}
         </span>
         <h1>
@@ -4837,7 +4996,7 @@ function PersonalizedWeatherPage({
             <strong>{td(personalized.window)}</strong>
           </div>
         </div>
-        <div className="personalized-basis">
+        <div className="personalized-basis" data-i18n-ignore>
           <span>✦</span>{" "}
           {t("briefing.basis", { basis: td(personalized.basis) })}
         </div>
@@ -5391,6 +5550,8 @@ export default function App() {
   return (
     <LanguageProvider>
       <MausamApp />
+      {/* Tree-shaken out of production builds; see i18n/I18nDebugOverlay. */}
+      {import.meta.env.DEV && <I18nDebugOverlay />}
     </LanguageProvider>
   )
 }

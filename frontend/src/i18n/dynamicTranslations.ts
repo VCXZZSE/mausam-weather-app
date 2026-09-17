@@ -14,6 +14,7 @@
 
 import type { Language } from "./translations"
 import { BRIEFING_ENTRIES } from "./briefingTranslations"
+import { isI18nDebugEnabled, reportDynamicMiss } from "./debug"
 
 /** [english, hindi, bengali] */
 type Entry = readonly [string, string, string]
@@ -222,6 +223,13 @@ const ENTRIES: readonly Entry[] = [
   ["Grass", "घास", "ঘাস"],
   ["Weed", "खरपतवार", "আগাছা"],
 
+  // ── Pollen guidance ────────────────────────────────────────────
+  [
+    "Keep windows closed 10 AM–3 PM · Antihistamine recommended if allergy-prone",
+    "सुबह 10 से दोपहर 3 बजे तक खिड़कियाँ बंद रखें · एलर्जी हो तो एंटीहिस्टामीन लेना उचित",
+    "সকাল ১০টা–বিকেল ৩টা জানলা বন্ধ রাখুন · অ্যালার্জি থাকলে অ্যান্টিহিস্টামিন নেওয়া ভালো",
+  ],
+
   // ── Packing list ────────────────────────────────────────────────────────────
   [
     "Umbrella / rain protection",
@@ -239,12 +247,57 @@ const ENTRIES: readonly Entry[] = [
   ["High rain chance today", "आज वर्षा की अधिक संभावना", "আজ বৃষ্টির প্রবল সম্ভাবনা"],
   ["Severe waterlogging", "भीषण जलभराव", "তীব্র জলমগ্নতা"],
 
+  // ── Seasonal event planner ───────────────────────────────────
+  [
+    "Event planners: Provide shade and water stations. Rain disruption probability is about 30%.",
+    "आयोजकों के लिए: छाया और पानी की व्यवस्था रखें। वर्षा से बाधा की संभावना लगभग 30% है।",
+    "অনুষ্ঠান পরিকল্পকদের জন্য: ছায়া ও জলের ব্যবস্থা রাখুন। বৃষ্টিতে বিঘ্ন হওয়ার সম্ভাবনা প্রায় ৩০%।",
+  ],
+
   // ── Running window ──────────────────────────────────────────────────────────
   ["FITNESS", "फ़िटनेस", "ফিটনেস"],
   ["Today", "आज", "আজ"],
   ["Tomorrow", "कल", "আগামীকাল"],
   ["Unavailable", "अनुपलब्ध", "অনুপলব্ধ"],
   ["Before humidity peaks", "आर्द्रता बढ़ने से पहले", "আর্দ্রতা বাড়ার আগে"],
+
+  // ── Hourly slot label (normalizer) ─────────────────────────────────
+  ["Now", "अभी", "এখন"],
+
+  // ── Bare units that arrive as their own payload field ──────────────
+  // rainfall.unit is rendered beside its number rather than inside a
+  // template, so it needs translating on its own like any other value.
+  ["mm", "मिमी", "মিমি"],
+  ["km", "किमी", "কিমি"],
+  ["km/h", "किमी/घंटा", "কিমি/ঘন্টা"],
+
+  // ── Observation timestamps (normalizer, CPCB feed) ─────────────────
+  ["Updated just now", "अभी-अभी अपडेट किया गया", "এইমাত্র আপডেট করা হয়েছে"],
+
+  // ── Compass points (degreesToCompass) ────────────────────────────
+  // Abbreviated the way Indian forecasts do, so they still fit the wind tile.
+  ["N", "उ", "উ"],
+  ["NNE", "उ-उपू", "উ-উপূ"],
+  ["NE", "उपू", "উপূ"],
+  ["ENE", "पू-उपू", "পূ-উপূ"],
+  ["E", "पू", "পূ"],
+  ["ESE", "पू-दपू", "পূ-দপূ"],
+  ["SE", "दपू", "দপূ"],
+  ["SSE", "द-दपू", "দ-দপূ"],
+  ["S", "द", "দ"],
+  ["SSW", "द-दप", "দ-দপ"],
+  ["SW", "दप", "দপ"],
+  ["WSW", "प-दप", "প-দপ"],
+  ["W", "प", "প"],
+  ["WNW", "प-उप", "প-উপ"],
+  ["NW", "उप", "উপ"],
+  ["NNW", "उ-उप", "উ-উপ"],
+
+  // ── Route and landmark names in the demo dataset ──────────────────
+  // Proper nouns, so these are transliterated rather than translated.
+  ["EM Bypass", "ईएम बाईपास", "ইএম বাইপাস"],
+  ["Howrah Br.", "हावड़ा ब्रिज", "হাওড়া ব্রিজ"],
+  ["Park St · Behala", "पार्क स्ट्रीट · बेहाला", "পার্ক স্ট্রিট · বেহালা"],
 
   // ── Moon phases ─────────────────────────────────────────────────────────────
   ["Sunrise", "सूर्योदय", "সূর্যোদয়"],
@@ -280,6 +333,74 @@ const ENTRIES: readonly Entry[] = [
   ["Fri", "शुक्र", "শুক্র"],
   ["Sat", "शनि", "শনি"],
   ["Sun", "रवि", "রবি"],
+
+  // ── Curated weather advisories (lib/data/curatedAlerts.ts) ────────────
+  ["Mausam Weather Advisory", "मौसम मौसम परामर्श", "মৌসম আবহাওয়া পরামর্শ"],
+  ["Extreme Heat Warning", "भीषण गर्मी की चेतावनी", "প্রচণ্ড গরমের সতর্কতা"],
+  ["Heatwave Advisory", "लू परामर्श", "তাপপ্রবাহ পরামর্শ"],
+  ["Heavy Rainfall Warning", "भारी वर्षा की चेतावनी", "ভারী বৃষ্টির সতর্কতা"],
+  ["Monsoon Flooding Risk", "मानसून बाढ़ का खतरा", "বর্ষায় বন্যার আশঙ্কা"],
+  ["Poor Air Quality Advisory", "ख़राब वायु गुणवत्ता परामर्श", "খারাপ বায়ুমান পরামর্শ"],
+  ["Strong Wind Advisory", "तेड़ हवा परामर्श", "জোরালো বাতাসের পরামর্শ"],
+  ["Thunderstorm Advisory", "आँधी-तूफ़ान परामर्श", "বজ্রঝড়ের পরামর্শ"],
+  [
+    "Dangerously high temperatures expected. Avoid outdoor exertion during peak hours.",
+    "खतरनाक रूप से अधिक तापमान की आशंका है। चरम समय में बाहरी मेहनत से बचें।",
+    "বিপজ্জনকভাবে বেশি তাপমাত্রার আশঙ্কা। সর্বোচ্চ সময়ে বাইরে পরিশ্রম এড়ান।",
+  ],
+  [
+    "High temperatures expected. Stay hydrated and limit midday outdoor activity.",
+    "अधिक तापमान की आशंका है। पानी पीते रहें और दोपहर में बाहरी गतिविधि सीमित रखें।",
+    "বেশি তাপমাত্রার আশঙ্কা। জল পান করতে থাকুন এবং দুপুরে বাইরের কাজ কমান।",
+  ],
+  [
+    "High rain chance during peak monsoon season. Low-lying areas may experience waterlogging.",
+    "मानसून के चरम पर वर्षा की अधिक संभावना है। निचले इलाकों में जलभराव हो सकता है।",
+    "বর্ষার ভরা মৌসুমে বৃষ্টির প্রবল সম্ভাবনা। নিচু এলাকায় জল জমতে পারে।",
+  ],
+  [
+    "Air quality is unhealthy for sensitive groups. Consider limiting prolonged outdoor exertion.",
+    "संवेदनशील लोगों के लिए वायु गुणवत्ता अस्वास्थ्यकर है। लंबे समय तक बाहरी मेहनत सीमित रखें।",
+    "সংবেদনশীল মানুষের জন্য বায়ুর মান অস্বাস্থ্যকর। দীর্ঘক্ষণ বাইরে পরিশ্রম কমান।",
+  ],
+  [
+    "Thunderstorms expected. Avoid open areas, tall isolated trees, and unnecessary travel.",
+    "आँधी-तूफ़ान की आशंका है। खुली जगहों, अलग-थलग ऊंचे पेड़ों और गैर-ज़रूरी यात्रा से बचें।",
+    "বজ্রঝড়ের আশঙ্কা। খোলা জায়গা, বিচ্ছিন্ন উঁচু গাছ ও অপ্রয়োজনীয় যাত্রা এড়ান।",
+  ],
+  ["Just now", "अभी-अभी", "এইমাত্র"],
+
+  // ── Demo-only Kolkata bulletins ────────────────────────────────────
+  ["Waterlogging — EM Bypass", "जलभराव — ईएम बाईपास", "জলমগ্নতা — ইএম বাইপাস"],
+  ["Ganga Ferry Suspended", "गंगा फ़ेरी सेवा स्थगित", "গঙ্গা ফেরি পরিষেবা বন্ধ"],
+  [
+    "IMD red alert: 115mm+ rain expected in next 24h. Avoid underpasses, the Maidan, and low-lying Behala.",
+    "IMD रेड अलर्ट: अगले 24 घंटे में 115मिमी+ वर्षा संभावित। अंडरपास, मैदान और निचले बेहाला से बचें।",
+    "IMD রেড অ্যালার্ট: পরবর্তী ২৪ ঘণ্টায় ১১৫মিমি+ বৃষ্টির সম্ভাবনা। আন্ডারপাস, ময়দান ও নিচু বেহালা এড়ান।",
+  ],
+  [
+    "Severe waterlogging on EM Bypass, Park Street, Kasba. Metro running on modified schedule. Allow extra time.",
+    "ईएम बाईपास, पार्क स्ट्रीट और कसबा में भीषण जलभराव। मेट्रो बदले हुए समय पर चल रही है। अतिरिक्त समय रखें।",
+    "ইএম বাইপাস, পার্ক স্ট্রিট ও কসবায় তীব্র জলমগ্নতা। মেট্রো পরিবর্তিত সময়সূচিতে চলছে। বাড়তি সময় রাখুন।",
+  ],
+  [
+    "Wind gusts 45 km/h. All ferry services on the Hooghly suspended until further notice.",
+    "45 किमी/घंटा के झोंके। हुगली पर सभी फ़ेरी सेवाएँ अगले आदेश तक स्थगित।",
+    "৪৫ কিমি/ঘন্টা বাতাসের ঝাপটা। হুগলিতে সব ফেরি পরিষেবা পরবর্তী নির্দেশ পর্যন্ত বন্ধ।",
+  ],
+
+  // ── Packing extras and the seasonal event card ─────────────────────
+  ["Power bank", "पावर बैंक", "পাওয়ার ব্যাঙ্ক"],
+  ["Power cuts likely", "बिजली कटौती संभावित", "বিদ্যুৎ বিভ্রাটের সম্ভাবনা"],
+  ["Event Planner", "आयोजन प्लानर", "অনুষ্ঠান পল্যানার"],
+  ["Post-monsoon", "मानसून के बाद", "বর্ষা-পরবর্তী"],
+  ["Low Rain", "कम वर्षा", "কম বৃষ্টি"],
+  ["Foggy", "कोहरा", "কুয়াশাচ্ছন্ন"],
+  [
+    "Plan pandal visits 5–9 AM for best weather. Avoid afternoons during the first two days.",
+    "सबसे अच्छे मौसम के लिए पंडाल घूमने का समय सुबह 5–9 रखें। पहले दो दिन दोपहर से बचें।",
+    "সবচেয়ে ভালো আবহাওয়ার জন্য প্যান্ডেল দেখার সময় সকাল ৫–৯টা রাখুন। প্রথম দুই দিন বিকেল এড়ান।",
+  ],
 
   // ── Alert / advisory severity ───────────────────────────────────────────────
   ["Red", "लाल", "লাল"],
@@ -419,14 +540,24 @@ const PATTERNS: ReadonlyArray<{
   { match: /^UV (\d+) · (.+)$/, hi: "UV $1 · @2", bn: "UV $1 · @2" },
   { match: /^Best window (.+)$/, hi: "सर्वोत्तम समय $1", bn: "সেরা সময় $1" },
   { match: /^Run (.+)$/, hi: "दौड़ $1", bn: "দৌড় $1" },
-  { match: /^Wind (\d+(?:\.\d+)?) km\/h$/, hi: "हवा $1 किमी/घं", bn: "বাতাস $1 কিমি/ঘন্টা" },
-  { match: /^(\d+(?:\.\d+)?) km\/h$/, hi: "$1 किमी/घं", bn: "$1 কিমি/ঘন্টা" },
+  { match: /^Wind (\d+(?:\.\d+)?) km\/h$/, hi: "हवा $1 किमी/घंटा", bn: "বাতাস $1 কিমি/ঘন্টা" },
+  { match: /^(\d+(?:\.\d+)?) km\/h$/, hi: "$1 किमी/घंटा", bn: "$1 কিমি/ঘন্টা" },
   { match: /^(\d+(?:\.\d+)?) ?km$/, hi: "$1 किमी", bn: "$1 কিমি" },
   { match: /^(\d+(?:\.\d+)?)m$/, hi: "$1 मी", bn: "$1 মি" },
   { match: /^Around (.+)$/, hi: "लगभग $1", bn: "প্রায় $1" },
   { match: /^~(\d+) min$/, hi: "~$1 मिनट", bn: "~$1 মিনিট" },
   { match: /^(\d+)% rain chance$/, hi: "$1% वर्षा संभावना", bn: "$1% বৃষ্টির সম্ভাবনা" },
   { match: /^For (.+) · (.+)$/, hi: "$1 के लिए · $2", bn: "$1-এর জন্য · $2" },
+  // Observation timestamps. The backend formats the clock itself (English-only
+  // contract), so the wrapper is translated and the "4:00 pm" kept verbatim —
+  // digits and AM/PM read the same in all three scripts (see numberFormat.ts).
+  { match: /^Updated at (.+)$/, hi: "$1 पर अपडेट", bn: "$1-এ আপডেট" },
+  { match: /^Station update: (.+)$/, hi: "स्टेशन अपडेट: $1", bn: "স্টেশন আপডেট: $1" },
+  { match: /^(\d+)h ago$/, hi: "$1 घंटे पहले", bn: "$1 ঘণ্টা আগে" },
+  { match: /^(\d+)m ago$/, hi: "$1 मिनट पहले", bn: "$1 মিনিট আগে" },
+  { match: /^UV Index (\d+) \((.+)\)$/, hi: "UV सूचकांक $1 (@2)", bn: "UV সূচক $1 (@2)" },
+  { match: /^AQI (\d+) \((.+)\)$/, hi: "AQI $1 (@2)", bn: "AQI $1 (@2)" },
+  { match: /^Heat index (\d+)°C$/, hi: "ताप सूचकांक $1°C", bn: "তাপ সূচক $1°C" },
   { match: /^Rough seas · (.+)$/, hi: "अशांत समुद्र · $1", bn: "উত্তাল সমুদ্র · $1" },
 ]
 
@@ -486,6 +617,9 @@ export function translateDynamic(
       return translated.join(" · ")
   }
 
+  // Nothing matched. The value is returned as-is (free text usually should be),
+  // but debug mode records it so the overlay can name what it highlighted.
+  if (isI18nDebugEnabled()) reportDynamicMiss(trimmed)
   return value
 }
 

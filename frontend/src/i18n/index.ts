@@ -15,6 +15,13 @@ export {
 } from "./translations"
 export { translateDynamic, translateDynamicList } from "./dynamicTranslations"
 export {
+  formatClockTime,
+  formatDateTime,
+  formatMeasurement,
+  formatNumber,
+  isTightUnit,
+} from "./numberFormat"
+export {
   LANGUAGE_STORAGE_KEY,
   getLanguage,
   setLanguage,
