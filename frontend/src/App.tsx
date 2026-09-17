@@ -504,9 +504,9 @@ function HomeTab({
         onClick={onOpenPersonalized}
         aria-label={t("home.briefingAria")}
       >
-        <div className="insight-spark">✦</div>
-        <div>
-          <strong>
+        <div className="insight-spark" aria-hidden="true">✦</div>
+        <div className="home-insight-single-line">
+          <strong className="home-insight-greeting">
             {profile.name ? (
               <>
                 {td(greeting)}, <span data-i18n-ignore>{profile.name}</span>
@@ -515,21 +515,14 @@ function HomeTab({
               td(greeting)
             )}
           </strong>
-          <span>
-            <span data-i18n-ignore>
-              {t("home.personalisedFor", { place: location.locality })}
-            </span>
+          <span className="home-insight-sep" aria-hidden="true">·</span>
+          <span className="home-insight-pref">
             {profile.sensitivities.length
-              ? ` · ${t("home.watching", {
-                  items: profile.sensitivities
-                    .slice(0, 2)
-                    .map((item) => td(item))
-                    .join(" + "),
-                })}`
-              : ""}
+              ? `${t("home.preferences")} (${profile.sensitivities.map((item) => td(item)).join(", ")})`
+              : t("home.preferences")}
           </span>
         </div>
-        <div className="insight-arrow">›</div>
+        <div className="insight-arrow" aria-hidden="true">›</div>
       </button>
       {/* Hero Card */}
       <div
