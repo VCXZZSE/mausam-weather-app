@@ -51,7 +51,7 @@ function Shield() {
   return <svg aria-hidden="true" width="19" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="M12 8v5m0 3h.01"/></svg>
 }
 
-export function LiveOfficialAdvisories({ location }: { location: UserLocation }) {
+export function LiveOfficialAdvisories({ location, refreshKey }: { location: UserLocation; refreshKey?: number }) {
   const { t, language } = useTranslation()
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -89,7 +89,7 @@ export function LiveOfficialAdvisories({ location }: { location: UserLocation })
     void refresh()
     const interval = window.setInterval(refresh, 300_000)
     return () => { disposed = true; controller?.abort(); window.clearInterval(interval) }
-  }, [key, location.latitude, location.longitude, location.postalCode])
+  }, [key, location.latitude, location.longitude, location.postalCode, refreshKey])
 
   const general = currentCategory(data?.categories.general, now)
   const generalAvailable = general?.status === "available"
@@ -128,7 +128,7 @@ export function LiveOfficialAdvisories({ location }: { location: UserLocation })
 
 // Government-feed access is paused at the user's request. Keep the future live
 // component separate so the homepage cannot start requests or imply an all-clear.
-export function OfficialAdvisories({ location }: { location: UserLocation }) {
+export function OfficialAdvisories({ location, refreshKey }: { location: UserLocation; refreshKey?: number }) {
   const { t } = useTranslation()
   return <section className="official-advisories" aria-label={t("advisories.aria")}>
     <header className="official-advisories-header">

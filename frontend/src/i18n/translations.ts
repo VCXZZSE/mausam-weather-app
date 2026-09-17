@@ -352,6 +352,12 @@ const coreEn = {
   "setup.crownAria": "User Profile Crown Wheel",
   "setup.previousProfile": "Previous profile",
   "setup.nextProfile": "Next profile",
+
+  // ── Pull to refresh ────────────────────────────────────────────────────────
+  "ptr.pull": "Pull down to refresh all",
+  "ptr.release": "Release to refresh",
+  "ptr.refreshing": "Refreshing weather, alerts & GPS…",
+  "ptr.success": "All feeds updated",
 } as const
 
 // The briefing generator's keys live in their own module for size; merging
@@ -662,6 +668,12 @@ const coreHi = {
   "setup.crownAria": "उपयोगकर्ता प्रोफ़ाइल क्राउन व्हील",
   "setup.previousProfile": "पिछली प्रोफ़ाइल",
   "setup.nextProfile": "अगली प्रोफ़ाइल",
+
+  // ── Pull to refresh ────────────────────────────────────────────────────────
+  "ptr.pull": "सभी जानकारी रीफ़्रेश करने के लिए नीचे खींचें",
+  "ptr.release": "रीफ़्रेश करने के लिए छोड़ें",
+  "ptr.refreshing": "मौसम, अलर्ट और GPS रीफ़्रेश हो रहा है…",
+  "ptr.success": "सभी जानकारी अपडेट हो गई",
 }
 
 const hi: Catalogue = { ...coreHi, ...GENERATED_BRIEFING_HI }
@@ -967,6 +979,12 @@ const coreBn = {
   "setup.crownAria": "ইউজার প্রোফাইল ক্রাউন হুইল",
   "setup.previousProfile": "আগের প্রোফাইল",
   "setup.nextProfile": "পরের প্রোফাইল",
+
+  // ── Pull to refresh ────────────────────────────────────────────────────────
+  "ptr.pull": "সব তথ্য রিফ্রেশ করতে নিচে টানুন",
+  "ptr.release": "রিফ্রেশ করতে ছেড়ে দিন",
+  "ptr.refreshing": "আবহাওয়া, সতর্কতা ও জিপিএস রিফ্রেশ হচ্ছে…",
+  "ptr.success": "সব তথ্য আপডেট হয়েছে",
 }
 
 const bn: Catalogue = { ...coreBn, ...GENERATED_BRIEFING_BN }

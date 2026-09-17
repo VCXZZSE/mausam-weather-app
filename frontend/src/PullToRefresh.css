@@ -1,0 +1,122 @@
+/* ==========================================================================
+   Mausam Pull-to-Refresh Component Styles
+   ========================================================================== */
+
+.pull-to-refresh-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pull-to-refresh-indicator {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 120;
+  transition: transform 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.22s ease;
+}
+
+.pull-to-refresh-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px 8px 14px;
+  border-radius: 999px;
+  background: rgba(14, 23, 38, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(56, 189, 248, 0.18);
+  color: #f1f5f9;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  user-select: none;
+  transform-origin: center;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pull-to-refresh-pill.is-ready {
+  background: rgba(16, 28, 48, 0.94);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6), 0 0 28px rgba(56, 189, 248, 0.35);
+  transform: scale(1.04);
+}
+
+.pull-to-refresh-pill.is-refreshing {
+  background: rgba(15, 25, 42, 0.95);
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6), 0 0 28px rgba(99, 102, 241, 0.3);
+}
+
+.pull-to-refresh-pill.is-success {
+  background: rgba(13, 38, 28, 0.95);
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6), 0 0 28px rgba(52, 211, 153, 0.3);
+  color: #6ee7b7;
+}
+
+.pull-to-refresh-icon-box {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.pull-to-refresh-arrow {
+  width: 18px;
+  height: 18px;
+  color: #38bdf8;
+  transition: transform 0.15s ease;
+}
+
+.pull-to-refresh-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.2px solid rgba(56, 189, 248, 0.25);
+  border-top-color: #38bdf8;
+  border-right-color: #818cf8;
+  border-radius: 50%;
+  animation: ptrSpin 0.75s linear infinite;
+}
+
+@keyframes ptrSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pull-to-refresh-check {
+  width: 18px;
+  height: 18px;
+  color: #34d399;
+  animation: ptrPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes ptrPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pull-to-refresh-text {
+  white-space: nowrap;
+}
+
+.pull-to-refresh-content {
+  width: 100%;
+  will-change: transform;
+}

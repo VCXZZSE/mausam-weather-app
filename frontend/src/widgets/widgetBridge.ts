@@ -70,7 +70,29 @@ export function resolveWidgetPreset(weather: DashboardWeatherData): 'sunny' | 't
     return 'thunderstorm';
   }
 
-  if (current.isDay === false || (current.condition || '').toLowerCase().includes('night')) {
+  const isNightTime = (() => {
+    if (current.isDay === false) return true;
+    if ((current.condition || '').toLowerCase().includes('night')) return true;
+    const sunsetStr = weather.astronomy?.sunset;
+    if (sunsetStr) {
+      const match = sunsetStr.match(/(\d+):(\d+)\s*(am|pm)?/i);
+      if (match) {
+        let h = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        const meridian = match[3]?.toLowerCase();
+        if (meridian === 'pm' && h < 12) h += 12;
+        if (meridian === 'am' && h === 12) h = 0;
+        const now = new Date();
+        const sunsetMin = h * 60 + m;
+        const currentMin = now.getHours() * 60 + now.getMinutes();
+        if (currentMin >= sunsetMin || currentMin < 5 * 60 + 30) return true;
+      }
+    }
+    const hour = new Date().getHours() + new Date().getMinutes() / 60;
+    return hour >= 18 || hour < 5.5;
+  })();
+
+  if (isNightTime) {
     return 'moon';
   }
 
@@ -97,7 +119,8 @@ export function calculateNextHours(weather: DashboardWeatherData, currentKey: Co
  */
 export async function syncWeatherToWidget(
   weather: DashboardWeatherData | null | undefined,
-  isDark = true
+  isDark = true,
+  locationLabel?: string
 ): Promise<void> {
   if (!weather || !weather.current) return;
 
@@ -108,7 +131,7 @@ export async function syncWeatherToWidget(
   const mode: 'dark' | 'light' = isDark ? 'dark' : 'light';
 
   const payload: WidgetPayload = {
-    location: current.city || 'Mausam',
+    location: locationLabel || current.city || 'Mausam',
     condition: current.condition || 'Clear Sky',
     temperature: `${Math.round(current.temperature)}°`,
     hi: `${Math.round(current.high)}°`,

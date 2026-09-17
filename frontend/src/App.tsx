@@ -2,6 +2,7 @@ import { MausamMenuButton, ProfileSidebar } from "./ProfileSidebar"
 import { OfficialAdvisories } from "./OfficialAdvisories"
 import { ComfortIndicator, comfortTone } from "./ComfortIndicator"
 import { syncWeatherToWidget } from "./widgets/widgetBridge"
+import { PullToRefresh } from "./PullToRefresh"
 import {
   useState,
   useEffect,
@@ -392,6 +393,7 @@ function HomeTab({
   onOpenMenu,
   menuOpen,
   weather,
+  advisoryRefreshKey,
 }: {
   profile: Profile
   location: UserLocation
@@ -401,25 +403,10 @@ function HomeTab({
   onOpenMenu: () => void
   menuOpen: boolean
   weather: DashboardWeatherData
+  advisoryRefreshKey?: number
 }) {
   const { t, td, n, nu } = useTranslation()
   const { current } = weather
-  // Rain has its own buddy in either daylight state. Any non-rainy night
-  // uses the lunar preset, including older API payloads that still say
-  // heroVariant="sunny" but correctly expose isDay=false.
-  const weatherHeroVariant =
-    current.heroVariant === "rainy"
-      ? "rainy"
-      : current.isDay === false
-        ? "night"
-        : (current.heroVariant ??
-          getWeatherHeroVariant(
-            current.conditionCode,
-            current.condition,
-            current.isDay,
-          ))
-  const isRainy = weatherHeroVariant === "rainy"
-  const isNight = weatherHeroVariant === "night"
   const [now, setNow] = useState(() => new Date())
   const locationLabel = formatUserLocation(location)
   const locationTimeZone =
@@ -430,6 +417,44 @@ function HomeTab({
     const timer = window.setInterval(() => setNow(new Date()), 60_000)
     return () => window.clearInterval(timer)
   }, [])
+
+  const isNightEffective = (() => {
+    if (current.isDay === false) return true
+    const sunsetStr = weather.astronomy?.sunset
+    if (sunsetStr) {
+      const match = sunsetStr.match(/(\d+):(\d+)\s*(am|pm)?/i)
+      if (match) {
+        let h = parseInt(match[1], 10)
+        const m = parseInt(match[2], 10)
+        const meridian = match[3]?.toLowerCase()
+        if (meridian === "pm" && h < 12) h += 12
+        if (meridian === "am" && h === 12) h = 0
+        const sunsetMin = h * 60 + m
+        const currentMin = now.getHours() * 60 + now.getMinutes()
+        if (currentMin >= sunsetMin || currentMin < 5 * 60 + 30) return true
+      }
+    }
+    const hour = now.getHours() + now.getMinutes() / 60
+    return hour >= 18 || hour < 5.5
+  })()
+
+  // Rain has its own buddy in either daylight state. Any non-rainy night
+  // uses the lunar preset, including older API payloads that still say
+  // heroVariant="sunny" but correctly expose isDay=false.
+  const weatherHeroVariant =
+    current.heroVariant === "rainy"
+      ? "rainy"
+      : isNightEffective
+        ? "night"
+        : (current.heroVariant ??
+          getWeatherHeroVariant(
+            current.conditionCode,
+            current.condition,
+            current.isDay,
+          ))
+  const isRainy = weatherHeroVariant === "rainy"
+  const isNight = weatherHeroVariant === "night"
+  const isOvercast = /overcast|cloudy|fog|mist|haze/i.test(`${current.conditionCode} ${current.condition}`)
 
   return (
     <div className="home-screen app-page" style={{ padding: "52px 16px 24px" }}>
@@ -858,6 +883,33 @@ function HomeTab({
                       />
                     </g>
                   </>
+                ) : isOvercast ? (
+                  <g className="cloud-character cloud-character-overcast">
+                    <defs>
+                      <linearGradient id="overcastCloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#cbd5e1" />
+                        <stop offset="100%" stopColor="#94a3b8" />
+                      </linearGradient>
+                    </defs>
+                    <ellipse cx="70" cy="122" rx="42" ry="7" fill="#475569" opacity=".25" />
+                    <path
+                      d="M25 72q-4-14 10-20 4-22 28-16 14-20 34-4 22-9 32 11 19 1 19 19 12 4 9 18-2 11-17 11H44Q25 90 25 72Z"
+                      fill="url(#overcastCloudGrad)"
+                      stroke="#475569"
+                      strokeWidth="2.2"
+                    />
+                    <circle cx="62" cy="68" r="2.5" fill="#334155" />
+                    <circle cx="84" cy="68" r="2.5" fill="#334155" />
+                    <path
+                      d="M68 76q5 4 10 0"
+                      fill="none"
+                      stroke="#334155"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <circle cx="53" cy="74" r="4.5" fill="#fca5a5" opacity=".5" />
+                    <circle cx="93" cy="74" r="4.5" fill="#fca5a5" opacity=".5" />
+                  </g>
                 ) : (
                   <image
                     className="sun-buddy-image"
@@ -934,7 +986,7 @@ function HomeTab({
       </div>
 
       <AudienceFocus items={weather.overview} />
-      <OfficialAdvisories location={location} />
+      <OfficialAdvisories location={location} refreshKey={advisoryRefreshKey} />
 
       {/* Hourly Forecast */}
       <div style={{ marginBottom: 22 }}>
@@ -6060,6 +6112,7 @@ function MausamApp() {
   const prefetchedLocationKey = useRef<string | null>(null)
   const [weatherLocationKey, setWeatherLocationKey] = useState<string | null>(null)
   const [weatherRetry, setWeatherRetry] = useState(0)
+  const [advisoryRefreshKey, setAdvisoryRefreshKey] = useState(0)
 
   // Synchronize latest weather state to the native Android widget
   useEffect(() => {
@@ -6211,6 +6264,47 @@ function MausamApp() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [tab, overlay])
 
+  const handlePullRefresh = async () => {
+    if (!userLocation) return
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 18_000)
+    try {
+      // 1. Fetch live weather directly
+      const weatherPromise = fetchWeatherDashboard(userLocation, controller.signal)
+
+      // 2. Refresh device location coordinates / reverse-geocoded locality if device GPS
+      const locationPromise = (async () => {
+        if (userLocation.source === "device") {
+          try {
+            const freshLocation = await enrichDeviceLocation(userLocation, controller.signal)
+            if (freshLocation && freshLocation.locality !== "Current location") {
+              saveLocation(freshLocation)
+              setUserLocation(freshLocation)
+            }
+          } catch {
+            /* non-fatal */
+          }
+        }
+      })()
+
+      // 3. Trigger advisory and downstream component refresh
+      setAdvisoryRefreshKey((k) => k + 1)
+
+      const [nextWeather] = await Promise.all([weatherPromise, locationPromise])
+      if (nextWeather) {
+        setWeather(nextWeather)
+        setWeatherLocationKey(`${userLocation.latitude},${userLocation.longitude}`)
+        setWeatherSource(isLiveWeatherEnabled() ? "live" : "demo")
+        void syncWeatherToWidget(nextWeather, theme === "dark", formatUserLocation(userLocation))
+      }
+    } catch (err) {
+      console.warn("Pull-to-refresh caught error:", err)
+      setWeatherRetry((v) => v + 1)
+    } finally {
+      window.clearTimeout(timeout)
+    }
+  }
+
   if (!profile || !profileSetupComplete)
     return <Setup weather={isLiveWeatherEnabled() ? null : weather} onComplete={(nextProfile) => {
       setProfile(nextProfile)
@@ -6284,51 +6378,54 @@ function MausamApp() {
           className="no-scrollbar app-scroll"
           style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
         >
-          {(tab !== "home" || overlay !== "none") && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
-          {overlay === "privacy" ? (
-            <PrivacyPolicyPage
-              onBack={() => setOverlay("briefing")}
-              onHome={() => {
-                setTab("home")
-                setOverlay("none")
-              }}
-            />
-          ) : overlay === "faq" ? (
-            <FAQPage
-              onBack={() => setOverlay("briefing")}
-              onHome={() => {
-                setTab("home")
-                setOverlay("none")
-              }}
-            />
-          ) : overlay === "briefing" ? (
-            <PersonalizedWeatherPage
-              profile={profile}
-              location={userLocation}
-              weather={weather}
-              onBack={() => setOverlay("none")}
-              onOpenPrivacy={() => setOverlay("privacy")}
-              onOpenFAQ={() => setOverlay("faq")}
-            />
-          ) : (
-            <>
-              {tab === "home" && (
-                <HomeTab
-                  profile={profile}
-                  location={userLocation}
-                  theme={theme}
-                  setTheme={setTheme}
-                  onOpenPersonalized={() => setOverlay("briefing")}
-                  onOpenMenu={() => setMenuOpen(true)}
-                  menuOpen={menuOpen}
-                  weather={weather}
-                />
-              )}
-              {tab === "health" && <HealthTab weather={weather} />}
-              {tab === "forecast" && <ForecastTab weather={weather} theme={theme} />}
-              {tab === "alerts" && <AlertsTab weather={weather} />}
-            </>
-          )}
+          <PullToRefresh scrollRef={scrollRef} onRefresh={handlePullRefresh}>
+            {(tab !== "home" || overlay !== "none") && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
+            {overlay === "privacy" ? (
+              <PrivacyPolicyPage
+                onBack={() => setOverlay("briefing")}
+                onHome={() => {
+                  setTab("home")
+                  setOverlay("none")
+                }}
+              />
+            ) : overlay === "faq" ? (
+              <FAQPage
+                onBack={() => setOverlay("briefing")}
+                onHome={() => {
+                  setTab("home")
+                  setOverlay("none")
+                }}
+              />
+            ) : overlay === "briefing" ? (
+              <PersonalizedWeatherPage
+                profile={profile}
+                location={userLocation}
+                weather={weather}
+                onBack={() => setOverlay("none")}
+                onOpenPrivacy={() => setOverlay("privacy")}
+                onOpenFAQ={() => setOverlay("faq")}
+              />
+            ) : (
+              <>
+                {tab === "home" && (
+                  <HomeTab
+                    profile={profile}
+                    location={userLocation}
+                    theme={theme}
+                    setTheme={setTheme}
+                    onOpenPersonalized={() => setOverlay("briefing")}
+                    onOpenMenu={() => setMenuOpen(true)}
+                    menuOpen={menuOpen}
+                    weather={weather}
+                    advisoryRefreshKey={advisoryRefreshKey}
+                  />
+                )}
+                {tab === "health" && <HealthTab weather={weather} />}
+                {tab === "forecast" && <ForecastTab weather={weather} theme={theme} />}
+                {tab === "alerts" && <AlertsTab weather={weather} />}
+              </>
+            )}
+          </PullToRefresh>
         </div>
         {overlay === "none" && <BottomNav tab={tab} setTab={setTab} />}
         <ProfileSidebar open={menuOpen} profile={profile} location={userLocation} theme={theme}
