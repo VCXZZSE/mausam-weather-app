@@ -46,7 +46,7 @@ export function computeCommute(
     location: input.city,
     items: [
       {
-        icon: "🚇",
+        icon: "train",
         name: "Metro / Rail",
         value: transitValue,
         detail: disrupted
@@ -54,7 +54,7 @@ export function computeCommute(
           : "No known disruption",
       },
       {
-        icon: "🚗",
+        icon: "car",
         name: "Roads",
         value: roadValue,
         detail: disrupted
@@ -62,7 +62,7 @@ export function computeCommute(
           : "Standard driving conditions",
       },
       {
-        icon: "👁️",
+        icon: "visibility",
         name: "Visibility",
         value: `${input.visibilityKm.toFixed(1)} km`,
         detail: visibilityDetail,

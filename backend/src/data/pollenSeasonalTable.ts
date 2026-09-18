@@ -74,7 +74,7 @@ export function computePollen(month: number): DashboardWeatherData["pollen"] {
 
   return {
     overall,
-    icon: "🌿",
+    icon: "pollen",
     advice:
       overall === "High"
         ? "🤧 Keep windows closed during peak hours · Antihistamine recommended if allergy-prone"

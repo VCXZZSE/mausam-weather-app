@@ -5,10 +5,12 @@ import {
   AQI_BANDS,
   ICON_SPECS,
   LEGACY_EMOJI_ALIASES,
+  LUCIDE_ICONS,
   SVG_ASSETS,
   aqiBandForIndex,
   aqiBandForLabel,
   isIconName,
+  isLucideIcon,
   isSvgAssetIcon,
   resolveIconName,
   weatherIconForCondition,
@@ -22,6 +24,7 @@ describe("Icon", () => {
     const names: IconName[] = [
       ...(Object.keys(ICON_SPECS) as IconName[]),
       ...(Object.keys(SVG_ASSETS) as IconName[]),
+      ...(Object.keys(LUCIDE_ICONS) as IconName[]),
     ]
     for (const name of names) {
       const { container, unmount } = render(<Icon name={name} />)
@@ -114,7 +117,11 @@ describe("resolveIconName", () => {
     for (const [emoji, name] of Object.entries(LEGACY_EMOJI_ALIASES)) {
       expect(isIconName(name), `${emoji} -> ${name} is not a real icon`).toBe(true)
       expect(
-        isSvgAssetIcon(name) ? SVG_ASSETS[name] : ICON_SPECS[name],
+        isSvgAssetIcon(name)
+          ? SVG_ASSETS[name]
+          : isLucideIcon(name)
+            ? LUCIDE_ICONS[name]
+            : ICON_SPECS[name],
       ).toBeDefined()
     }
   })

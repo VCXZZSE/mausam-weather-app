@@ -1,4 +1,11 @@
-import { ICON_SPECS, SVG_ASSETS, isSvgAssetIcon, type IconName } from "./iconMap"
+import {
+  ICON_SPECS,
+  LUCIDE_ICONS,
+  SVG_ASSETS,
+  isLucideIcon,
+  isSvgAssetIcon,
+  type IconName,
+} from "./iconMap"
 
 export type {
   IconName,
@@ -33,7 +40,7 @@ type IconProps = {
    */
   label?: string
   className?: string
-  /** Overrides the per-icon default. Line icons only. */
+  /** Overrides the per-icon default. Ignored by the weather/AQI artwork. */
   strokeWidth?: number
 }
 
@@ -72,7 +79,8 @@ function prepareAssetSvg(
 /**
  * The only way to render an icon. Components pass a name from the `IconName`
  * union; the art comes from `iconMap.ts` — inline path data for the interface
- * icons, a vendored SVG file for weather and AQI.
+ * icons, a lucide-react glyph for the payload icons, a vendored SVG file for
+ * weather and AQI.
  *
  * Line icons inherit colour (`stroke="currentColor"`), so they follow whatever
  * the surrounding theme rule sets and need no per-theme handling here. The
@@ -93,6 +101,21 @@ export function Icon({ name, size, label, className, strokeWidth }: IconProps) {
         className="icon-asset"
         data-icon={name}
         dangerouslySetInnerHTML={{ __html: html }}
+      />
+    )
+  }
+
+  if (isLucideIcon(name)) {
+    const Glyph = LUCIDE_ICONS[name]
+    return (
+      <Glyph
+        {...(size === undefined ? {} : { size })}
+        strokeWidth={strokeWidth ?? 1.8}
+        className={className}
+        data-icon={name}
+        {...(label
+          ? { role: "img", "aria-label": label }
+          : { "aria-hidden": true })}
       />
     )
   }

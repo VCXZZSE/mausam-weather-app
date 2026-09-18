@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { z } from "zod"
 import type { UserLocation } from "@/services/locationService"
 import { formatDateTime, useTranslation, type Language } from "@/i18n"
+import { Icon } from "@/components/icons/Icon"
 import "./OfficialAdvisories.css"
 
 const alertSchema = z.object({
@@ -44,7 +45,7 @@ function Bulletin({ alert }: { alert: OfficialAlert }) {
     <p>{alert.description}</p>
     {alert.instruction && alert.instruction !== alert.description && <p className="official-instruction">{alert.instruction}</p>}
     <div className="official-bulletin-meta">{alert.area} · {alert.source}{issued && <> · {t("advisories.issued", { time: issued })}</>}{expiry && <> · {t("advisories.validUntil", { time: expiry })}</>}</div>
-    {href && <a href={href} target="_blank" rel="noopener noreferrer">{t("advisories.viewOfficial")} <span aria-hidden="true">↗</span></a>}
+    {href && <a href={href} target="_blank" rel="noopener noreferrer">{t("advisories.viewOfficial")} <Icon name="external" /></a>}
   </article>
 }
 function Shield() {
@@ -119,7 +120,7 @@ export function LiveOfficialAdvisories({ location, refreshKey }: { location: Use
           : info?.status === "available"
             ? t(category === "farming" ? "advisories.noFarming" : "advisories.noFishing")
             : t("advisories.specialtyUnavailable")
-      const label = <><span aria-hidden="true" className="official-specialty-icon">{category === "farming" ? "🌾" : "🐟"}</span><span><strong>{title}</strong><span className="official-specialty-status">{status}</span></span>{alerts.length > 0 && <span aria-hidden="true" className="official-expand">⌄</span>}</>
+      const label = <><span className="official-specialty-icon"><Icon name={category === "farming" ? "wheat" : "fish"} /></span><span><strong>{title}</strong><span className="official-specialty-status">{status}</span></span>{alerts.length > 0 && <span className="official-expand"><Icon name="chevron-down" /></span>}</>
       return alerts.length ? <details className="official-specialty has-advisory" key={category}><summary>{label}</summary><div className="official-specialty-bulletins">{alerts.map(alert => <Bulletin key={alert.id} alert={alert} />)}{info?.status !== "available" && <p className="official-partial">{t("advisories.partialShort")}</p>}</div></details> : <div className="official-specialty" key={category}>{label}</div>
     })}</div>
     <footer className="official-advisories-footer"><span>{t("advisories.footerLeft")}</span><span>{checked ? t("advisories.checked", { time: checked }) : loading ? t("advisories.connecting") : t("advisories.awaiting")}</span></footer>
@@ -147,7 +148,7 @@ export function OfficialAdvisories({ location, refreshKey }: { location: UserLoc
     </div>
     <div className="official-specialties">
       {(["advisories.farming", "advisories.fishing"] as const).map(key => <div className="official-specialty" key={key}>
-        <span aria-hidden="true" className="official-specialty-icon">{key === "advisories.farming" ? "♧" : "≋"}</span>
+        <span className="official-specialty-icon"><Icon name={key === "advisories.farming" ? "wheat" : "fish"} /></span>
         <span><strong>{t(key)}</strong><span className="official-specialty-status">{t("advisories.none")}</span></span>
       </div>)}
     </div>

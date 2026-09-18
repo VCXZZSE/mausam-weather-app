@@ -4,7 +4,11 @@ import { ComfortIndicator, comfortTone } from "@/components/common/ComfortIndica
 import { syncWeatherToWidget } from "@/widgets/widgetBridge"
 import { PullToRefresh } from "@/components/common/PullToRefresh"
 import { Icon } from "@/components/icons/Icon"
-import { aqiBandForIndex } from "@/components/icons/iconMap"
+import {
+  aqiBandForIndex,
+  resolveIconName,
+  type IconName,
+} from "@/components/icons/iconMap"
 import type { PersonalizedIcon } from "@/components/icons/iconMap"
 import {
   useState,
@@ -204,6 +208,18 @@ function Bar({
 // so the meter and the band icons cannot drift apart.
 const INDIA_NAQI_GRADIENT = "var(--aqi-gradient)"
 
+/**
+ * Renders an icon named by the API payload. Unlike a literal <Icon name="..." />
+ * the value is not known at build time: a cached response or an older backend
+ * may still carry an emoji, which resolveIconName maps to its replacement.
+ * Anything it cannot place renders nothing rather than a broken glyph.
+ */
+function IconByName({ name, label }: { name: string; label?: string }) {
+  const resolved = resolveIconName(name)
+  if (!resolved) return null
+  return <Icon name={resolved} label={label} />
+}
+
 function WeatherIcon({
   conditionCode,
   icon,
@@ -386,7 +402,9 @@ function AudienceFocus({ items }: { items: DashboardWeatherData["overview"] }) {
 
           return (
             <div key={item.label} className={`audience-focus-card ${item.tone}`}>
-              <span className="audience-focus-icon">{item.icon}</span>
+              <span className="audience-focus-icon">
+                <IconByName name={item.icon} />
+              </span>
               <div>
                 <strong>{td(item.label)}</strong>
                 <small>{td(val)}</small>
@@ -1380,7 +1398,9 @@ export function HomeTab({
                     textAlign: "center",
                   }}
                 >
-                  <div style={{ fontSize: 18 }}>{c.icon}</div>
+                  <div style={{ fontSize: 18 }}>
+                    <IconByName name={c.icon} />
+                  </div>
                   <div
                     style={{
                       fontSize: 8,
@@ -1909,7 +1929,9 @@ function HealthTab({
           <div style={{ fontSize: 24, fontWeight: 800, color: "white" }}>
             {td(weather.pollen.overall)}
           </div>
-          <div style={{ fontSize: 28 }}>{weather.pollen.icon}</div>
+          <div style={{ fontSize: 28 }}>
+            <IconByName name={weather.pollen.icon} />
+          </div>
         </div>
         {weather.pollen.items.map((p) => (
           <div key={p.type} style={{ marginBottom: 12 }}>
@@ -3303,7 +3325,7 @@ function AlertsTab({
                   textAlign: "center",
                 }}
               >
-                {p.icon}
+                <IconByName name={p.icon} />
               </div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
@@ -3348,7 +3370,7 @@ function AlertsTab({
                 marginBottom: 3,
               }}
             >
-              {weather.event.icon}{" "}
+              <IconByName name={weather.event.icon} />{" "}
               <span data-i18n-ignore>{td(weather.event.title)}</span>
             </div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.38)" }}>
@@ -3449,7 +3471,7 @@ export interface UserPersona {
   id: UserPersonaId
   title: string
   shortTitle: string
-  icon: string
+  icon: IconName
   accentColor: string
   gradient: string
   tagline: string
@@ -3466,7 +3488,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "health",
     title: "Health-conscious",
     shortTitle: "Health",
-    icon: "🌿",
+    icon: "leaf",
     accentColor: "#10b981",
     gradient: "linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 95, 70, 0.15))",
     tagline: "Allergy, asthma & skin shield",
@@ -3481,7 +3503,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "fitness",
     title: "Outdoor fitness enthusiasts",
     shortTitle: "Fitness",
-    icon: "⚡",
+    icon: "bolt",
     accentColor: "#f59e0b",
     gradient: "linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(180, 83, 9, 0.15))",
     tagline: "Best running hours & thermal stamina",
@@ -3496,7 +3518,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "beach",
     title: "Beachgoers & surfers",
     shortTitle: "Beach & Surf",
-    icon: "🌊",
+    icon: "waves",
     accentColor: "#06b6d4",
     gradient: "linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(14, 116, 144, 0.15))",
     tagline: "Sea conditions, swell & tide timings",
@@ -3511,7 +3533,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "travel",
     title: "Travelers",
     shortTitle: "Travelers",
-    icon: "✈️",
+    icon: "plane",
     accentColor: "#8b5cf6",
     gradient: "linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(109, 40, 217, 0.15))",
     tagline: "Saved destinations & transit alerts",
@@ -3526,7 +3548,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "family",
     title: "Parents & families",
     shortTitle: "Parents & Families",
-    icon: "🏡",
+    icon: "home",
     accentColor: "#ec4899",
     gradient: "linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(190, 24, 93, 0.15))",
     tagline: "School commute & daily routine safety",
@@ -3541,7 +3563,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "garden",
     title: "Agriculture & gardeners",
     shortTitle: "Agri & Gardeners",
-    icon: "🌱",
+    icon: "sprout",
     accentColor: "#22c55e",
     gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(21, 128, 61, 0.15))",
     tagline: "Soil moisture & seasonal planting",
@@ -3556,7 +3578,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "commute",
     title: "Commuters",
     shortTitle: "Commuters",
-    icon: "🚗",
+    icon: "car",
     accentColor: "#3b82f6",
     gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(29, 78, 216, 0.15))",
     tagline: "Visibility, traffic flow & storm alerts",
@@ -3571,7 +3593,7 @@ export const USER_PERSONAS: UserPersona[] = [
     id: "event",
     title: "Event planners",
     shortTitle: "Event Planners",
-    icon: "🎉",
+    icon: "party",
     accentColor: "#f43f5e",
     gradient: "linear-gradient(135deg, rgba(244, 63, 94, 0.25), rgba(190, 18, 60, 0.15))",
     tagline: "Extended forecasts & comfort index",
@@ -5229,7 +5251,9 @@ export function SemiCircleCrownWheel({
                   : "none",
               }}
             >
-              <span className="crown-item-emoji">{persona.icon}</span>
+              <span className="crown-item-emoji">
+                <Icon name={persona.icon} label={td(persona.shortTitle)} />
+              </span>
             </div>
           </div>
         )

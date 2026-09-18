@@ -8,12 +8,12 @@ import type { DashboardWeatherData } from "../types/dashboard.js"
 // CPCB overall AQI requires >=3 pollutants, including PM2.5 or PM10:
 // https://cpcb.nic.in/National-Air-Quality-Index/
 const IN_NAQI_CATEGORIES: Array<{ max: number; label: string; icon: string }>=[
-  { max: 50,label: "Good",icon: "😊" },
-  { max: 100,label: "Satisfactory",icon: "🙂" },
-  { max: 200,label: "Moderate",icon: "😐" },
-  { max: 300,label: "Poor",icon: "😷" },
-  { max: 400,label: "Very Poor",icon: "🚫" },
-  { max: Infinity,label: "Severe",icon: "☠️" },
+  { max: 50,label: "Good",icon: "aqi-good" },
+  { max: 100,label: "Satisfactory",icon: "aqi-satisfactory" },
+  { max: 200,label: "Moderate",icon: "aqi-moderate" },
+  { max: 300,label: "Poor",icon: "aqi-poor" },
+  { max: 400,label: "Very Poor",icon: "aqi-very-poor" },
+  { max: Infinity,label: "Severe",icon: "aqi-severe" },
 ]
 
 function categorize(index: number) {

@@ -62,6 +62,9 @@ describe("profile sidebar", () => {
     render(<ProfileSidebar {...props()} profile={{ ...profile, persona: "health" }} />)
     const chips = screen.getAllByText("Health-conscious")
     expect(chips.length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText("🌿").length).toBeGreaterThanOrEqual(1)
+    // The persona badge is an icon now, not the emoji this used to match.
+    expect(
+      document.querySelectorAll('[data-icon="leaf"]').length,
+    ).toBeGreaterThanOrEqual(1)
   })
 })

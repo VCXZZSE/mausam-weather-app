@@ -59,7 +59,7 @@ function minimalLivePayload(overrides: Record<string, unknown> = {}) {
       },
     ],
     overview: [
-      { icon: "♥", label: "Health", value: "UV 3", tone: "focus-health" },
+      { icon: "heart", label: "Health", value: "UV 3", tone: "focus-health" },
     ],
     uv: {
       index: 3,
@@ -82,7 +82,7 @@ function minimalLivePayload(overrides: Record<string, unknown> = {}) {
     comfort: {
       index: 80,
       label: "Comfortable",
-      icon: "🙂",
+      icon: "comfortable",
       advice: "Nice.",
       factors: [],
     },
@@ -116,13 +116,13 @@ function minimalLivePayload(overrides: Record<string, unknown> = {}) {
       soil: "Moist",
       note: "Note",
     },
-    pollen: { overall: "Low", icon: "🌿", advice: "Low.", items: [] },
+    pollen: { overall: "Low", icon: "pollen", advice: "Low.", items: [] },
     alerts: [],
     locations: [],
     packing: { title: "For Kolkata", items: [] },
     event: {
       sectionLabel: "Event Planner",
-      icon: "🌤️",
+      icon: "clear-day",
       title: "Weekend Outdoor Weather Outlook",
       dateRange: "6-7 Sep",
       daysAway: 1,

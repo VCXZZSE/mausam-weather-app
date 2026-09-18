@@ -93,7 +93,7 @@ function weatherFixture(overrides: Record<string, unknown> = {}) {
       },
     ],
     overview: [
-      { icon: "♥", label: "Health", value: "UV 3", tone: "focus-health" },
+      { icon: "heart", label: "Health", value: "UV 3", tone: "focus-health" },
     ],
     uv: {
       index: 3,
@@ -116,7 +116,7 @@ function weatherFixture(overrides: Record<string, unknown> = {}) {
     comfort: {
       index: 80,
       label: "Comfortable",
-      icon: "🙂",
+      icon: "comfortable",
       advice: "Nice out.",
       factors: [],
     },
@@ -150,13 +150,13 @@ function weatherFixture(overrides: Record<string, unknown> = {}) {
       soil: "Moist",
       note: "Note",
     },
-    pollen: { overall: "Low", icon: "🌿", advice: "Low levels.", items: [] },
+    pollen: { overall: "Low", icon: "pollen", advice: "Low levels.", items: [] },
     alerts: [],
     locations: [],
     packing: { title: "For Kolkata", items: [] },
     event: {
       sectionLabel: "Event Planner",
-      icon: "🌤️",
+      icon: "clear-day",
       title: "Weekend Outdoor Weather Outlook",
       dateRange: "6 Sep–7 Sep",
       daysAway: 1,

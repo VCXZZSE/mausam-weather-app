@@ -60,7 +60,12 @@ export function computeEvent(input: EventInput): DashboardWeatherData["event"] {
       : avgRainChance < 60
         ? "Moderate Rain"
         : "High Rain"
-  const icon = avgRainChance >= 60 ? "🌧️" : avgRainChance >= 30 ? "⛅" : "🌤️"
+  const icon =
+    avgRainChance >= 60
+      ? "rain-cloud"
+      : avgRainChance >= 30
+        ? "partly-cloudy-day"
+        : "clear-day"
 
   const advice =
     avgRainChance >= 60

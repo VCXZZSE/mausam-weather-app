@@ -70,7 +70,7 @@ export function buildBaseWeather(): WeatherPayload {
       ],
       label: "Good",
       updatedLabel: "Updated just now",
-      icon: "😊",
+      icon: "aqi-good",
       advice: "Air quality is good.",
       pollutants: [
         {
@@ -124,7 +124,7 @@ export function buildBaseWeather(): WeatherPayload {
     comfort: {
       index: 80,
       label: "Comfortable",
-      icon: "🙂",
+      icon: "comfortable",
       advice: "Pleasant conditions.",
       factors: [
         { label: "Temperature", value: "26°C", percent: 58, color: "#f59e0b" },
@@ -139,7 +139,7 @@ export function buildBaseWeather(): WeatherPayload {
     },
     overview: [
       {
-        icon: "♥",
+        icon: "heart",
         label: "Health",
         value: "US AQI 35 · UV 3",
         tone: "focus-health",
@@ -147,7 +147,7 @@ export function buildBaseWeather(): WeatherPayload {
     ],
     pollen: {
       overall: "Low",
-      icon: "🌿",
+      icon: "pollen",
       advice: "Pollen levels are low.",
       items: [{ type: "Tree", level: "Low", percent: 20, color: "#4ade80" }],
     },
@@ -181,7 +181,7 @@ export function buildBaseWeather(): WeatherPayload {
     packing: { title: "For Kolkata · 5 Sep 2026", items: [] },
     event: {
       sectionLabel: "Event Planner",
-      icon: "🌤️",
+      icon: "clear-day",
       title: "Weekend Outdoor Weather Outlook",
       dateRange: "6 Sep–7 Sep",
       daysAway: 1,

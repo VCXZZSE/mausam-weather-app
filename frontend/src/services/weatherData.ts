@@ -383,20 +383,20 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
   ],
   overview: [
     {
-      icon: "♥",
+      icon: "heart",
       label: "Health",
       value: "AQI 78 · UV 6",
       tone: "focus-health",
     },
-    { icon: "↗", label: "Move", value: "Run 5:30–7 AM", tone: "focus-move" },
+    { icon: "trending-up", label: "Move", value: "Run 5:30–7 AM", tone: "focus-move" },
     {
-      icon: "⌁",
+      icon: "commute",
       label: "Commute",
       value: "Flooding nearby",
       tone: "focus-commute",
     },
     {
-      icon: "⌂",
+      icon: "home",
       label: "Outdoors",
       value: "Rough seas · 2.1m",
       tone: "focus-outdoors",
@@ -441,18 +441,18 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
     location: "Kolkata",
     items: [
       {
-        icon: "🚇",
+        icon: "train",
         name: "Metro Line",
         value: "Modified",
         detail: "Delays expected",
       },
       {
-        icon: "🚗",
+        icon: "car",
         name: "EM Bypass",
         value: "Flooded",
         detail: "Park St · Behala",
       },
-      { icon: "👁️", name: "Howrah Br.", value: "1.8 km", detail: "Visibility" },
+      { icon: "visibility", name: "Howrah Br.", value: "1.8 km", detail: "Visibility" },
     ],
   },
   swimming: {
@@ -473,7 +473,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
   },
   pollen: {
     overall: "Moderate",
-    icon: "🌿",
+    icon: "pollen",
     advice:
       "🤧 Keep windows closed 10 AM–3 PM · Antihistamine recommended if allergy-prone",
     items: [
@@ -493,7 +493,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
   comfort: {
     index: 38,
     label: "Uncomfortable",
-    icon: "🥵",
+    icon: "hot",
     advice:
       "🎪 Event planners: Provide shade and water stations. Rain disruption probability is about 30%.",
     factors: [
@@ -571,21 +571,21 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
   packing: {
     title: "For Kolkata · 28 Aug 2026",
     items: [
-      { icon: "☂️", item: "Heavy duty umbrella", reason: "92% rain chance" },
+      { icon: "umbrella", item: "Heavy duty umbrella", reason: "92% rain chance" },
       {
-        icon: "👟",
+        icon: "boots",
         item: "Waterproof footwear",
         reason: "Severe waterlogging",
       },
-      { icon: "🧴", item: "Sunscreen SPF 30+", reason: "UV Index 6 (High)" },
-      { icon: "💧", item: "Water bottle (1L+)", reason: "Heat index 41°C" },
-      { icon: "😷", item: "N95 mask", reason: "AQI 78 (Satisfactory)" },
-      { icon: "📱", item: "Power bank", reason: "Power cuts likely" },
+      { icon: "sunscreen", item: "Sunscreen SPF 30+", reason: "UV Index 6 (High)" },
+      { icon: "water-bottle", item: "Water bottle (1L+)", reason: "Heat index 41°C" },
+      { icon: "mask", item: "N95 mask", reason: "AQI 78 (Satisfactory)" },
+      { icon: "power-bank", item: "Power bank", reason: "Power cuts likely" },
     ],
   },
   event: {
     sectionLabel: "Event Planner",
-    icon: "🪔",
+    icon: "festival",
     title: "Durga Puja 2026",
     dateRange: "Oct 2–6",
     daysAway: 33,

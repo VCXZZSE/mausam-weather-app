@@ -82,7 +82,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
             const persona = getPersonaById(profile.persona)
             return persona ? (
               <div className="sidebar-persona-chip">
-                <span className="sidebar-persona-icon">{persona.icon}</span>
+                <span className="sidebar-persona-icon"><Icon name={persona.icon} /></span>
                 <span className="sidebar-persona-label">{td(persona.title)}</span>
               </div>
             ) : null
@@ -95,7 +95,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
             const persona = getPersonaById(profile.persona)
             return persona ? (
               <div className="sidebar-active-persona-banner" style={{ "--persona-accent": persona.accentColor } as React.CSSProperties}>
-                <span className="sidebar-active-persona-icon">{persona.icon}</span>
+                <span className="sidebar-active-persona-icon"><Icon name={persona.icon} /></span>
                 <div className="sidebar-active-persona-info">
                   <strong>{td(persona.title)}</strong>
                   <small>{td(persona.tagline)}</small>

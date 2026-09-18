@@ -14,10 +14,15 @@ type ComfortTone = {
 // score the same on the index - so it stays the discriminator while label carries
 // severity. Anything unrecognised falls back to the label alone.
 //
+// The value is an icon name ("cold"/"comfortable"/"hot"); "🥶" is still
+// accepted because a cached response or a frozen Android bundle can carry the
+// emoji this replaced.
+//
 // `label` is always the English label from the API: tone is keyed off it, so it
 // must not be translated before it gets here. Only the aria-label is localised.
 export function comfortTone(label: string, icon: string): ComfortTone {
-  if (icon === "🥶") return { color: "#60a5fa", mercury: 0.16 }
+  if (icon === "cold" || icon === "🥶")
+    return { color: "#60a5fa", mercury: 0.16 }
   if (label === "Comfortable") return { color: "#34d399", mercury: 0.5 }
   if (label === "Very Uncomfortable") return { color: "#f87171", mercury: 0.94 }
   return { color: "#f59e0b", mercury: 0.78 }

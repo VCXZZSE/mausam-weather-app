@@ -15,6 +15,41 @@
 // <Icon>, rather than referenced with <img src>: that needs no network and no
 // extra request inside the Android WebView, and lets the AQI set inherit
 // `currentColor` from the theme.
+// lucide-react is imported here and nowhere else in the app: components ask
+// for one of our names and never reach for the library themselves. Named
+// imports keep the bundle to the glyphs actually listed in LUCIDE_ICONS.
+import {
+  ArrowUpRight,
+  BatteryCharging,
+  Car,
+  ChevronDown,
+  Droplet,
+  Eye,
+  Fish,
+  Flame,
+  Flower2,
+  Glasses,
+  Heart,
+  House,
+  Lamp,
+  Leaf,
+  PartyPopper,
+  Plane,
+  Route,
+  Shirt,
+  Smile,
+  SportShoe,
+  SprayCan,
+  Sprout,
+  TrainFront,
+  TrendingUp,
+  Umbrella,
+  Waves,
+  Wheat,
+  Zap,
+  type LucideIcon,
+} from "lucide-react"
+
 import clearDay from "@/assets/icons/weather/clear-day.svg?raw"
 import clearNight from "@/assets/icons/weather/clear-night.svg?raw"
 import partlyCloudyDay from "@/assets/icons/weather/partly-cloudy-day.svg?raw"
@@ -68,6 +103,11 @@ export type IconName =
   | WeatherIconName
   // --- CPCB NAQI bands (hand-drawn, see assets/icons/aqi) ---
   | AqiIconName
+  // --- payload icons the rules engine names (lucide-react) ---
+  | LucideIconName
+  // --- payload icons lucide has no equivalent for (hand-drawn) ---
+  | "scarf"
+  | "mask"
 
 /**
  * Weather artwork, named after the source SVG. These are full-colour icons —
@@ -90,6 +130,48 @@ export type WeatherIconName =
   | "snow"
   | "thermometer"
 
+/**
+ * Icons taken from lucide-react. The name on the left is ours and is what the
+ * rules engine emits; which lucide glyph draws it is an implementation detail
+ * that can change without touching the wire format.
+ */
+export type LucideIconName =
+  // focus tiles
+  | "heart"
+  | "trending-up"
+  | "commute"
+  | "home"
+  // comfort band
+  | "comfortable"
+  | "hot"
+  // packing list
+  | "umbrella"
+  | "boots"
+  | "sunscreen"
+  | "sunglasses"
+  | "jacket"
+  | "water-bottle"
+  | "power-bank"
+  // commute detail
+  | "train"
+  | "car"
+  | "visibility"
+  // seasonal / advisory subjects
+  | "pollen"
+  | "festival"
+  | "fish"
+  | "wheat"
+  // personas
+  | "leaf"
+  | "bolt"
+  | "waves"
+  | "plane"
+  | "sprout"
+  | "party"
+  // interface affordances
+  | "chevron-down"
+  | "external"
+
 /** One per CPCB National AQI band. Drawn in currentColor. */
 export type AqiIconName =
   | "aqi-good"
@@ -103,7 +185,10 @@ export type AqiIconName =
  * The icons drawn from inline path data in `ICON_SPECS`, as opposed to the
  * weather and AQI art loaded from SVG files. All of them inherit colour.
  */
-export type LineIconName = Exclude<IconName, WeatherIconName | AqiIconName>
+export type LineIconName = Exclude<
+  IconName,
+  WeatherIconName | AqiIconName | LucideIconName
+>
 
 /** A circle primitive, for the few icons whose art is not a single path. */
 export type IconCircle = { cx: number; cy: number; r: number }
@@ -243,6 +328,25 @@ export const ICON_SPECS: Record<LineIconName, IconSpec> = {
     paths: ["M3 8h11a2.5 2.5 0 1 0-2.3-3.5M3 12h17M3 16h11a2.5 2.5 0 1 1-2.3 3.5"],
     strokeWidth: 1.8,
   },
+
+  // --- packing items lucide-react has no glyph for, stroke 1.8 ---
+  scarf: {
+    paths: [
+      "M7.5 4.2a5.5 5.5 0 0 1 9 0",
+      "M6.6 6.1a7 7 0 0 1 10.8 0",
+      "M8.4 8.6h7.2v3.1a3.6 3.6 0 0 1-7.2 0Z",
+      "M10.1 12.3v6.1a1.7 1.7 0 0 1-3.4 0v-4.2M13.9 12.3v7.6",
+    ],
+    strokeWidth: 1.8,
+  },
+  mask: {
+    paths: [
+      "M4.6 9.4 3 8.6v6l1.6-.8M19.4 9.4 21 8.6v6l-1.6-.8",
+      "M4.6 8.2h14.8v6.1a3.4 3.4 0 0 1-2.1 3.2l-4 1.6a3.4 3.4 0 0 1-2.6 0l-4-1.6a3.4 3.4 0 0 1-2.1-3.2Z",
+      "M8 11.4h8M8.6 14.3h6.8",
+    ],
+    strokeWidth: 1.8,
+  },
 }
 
 export function isIconName(value: string): value is IconName {
@@ -330,6 +434,45 @@ export const SVG_ASSETS: Record<WeatherIconName | AqiIconName, string> = {
   "aqi-severe": aqiSevere,
 }
 
+/**
+ * Which lucide glyph draws each of our names. Imported as named exports so the
+ * bundler keeps only these, not the 1500-icon package.
+ */
+export const LUCIDE_ICONS: Record<LucideIconName, LucideIcon> = {
+  heart: Heart,
+  "trending-up": TrendingUp,
+  commute: Route,
+  home: House,
+  comfortable: Smile,
+  hot: Flame,
+  umbrella: Umbrella,
+  boots: SportShoe,
+  sunscreen: SprayCan,
+  sunglasses: Glasses,
+  jacket: Shirt,
+  "water-bottle": Droplet,
+  "power-bank": BatteryCharging,
+  train: TrainFront,
+  car: Car,
+  visibility: Eye,
+  pollen: Flower2,
+  festival: Lamp,
+  fish: Fish,
+  wheat: Wheat,
+  leaf: Leaf,
+  bolt: Zap,
+  waves: Waves,
+  plane: Plane,
+  sprout: Sprout,
+  party: PartyPopper,
+  "chevron-down": ChevronDown,
+  external: ArrowUpRight,
+}
+
+export function isLucideIcon(name: IconName): name is LucideIconName {
+  return name in LUCIDE_ICONS
+}
+
 export function isSvgAssetIcon(
   name: IconName,
 ): name is WeatherIconName | AqiIconName {
@@ -340,6 +483,7 @@ export function isSvgAssetIcon(
 const ICON_NAMES = new Set<string>([
   ...Object.keys(ICON_SPECS),
   ...Object.keys(SVG_ASSETS),
+  ...Object.keys(LUCIDE_ICONS),
 ])
 
 // --- semantic resolvers -----------------------------------------------------

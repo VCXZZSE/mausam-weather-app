@@ -29,8 +29,11 @@ export function computeComfort(
       : index >= 30
         ? "Uncomfortable"
         : "Very Uncomfortable"
+  // An icon *name*, not a glyph: the frontend renders it through its icon
+  // registry, and ComfortIndicator uses it to tell "too cold" from "too hot"
+  // (both score the same on the index, so label alone cannot separate them).
   const icon =
-    input.temperature <= 15 ? "🥶" : label === "Comfortable" ? "🙂" : "🥵"
+    input.temperature <= 15 ? "cold" : label === "Comfortable" ? "comfortable" : "hot"
 
   const advice =
     label === "Comfortable"
@@ -127,9 +130,9 @@ export function computeOverview(
       : `UV ${input.uvIndex} · ${input.uvLabel}`
 
   return [
-    { icon: "♥", label: "Health", value: healthValue, tone: "focus-health" },
+    { icon: "heart", label: "Health", value: healthValue, tone: "focus-health" },
     {
-      icon: "↗",
+      icon: "trending-up",
       label: "Move",
       value:
         input.bestWindowLabel === "most of the day" || input.bestWindowLabel === "Good all day"
@@ -138,7 +141,7 @@ export function computeOverview(
       tone: "focus-move",
     },
     {
-      icon: "⌁",
+      icon: "commute",
       label: "Commute",
       value:
         input.rainChanceToday >= 60
@@ -147,7 +150,7 @@ export function computeOverview(
       tone: "focus-commute",
     },
     {
-      icon: "⌂",
+      icon: "home",
       label: "Outdoors",
       value: `Wind ${Math.round(input.windSpeed)} km/h`,
       tone: "focus-outdoors",
