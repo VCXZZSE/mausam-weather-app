@@ -79,12 +79,12 @@ The official advisory card remains in its safe unavailable state. Farming and fi
 
 ## Run locally
 
-The repository pins Node.js 22 and pnpm 10.34.3 in `.mise.toml`. Install the frontend and backend dependencies separately:
+The repository pins Node.js 22 in `.mise.toml`. Install the frontend and backend dependencies separately:
 
 ```bash
 git clone https://github.com/VCXZZSE/mausam-weather-app.git
 cd mausam-weather-app
-pnpm install --frozen-lockfile
+npm ci
 npm ci --prefix backend
 ```
 
@@ -119,7 +119,7 @@ The root `.env.example` points browser requests to the local backend. Device loc
 | `npm run preview` | Preview the frontend build; start the local API separately when using local API URLs |
 | `npm test` | Run frontend tests |
 | `npm test --prefix backend` | Run backend tests |
-| `pnpm exec tsc --noEmit` | Check frontend TypeScript |
+| `npx tsc --noEmit` | Check frontend TypeScript |
 | `npm run typecheck --prefix backend` | Check backend TypeScript |
 
 ## Deploy to Vercel

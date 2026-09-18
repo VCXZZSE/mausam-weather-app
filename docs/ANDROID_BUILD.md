@@ -38,7 +38,7 @@ From the **project root** — the folder containing `package.json`, not
 `android/`:
 
 ```bash
-npm install            # or: pnpm install --frozen-lockfile
+npm ci
 npm run android        # build web app, copy into Android project, open Studio
 ```
 
