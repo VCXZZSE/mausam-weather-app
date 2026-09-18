@@ -3335,7 +3335,7 @@ function AlertsTab({
                   marginBottom: 2,
                 }}
               >
-                <span data-i18n-ignore>{location.name}</span>
+                <span data-i18n-ignore>{td(location.name)}</span>
               </div>
               <div
                 style={{
@@ -3444,7 +3444,7 @@ function AlertsTab({
               <span data-i18n-ignore>{td(weather.event.title)}</span>
             </div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.38)" }}>
-              <span data-i18n-ignore>{weather.event.dateRange}</span> ·{" "}
+              <span data-i18n-ignore>{td(weather.event.dateRange)}</span> ·{" "}
               {t("event.startsIn", { days: weather.event.daysAway })}
             </div>
           </div>

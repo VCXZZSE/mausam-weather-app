@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { LanguageSelector } from "@/components/language/LanguageSelector"
-import { ProfileSidebar } from "@/components/layout/ProfileSidebar"
+import { MausamMenuButton, ProfileSidebar } from "@/components/layout/ProfileSidebar"
 import App from "@/App"
 import { LanguageProvider, useTranslation } from "@/i18n"
 import {
@@ -279,14 +279,41 @@ describe("dynamic (API-sourced) values", () => {
     ).toBe("শুধুমাত্র আবহাওয়া সংক্রান্ত দিকনির্দেশ — চিকিৎসা পরামর্শ নয়।")
   })
 
-  it("translates each segment of a compound advice string", () => {
-    expect(translateDynamic("bn", "Use SPF 30+ · Seek shade at midday")).toContain(
-      "SPF 30+ ব্যবহার করুন",
-    )
+  it("translates Alerts & Travel saved locations, packing, and event details", () => {
+    // Hindi
+    expect(translateDynamic("hi", "Darjeeling")).toBe("दार्जिलिंग")
+    expect(translateDynamic("hi", "Digha Beach")).toBe("दीघा बीच")
+    expect(translateDynamic("hi", "Sundarbans")).toBe("सुंदरबन")
+    expect(translateDynamic("hi", "Siliguri")).toBe("सिलीगुड़ी")
+    expect(translateDynamic("hi", "Weekend Outdoor Weather Outlook")).toBe("सप्ताहांत बाहरी मौसम परिदृश्य")
+    expect(translateDynamic("hi", "19 Sept–20 Sept")).toBe("19 सितंबर–20 सितंबर")
+    expect(translateDynamic("hi", "For Kolkata · 18 Sept 2026")).toBe("कोलकाता के लिए · 18 सितंबर 2026")
+    expect(translateDynamic("hi", "Monsoon")).toBe("मानसून")
+    expect(translateDynamic("hi", "High Rain")).toBe("भारी वर्षा")
+
+    // Bengali
+    expect(translateDynamic("bn", "Darjeeling")).toBe("দার্জিলিং")
+    expect(translateDynamic("bn", "Digha Beach")).toBe("দিঘা সৈকত")
+    expect(translateDynamic("bn", "Sundarbans")).toBe("সুন্দরবন")
+    expect(translateDynamic("bn", "Siliguri")).toBe("শিলিগুড়ি")
+    expect(translateDynamic("bn", "Weekend Outdoor Weather Outlook")).toBe("উইকএন্ডের বাইরের আবহাওয়ার পূর্বাভাস")
+    expect(translateDynamic("bn", "19 Sept–20 Sept")).toBe("19 সেপ্টেম্বর–20 সেপ্টেম্বর")
+    expect(translateDynamic("bn", "For Kolkata · 18 Sept 2026")).toBe("কলকাতা-এর জন্য · 18 সেপ্টেম্বর 2026")
+    expect(translateDynamic("bn", "Monsoon")).toBe("বর্ষা")
+    expect(translateDynamic("bn", "High Rain")).toBe("ভারী বৃষ্টি")
   })
 })
 
 describe("app surfaces render in every language", () => {
+  it.each(["en", "hi", "bn"] as const)("keeps Mausam header badging in English across %s", (code) => {
+    setLanguage(code)
+    render(
+      <LanguageProvider>
+        <MausamMenuButton onClick={() => {}} expanded={false} />
+      </LanguageProvider>,
+    )
+    expect(screen.getByText("Mausam")).toBeInTheDocument()
+  })
   it.each([
     ["en", "Your profile", "Log out", "Change location"],
     ["hi", "आपकी प्रोफ़ाइल", "लॉग आउट", "स्थान बदलें"],

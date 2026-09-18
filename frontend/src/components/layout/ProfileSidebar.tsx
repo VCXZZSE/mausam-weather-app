@@ -16,7 +16,7 @@ export function MausamMenuButton({ onClick, expanded }: { onClick: () => void; e
   const { t } = useTranslation()
   return <button className="mausam-menu-trigger" onClick={onClick} aria-label={t("sidebar.open")} aria-haspopup="dialog" aria-expanded={expanded} aria-controls="mausam-sidebar" type="button">
     <MausamLogo />
-    <span className="app-header-title">{t("app.name")}</span>
+    <span className="app-header-title" data-i18n-ignore>Mausam</span>
     <span className="mausam-menu-hint" aria-hidden="true"><i /><i /></span>
   </button>
 }
@@ -71,7 +71,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
 
   return createPortal(<dialog ref={dialog} id="mausam-sidebar" className={`profile-sidebar sidebar-${theme}`} aria-labelledby="sidebar-title" onCancel={event => { event.preventDefault(); onClose() }} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
     <div className="sidebar-surface">
-      <header className="sidebar-header"><div className="sidebar-wordmark"><MausamLogo />{t("app.name")}</div><button className="sidebar-close" type="button" aria-label={t("sidebar.close")} onClick={onClose}><Icon name="close" /></button></header>
+      <header className="sidebar-header"><div className="sidebar-wordmark" data-i18n-ignore><MausamLogo />Mausam</div><button className="sidebar-close" type="button" aria-label={t("sidebar.close")} onClick={onClose}><Icon name="close" /></button></header>
       <div className="sidebar-scroll">
         <section className="sidebar-identity">
           <div className="sidebar-avatar-wrap"><Avatar profile={profile} /><span className="sidebar-avatar-spark"><Icon name="spark" /></span></div>
