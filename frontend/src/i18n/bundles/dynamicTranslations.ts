@@ -86,6 +86,38 @@ const ENTRIES: readonly Entry[] = [
   ["Very Poor", "बहुत ख़राब", "খুব খারাপ"],
   ["Severe", "गंभीर", "মারাত্মক"],
 
+  // ── AQI band advice (cpcbAqi.ts adviceForNaqi) ─────────────────────
+  [
+    "Air quality is good — safe for outdoor activity.",
+    "वायु गुणवत्ता अच्छी है — बाहरी गतिविधि के लिए सुरक्षित।",
+    "বাতাসের মান ভালো — বাইরের কাজের জন্য নিরাপদ।",
+  ],
+  [
+    "Air quality is acceptable for most people.",
+    "वायु गुणवत्ता अधिकतर लोगों के लिए ठीक है।",
+    "বাতাসের মান বেশিরভাগ মানুষের জন্য গ্রহণযোগ্য।",
+  ],
+  [
+    "Sensitive groups should reduce prolonged outdoor exertion.",
+    "संवेदनशील लोग लंबे समय तक बाहर मेहनत करने से बचें।",
+    "সংবেদনশীল ব্যক্তিরা দীর্ঘক্ষণ বাইরে পরিশ্রম কমান।",
+  ],
+  [
+    "Limit prolonged outdoor exertion; consider a mask.",
+    "लंबे समय बाहर मेहनत सीमित रखें; मास्क पहनने पर विचार करें।",
+    "দীর্ঘক্ষণ বাইরে পরিশ্রম কমান; মাস্ক পরার কথা ভাবুন।",
+  ],
+  [
+    "Avoid outdoor exertion; keep windows closed.",
+    "बाहर मेहनत से बचें; खिड़कियाँ बंद रखें।",
+    "বাইরে পরিশ্রম এড়ান; জানালা বন্ধ রাখুন।",
+  ],
+  [
+    "Severe air quality — stay indoors if possible.",
+    "वायु गुणवत्ता गंभीर — हो सके तो घर के अंदर रहें।",
+    "বাতাসের মান মারাত্মক — সম্ভব হলে ঘরে থাকুন।",
+  ],
+
   // ── UV bands & guidance ─────────────────────────────────────────────────────
   ["Low", "कम", "কম"],
   ["High", "अधिक", "বেশি"],
@@ -230,6 +262,21 @@ const ENTRIES: readonly Entry[] = [
     "सुबह 10 से दोपहर 3 बजे तक खिड़कियाँ बंद रखें · एलर्जी हो तो एंटीहिस्टामीन लेना उचित",
     "সকাল ১০টা–বিকেল ৩টা জানলা বন্ধ রাখুন · অ্যালার্জি থাকলে অ্যান্টিহিস্টামিন নেওয়া ভালো",
   ],
+  [
+    "Keep windows closed during peak hours · Antihistamine recommended if allergy-prone",
+    "चरम समय में खिड़कियाँ बंद रखें · एलर्जी की प्रवृत्ति हो तो एंटीहिस्टामीन लें",
+    "সর্বোচ্চ সময়ে জানালা বন্ধ রাখুন · অ্যালার্জির প্রবণতা থাকলে অ্যান্টিহিস্টামিন নিন",
+  ],
+  [
+    "Sensitive individuals should monitor symptoms outdoors",
+    "संवेदनशील लोग बाहर रहते हुए लक्षणों पर ध्यान दें",
+    "সংবেদনশীল ব্যক্তিরা বাইরে থাকাকালীন উপসর্গে নজর রাখুন",
+  ],
+  [
+    "Pollen levels are low — minimal precaution needed",
+    "पराग का स्तर कम है — बहुत कम सावधानी पर्याप्त",
+    "পরাগের মাত্রা কম — সামান্য সতর্কতাই যথেষ্ট",
+  ],
 
   // ── Packing list ────────────────────────────────────────────────────────────
   [
@@ -253,6 +300,78 @@ const ENTRIES: readonly Entry[] = [
     "Event planners: Provide shade and water stations. Rain disruption probability is about 30%.",
     "आयोजकों के लिए: छाया और पानी की व्यवस्था रखें। वर्षा से बाधा की संभावना लगभग 30% है।",
     "অনুষ্ঠান পরিকল্পকদের জন্য: ছায়া ও জলের ব্যবস্থা রাখুন। বৃষ্টিতে বিঘ্ন হওয়ার সম্ভাবনা প্রায় ৩০%।",
+  ],
+
+  // ── Swimming advice (rules/swimming.ts) ────────────────────────────
+  // "Rough conditions" and "exposure time" are read in the swimming
+  // context: rough WATER, and time in the SUN. See the note in the
+  // commit message if the English was meant more generally.
+  [
+    "Swimming not advised due to thunderstorm risk",
+    "आँधी-तूफ़ान के ख़तरे के कारण तैराकी की सलाह नहीं",
+    "বজ্রঝড়ের ঝুঁকির কারণে সাঁতার না কাটাই ভালো",
+  ],
+  [
+    "Swimming not advised due to heavy rain",
+    "भारी वर्षा के कारण तैराकी की सलाह नहीं",
+    "ভারী বৃষ্টির কারণে সাঁতার না কাটাই ভালো",
+  ],
+  [
+    "Rough conditions expected due to strong wind",
+    "तेज़ हवा के कारण पानी अशांत रहने की संभावना",
+    "জোরালো বাতাসে জল উত্তাল থাকার সম্ভাবনা",
+  ],
+  [
+    "High UV — use waterproof sunscreen and limit exposure time",
+    "तेज़ UV — वाटरप्रूफ़ सनस्क्रीन लगाएँ और धूप में समय सीमित रखें",
+    "প্রবল UV — ওয়াটারপ্রুফ সানস্ক্রিন ব্যবহার করুন ও রোদে সময় কমান",
+  ],
+  [
+    "Good conditions for swimming",
+    "तैराकी के लिए अनुकूल स्थिति",
+    "সাঁতারের জন্য অনুকূল অবস্থা",
+  ],
+
+  // ── Seasonal notes (data/gardenSeasonalTable.ts) ───────────────────
+  // Hilsa is the monsoon FISHING season, not a crop — the source table
+  // says so explicitly; it is a regional seasonal note sitting in the
+  // agriculture card.
+  [
+    "Hilsa season active!",
+    "हिल्सा मछली का मौसम चालू है!",
+    "ইলিশের মরসুম চলছে!",
+  ],
+  [
+    "Harvest season for local paddy fields",
+    "स्थानीय धान के खेतों की कटाई का मौसम",
+    "স্থানীয় ধানখেতে ফসল কাটার মরসুম",
+  ],
+  [
+    "Good season for leafy greens and winter vegetables",
+    "पत्तेदार साग और सर्दियों की सब्ज़ियों के लिए अच्छा मौसम",
+    "শাকসবজি ও শীতের সবজির জন্য ভালো মরসুম",
+  ],
+  [
+    "Prepare soil ahead of monsoon sowing",
+    "मानसून की बुवाई से पहले मिट्टी तैयार करें",
+    "বর্ষার বীজ বোনার আগে মাটি প্রস্তুত করুন",
+  ],
+
+  // ── Event outlook advice (rules/event.ts) ──────────────────────────
+  [
+    "High rain chance this weekend — plan indoor alternatives or flexible timing.",
+    "इस सप्ताहांत वर्षा की संभावना अधिक — घर के अंदर के विकल्प या लचीला समय रखें।",
+    "এই সপ্তাহান্তে বৃষ্টির সম্ভাবনা বেশি — ঘরের বিকল্প বা নমনীয় সময় ভাবুন।",
+  ],
+  [
+    "Some rain possible — keep an eye on the forecast closer to the date.",
+    "कुछ वर्षा संभव — तारीख़ नज़दीक आने पर पूर्वानुमान देखते रहें।",
+    "কিছু বৃষ্টি হতে পারে — দিন এগিয়ে এলে পূর্বাভাসে নজর রাখুন।",
+  ],
+  [
+    "Favorable weather expected — good window for outdoor plans.",
+    "मौसम अनुकूल रहने की उम्मीद — बाहरी योजनाओं के लिए अच्छा समय।",
+    "আবহাওয়া অনুকূল থাকার আশা — বাইরের পরিকল্পনার জন্য ভালো সময়।",
   ],
 
   // ── Running window ──────────────────────────────────────────────────────────

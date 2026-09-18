@@ -390,20 +390,22 @@ describe("dashboard renders in every language", () => {
   })
 })
 
-// Commit 4 stripped the emoji prefix off every advice/note string the rules
-// engine emits. The translation keys were already emoji-free (the EMOJI_PREFIX
-// branch stripped the mark at runtime before looking one up), so this should
-// have changed nothing about what hi/bn readers see. These cases pin that:
-// each pair is the old emoji-prefixed string and its replacement, and both
-// must come out as the same words.
-describe("removing emoji prefixes did not change any translation", () => {
-  const stripMarks = (value: string) =>
-    value
-      .replace(EMOJI_ANYWHERE, "")
-      .replace(/\s+/g, " ")
-      .trim()
 
-  const PAIRS: Array<[string, string]> = [
+// Every advice/note string the rules engine can emit — the same 29 the audit
+// script counts, so the test and the report cannot disagree.
+//
+// Each pair is the string as it was before commit 4 stripped its mark, and the
+// string as it is emitted now. Translation keys were always emoji-free (the
+// EMOJI_PREFIX branch stripped the mark before looking one up), so removing it
+// at the source must change nothing a reader sees.
+describe("every advisory string survives losing its emoji prefix", () => {
+  const stripMarks = (value: string) =>
+    value.replace(EMOJI_ANYWHERE, "").replace(/\s+/g, " ").trim()
+
+  const isTranslated = (language: "hi" | "bn", text: string) =>
+    stripMarks(translateDynamic(language, text)) !== stripMarks(text)
+
+  const ADVISORY_PAIRS: Array<[string, string]> = [
     ["✅ Air quality is good — safe for outdoor activity.", "Air quality is good — safe for outdoor activity."],
     ["🙂 Air quality is acceptable for most people.", "Air quality is acceptable for most people."],
     ["💡 Sensitive groups should reduce prolonged outdoor exertion.", "Sensitive groups should reduce prolonged outdoor exertion."],
@@ -414,57 +416,58 @@ describe("removing emoji prefixes did not change any translation", () => {
     ["💧 Stay hydrated and take breaks if outdoors for long.", "Stay hydrated and take breaks if outdoors for long."],
     ["⚠️ Limit prolonged outdoor exposure; conditions are taxing.", "Limit prolonged outdoor exposure; conditions are taxing."],
     ["💧 Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated", "Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated"],
+    ["💧 Drink 2–3L water today · Limit strenuous activity during peak heat", "Drink 2–3L water today · Limit strenuous activity during peak heat"],
+    ["💧 Stay hydrated — drink water regularly through the day", "Stay hydrated — drink water regularly through the day"],
     ["🧴 Light sun protection recommended for extended outdoor time", "Light sun protection recommended for extended outdoor time"],
+    ["🚫 Swimming not advised due to thunderstorm risk", "Swimming not advised due to thunderstorm risk"],
     ["🚫 Swimming not advised due to heavy rain", "Swimming not advised due to heavy rain"],
-    ["🐟 Hilsa season active!", "Hilsa season active!"],
-    ["🌿 Pollen levels are low — minimal precaution needed", "Pollen levels are low — minimal precaution needed"],
+    ["⚠️ Rough conditions expected due to strong wind", "Rough conditions expected due to strong wind"],
+    ["🧴 High UV — use waterproof sunscreen and limit exposure time", "High UV — use waterproof sunscreen and limit exposure time"],
+    ["✅ Good conditions for swimming", "Good conditions for swimming"],
+    ["💡 High rain chance this weekend — plan indoor alternatives or flexible timing.", "High rain chance this weekend — plan indoor alternatives or flexible timing."],
+    ["💡 Some rain possible — keep an eye on the forecast closer to the date.", "Some rain possible — keep an eye on the forecast closer to the date."],
+    ["💡 Favorable weather expected — good window for outdoor plans.", "Favorable weather expected — good window for outdoor plans."],
     ["🤧 Keep windows closed during peak hours · Antihistamine recommended if allergy-prone", "Keep windows closed during peak hours · Antihistamine recommended if allergy-prone"],
+    ["🌿 Sensitive individuals should monitor symptoms outdoors", "Sensitive individuals should monitor symptoms outdoors"],
+    ["🌿 Pollen levels are low — minimal precaution needed", "Pollen levels are low — minimal precaution needed"],
+    ["🐟 Hilsa season active!", "Hilsa season active!"],
+    ["🌾 Harvest season for local paddy fields", "Harvest season for local paddy fields"],
+    ["🥦 Good season for leafy greens and winter vegetables", "Good season for leafy greens and winter vegetables"],
+    ["🌱 Prepare soil ahead of monsoon sowing", "Prepare soil ahead of monsoon sowing"],
     ["☂️ Carry umbrella · 😎 Wear sunglasses · 🧴 Reapply SPF every 2h", "Carry umbrella · Wear sunglasses · Reapply SPF every 2h"],
   ]
 
-  // Split deliberately. Comparing before-vs-after alone is symmetric: when a
-  // string has no translation at all, both sides come back as English and the
-  // comparison passes while proving nothing. So each pair is first classified
-  // by whether the language actually translates it, and the two cases assert
-  // different things.
-  const isTranslated = (language: "hi" | "bn", text: string) =>
-    stripMarks(translateDynamic(language, text)) !== stripMarks(text)
+  it("covers the same set the audit reports", () => {
+    expect(ADVISORY_PAIRS).toHaveLength(29)
+  })
 
-  it.each(PAIRS)("%s", (before, after) => {
+  it.each(ADVISORY_PAIRS)("%s", (before, after) => {
     for (const language of ["hi", "bn"] as const) {
-      const wasTranslated = isTranslated(language, before)
-      const nowTranslated = isTranslated(language, after)
-
       // Stripping the mark must never cost a translation.
       expect(
-        nowTranslated,
+        isTranslated(language, after),
         `"${after}" used to translate into ${language} and no longer does`,
-      ).toBe(wasTranslated)
+      ).toBe(isTranslated(language, before))
 
-      if (nowTranslated) {
-        // It translates: the words must come out the same as before, and must
-        // genuinely differ from the English.
-        expect(stripMarks(translateDynamic(language, after))).toBe(
-          stripMarks(translateDynamic(language, before)),
-        )
-        expect(stripMarks(translateDynamic(language, after))).not.toBe(
-          stripMarks(after),
-        )
-      }
+      // And the words must come out the same as they did with the mark.
+      expect(stripMarks(translateDynamic(language, after))).toBe(
+        stripMarks(translateDynamic(language, before)),
+      )
     }
   })
 
-  // Names the strings that reach a reader untranslated, so the gap is recorded
-  // rather than hidden behind a comparison that passes either way. Update this
-  // count when these get translated — downwards only.
-  it("records how many of these still reach hi/bn readers in English", () => {
-    const untranslated = PAIRS.filter(
-      ([, after]) => !isTranslated("hi", after) && !isTranslated("bn", after),
+  // Comparing before-against-after is symmetric: if a string had no
+  // translation, both sides return English and the comparison passes while
+  // proving nothing. This asserts the set is genuinely translated, and is the
+  // number the audit script reports.
+  it("leaves nothing reaching hi/bn readers in English", () => {
+    const untranslated = ADVISORY_PAIRS.filter(
+      ([, after]) => !isTranslated("hi", after) || !isTranslated("bn", after),
     ).map(([, after]) => after)
 
     expect(
-      untranslated.length,
-      `still English in both hi and bn: ${untranslated.join(" | ")}`,
-    ).toBe(10)
+      untranslated,
+      `still English for at least one language: ${untranslated.join(" | ")}`,
+    ).toEqual([])
   })
 })

@@ -239,7 +239,7 @@ describe("CPCB AQI bands", () => {
       const markup = SVG_ASSETS[band.icon]
       expect(markup).toContain('stroke="currentColor"')
       // no baked-in hex or named fills that would defeat the token
-      expect(markup).not.toMatch(/#[0-9a-f]{3,8}/i)
+      expect(markup).not.toMatch(/#[0-9a-fA-F]{3,8}/)
     }
   })
 
@@ -274,7 +274,7 @@ describe("vendored weather artwork", () => {
   it("namespaces gradient ids so inlined icons cannot collide", () => {
     const seen = new Map<string, string>()
     for (const [name, markup] of Object.entries(SVG_ASSETS)) {
-      for (const match of markup.matchAll(/id="([^"]+)"/g)) {
+      for (const match of markup.matchAll(/\sid="([^"]+)"/g)) {
         const id = match[1]
         expect(
           seen.has(id),
