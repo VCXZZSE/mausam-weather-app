@@ -41,7 +41,8 @@ public class MausamMinimalAProvider extends AppWidgetProvider {
         String mode = prefs.getString("mode", "dark");
         String preset = prefs.getString("preset", "sunny");
         boolean isLight = "light".equalsIgnoreCase(mode);
-        boolean isNight = "moon".equalsIgnoreCase(preset);
+        boolean isNight = "moon".equalsIgnoreCase(preset)
+                || "overcast-night".equalsIgnoreCase(preset);
 
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_minimal_a);
 

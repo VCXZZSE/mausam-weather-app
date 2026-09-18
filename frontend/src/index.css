@@ -4154,3 +4154,48 @@ input:-webkit-autofill {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+/* ── Overcast hero character ───────────────────────────────── */
+/* Transform/opacity only — this runs inside the Android WebView, where
+   anything that touches layout or paint drops frames. Offsets are in viewBox
+   units (the companion's 140x140 space), like .cloud-character above. */
+@keyframes overcastDrift {
+  0%, 100% { transform: translateX(-5.1px); }
+  50% { transform: translateX(5.1px); }
+}
+@keyframes overcastBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3.3px); }
+}
+@keyframes overcastDriftBack {
+  0%, 100% { transform: translateX(3.1px); }
+  50% { transform: translateX(-3.1px); }
+}
+@keyframes overcastBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95%, 97% { transform: scaleY(.1); }
+}
+/* Multiplies with the dimming opacity on the parent .overcast-disc. */
+@keyframes overcastDiscBreathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .84; }
+}
+
+.cloud-character-overcast .overcast-cloud { animation: overcastDrift 9s ease-in-out infinite; }
+.cloud-character-overcast .overcast-cloud-bob { animation: overcastBob 6s ease-in-out infinite; }
+.cloud-character-overcast .overcast-cloud-back { animation: overcastDriftBack 16s ease-in-out infinite; }
+.cloud-character-overcast .overcast-eyes {
+  transform-origin: 69px 86.5px;
+  animation: overcastBlink 7s ease-in-out infinite;
+}
+.cloud-character-overcast .overcast-disc-breathe { animation: overcastDiscBreathe 8s ease-in-out infinite; }
+
+/* The .weather-companion * rule above already stops these; repeated here so
+   the static fallback travels with the art rather than depending on it. */
+@media (prefers-reduced-motion: reduce) {
+  .cloud-character-overcast .overcast-cloud,
+  .cloud-character-overcast .overcast-cloud-bob,
+  .cloud-character-overcast .overcast-cloud-back,
+  .cloud-character-overcast .overcast-eyes,
+  .cloud-character-overcast .overcast-disc-breathe { animation: none; }
+}

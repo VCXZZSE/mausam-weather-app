@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="68"
+    android:viewportHeight="68">
+    <!-- Coordinates mirror OvercastIcon.tsx one-for-one, so the native tile
+         and the React preset stay the same drawing. The web version's soft
+         glow is dropped here: a flat-alpha circle would draw a hard rim. -->
+
+    <!-- Sun behind the cloud: scenery only, dimmed and faceless -->
+    <path
+        android:fillColor="#F0B75F"
+        android:fillAlpha="0.62"
+        android:pathData="M47,28 m-12.5,0 a12.5,12.5 0 1 1 25,0 a12.5,12.5 0 1 1 -25,0" />
+
+    <!-- Second cloud, further back. One path, so the 50% fill composites
+         once instead of seaming where the lobes overlap. -->
+    <path
+        android:fillColor="#C9D5E6"
+        android:fillAlpha="0.5"
+        android:pathData="M16,23 m-7,0 a7,7 0 1 1 14,0 a7,7 0 1 1 -14,0
+                          M24,24.5 m-5.5,0 a5.5,5.5 0 1 1 11,0 a5.5,5.5 0 1 1 -11,0
+                          M13.75,24 h12.5 a3.75,3.75 0 0 1 3.75,3.75 a3.75,3.75 0 0 1 -3.75,3.75 h-12.5 a3.75,3.75 0 0 1 -3.75,-3.75 a3.75,3.75 0 0 1 3.75,-3.75 z" />
+
+    <!-- Foreground cloud: the character -->
+    <path
+        android:fillColor="#DCE5F0"
+        android:pathData="M24,38 m-13,0 a13,13 0 1 1 26,0 a13,13 0 1 1 -26,0
+                          M44,34 m-12.5,0 a12.5,12.5 0 1 1 25,0 a12.5,12.5 0 1 1 -25,0
+                          M54,41 m-8.5,0 a8.5,8.5 0 1 1 17,0 a8.5,8.5 0 1 1 -17,0
+                          M19,39 h30 a9,9 0 0 1 9,9 a9,9 0 0 1 -9,9 h-30 a9,9 0 0 1 -9,-9 a9,9 0 0 1 9,-9 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.28"
+        android:pathData="M22,30 m-8,0 a8,3.6 0 1 1 16,0 a8,3.6 0 1 1 -16,0" />
+
+    <!-- Face -->
+    <path
+        android:fillColor="#FCA5A5"
+        android:fillAlpha="0.45"
+        android:pathData="M21,47 m-3.4,0 a3.4,2.2 0 1 1 6.8,0 a3.4,2.2 0 1 1 -6.8,0
+                          M45,47 m-3.4,0 a3.4,2.2 0 1 1 6.8,0 a3.4,2.2 0 1 1 -6.8,0" />
+    <path
+        android:fillColor="#334155"
+        android:pathData="M28,42 m-2.2,0 a2.2,2.2 0 1 1 4.4,0 a2.2,2.2 0 1 1 -4.4,0
+                          M39,42 m-2.2,0 a2.2,2.2 0 1 1 4.4,0 a2.2,2.2 0 1 1 -4.4,0" />
+    <path
+        android:strokeColor="#334155"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M30,47.5 q3.5,3.6 7,0" />
+</vector>

@@ -457,7 +457,7 @@ function AppHeader({
 
 // ── Home Tab ───────────────────────────────────────────────────────────────────
 
-function HomeTab({
+export function HomeTab({
   profile,
   location,
   theme,
@@ -527,7 +527,39 @@ function HomeTab({
           ))
   const isRainy = weatherHeroVariant === "rainy"
   const isNight = weatherHeroVariant === "night"
-  const isOvercast = /overcast|cloudy|fog|mist|haze/i.test(`${current.conditionCode} ${current.condition}`)
+  // Fog, mist and haze stay in the overcast bucket — the sky reads as covered
+  // either way. Partly cloudy does not: the sun or moon is still the subject,
+  // so its "cloudy" is stripped before the test rather than excluded after it,
+  // which keeps a payload like "partly_cloudy Fog" on the fog side.
+  // Note: this matches the literal strings "haze"/"mist", so a provider that
+  // reports "Hazy" would not match here (nor in widgetBridge's resolver).
+  const isOvercast = /overcast|cloudy|fog|mist|haze/i.test(
+    `${current.conditionCode} ${current.condition}`.replace(
+      /partly[\s_-]*cloudy/gi,
+      "",
+    ),
+  )
+  // Palette for the overcast character, ported from OvercastIcon.tsx. The
+  // disc behind the cloud is background scenery: dimmed, and with no face.
+  const overcastArt = isNight
+    ? {
+        cloud: ["#cbd5e1", "#94a3b8"],
+        back: ["#b5c2d5", "#8393ab"],
+        disc: ["#e9effc", "#b1c1df"],
+        // 0.62 (the day value) leaves the moon darker than the cloud in
+        // front of it on the navy card; it needs to sit brighter to read.
+        discOpacity: 0.7,
+        ink: "#1e293b",
+        blush: "#e3a2b6",
+      }
+    : {
+        cloud: ["#f4f7fc", "#b8c6da"],
+        back: ["#dee6f2", "#aebbcf"],
+        disc: ["#ffe6b0", "#f0b75f"],
+        discOpacity: 0.62,
+        ink: "#334155",
+        blush: "#fca5a5",
+      }
 
   return (
     <div className="home-screen app-page">
@@ -702,9 +734,11 @@ function HomeTab({
               aria-label={t(
                 isRainy
                   ? "hero.ariaRain"
-                  : isNight
-                    ? "hero.ariaNight"
-                    : "hero.ariaSun",
+                  : isOvercast
+                    ? "hero.ariaOvercast"
+                    : isNight
+                      ? "hero.ariaNight"
+                      : "hero.ariaSun",
               )}
             >
               <svg
@@ -820,6 +854,98 @@ function HomeTab({
                       />
                     </g>
                   </>
+                ) : isOvercast ? (
+                  <g
+                    className="cloud-character cloud-character-overcast"
+                    data-overcast-phase={isNight ? "night" : "day"}
+                  >
+                    <defs>
+                      {/* User-space ramps so every lobe shares one gradient
+                          instead of each getting its own, which seams. */}
+                      <linearGradient
+                        id="overcastCloudGrad"
+                        gradientUnits="userSpaceOnUse"
+                        x1="0" y1="51.5" x2="0" y2="117.4"
+                      >
+                        <stop offset="0%" stopColor={overcastArt.cloud[0]} />
+                        <stop offset="100%" stopColor={overcastArt.cloud[1]} />
+                      </linearGradient>
+                      <linearGradient
+                        id="overcastBackGrad"
+                        gradientUnits="userSpaceOnUse"
+                        x1="0" y1="32.9" x2="0" y2="64.9"
+                      >
+                        <stop offset="0%" stopColor={overcastArt.back[0]} />
+                        <stop offset="100%" stopColor={overcastArt.back[1]} />
+                      </linearGradient>
+                      {/* Fades out rather than stopping flat, so no hard rim */}
+                      <radialGradient id="overcastGlowGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="52%" stopColor={overcastArt.disc[0]} stopOpacity=".4" />
+                        <stop offset="100%" stopColor={overcastArt.disc[0]} stopOpacity="0" />
+                      </radialGradient>
+                      <radialGradient id="overcastDiscGrad" cx="38%" cy="32%" r="72%">
+                        <stop offset="0%" stopColor={overcastArt.disc[0]} />
+                        <stop offset="100%" stopColor={overcastArt.disc[1]} />
+                      </radialGradient>
+                    </defs>
+                    <ellipse cx="70" cy="122" rx="42" ry="7" fill="#475569" opacity=".25" />
+
+                    {/* Sun by day, moon by night — dimmed scenery, no face.
+                        The cloud in front hides about two thirds of it. */}
+                    {/* Outer group holds the dimming as an attribute; the
+                        inner one breathes. A CSS opacity animation on the
+                        outer group would override the attribute and flash
+                        the disc to full brightness, so the two are split
+                        and their opacities multiply instead. */}
+                    <g className="overcast-disc" opacity={overcastArt.discOpacity}>
+                      <g className="overcast-disc-breathe">
+                        <circle cx="96.8" cy="57.6" r="32.9" fill="url(#overcastGlowGrad)" />
+                        <circle cx="96.8" cy="57.6" r="25.7" fill="url(#overcastDiscGrad)" />
+                        {isNight ? (
+                          <>
+                            <circle cx="104" cy="43.2" r="4.7" fill={overcastArt.disc[1]} opacity=".5" />
+                            <circle cx="89.6" cy="40.2" r="2.9" fill={overcastArt.disc[1]} opacity=".4" />
+                          </>
+                        ) : null}
+                      </g>
+                    </g>
+
+                    {/* Smaller, fainter cloud behind — slower drift, parallax */}
+                    <g className="overcast-cloud-back" opacity=".5">
+                      <g fill="url(#overcastBackGrad)">
+                        <circle cx="32.9" cy="47.4" r="14.4" />
+                        <circle cx="49.4" cy="50.4" r="11.3" />
+                        <rect x="20.6" y="49.4" width="41.2" height="15.4" rx="7.7" />
+                      </g>
+                    </g>
+
+                    {/* The character. Outer group drifts, inner group bobs,
+                        so the two run on independent periods. */}
+                    <g className="overcast-cloud">
+                      <g className="overcast-cloud-bob">
+                        <g fill="url(#overcastCloudGrad)">
+                          <circle cx="49.4" cy="78.2" r="26.8" />
+                          <circle cx="90.6" cy="70" r="25.7" />
+                          <circle cx="111.2" cy="84.4" r="17.5" />
+                          <rect x="20.6" y="80.3" width="98.8" height="37.1" rx="18.5" />
+                        </g>
+                        <ellipse cx="45.3" cy="61.8" rx="16.5" ry="7.4" fill="#ffffff" opacity=".28" />
+                        <ellipse cx="40" cy="99" rx="7.5" ry="5" fill={overcastArt.blush} opacity=".45" />
+                        <ellipse cx="96" cy="99" rx="7.5" ry="5" fill={overcastArt.blush} opacity=".45" />
+                        <g className="overcast-eyes" fill={overcastArt.ink}>
+                          <circle cx="54" cy="86.5" r="4.8" />
+                          <circle cx="84" cy="86.5" r="4.8" />
+                        </g>
+                        <path
+                          d="M59 98q10 11 20 0"
+                          fill="none"
+                          stroke={overcastArt.ink}
+                          strokeWidth="3.4"
+                          strokeLinecap="round"
+                        />
+                      </g>
+                    </g>
+                  </g>
                 ) : isNight ? (
                   <>
                     <ellipse
@@ -921,33 +1047,6 @@ function HomeTab({
                       />
                     </g>
                   </>
-                ) : isOvercast ? (
-                  <g className="cloud-character cloud-character-overcast">
-                    <defs>
-                      <linearGradient id="overcastCloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#cbd5e1" />
-                        <stop offset="100%" stopColor="#94a3b8" />
-                      </linearGradient>
-                    </defs>
-                    <ellipse cx="70" cy="122" rx="42" ry="7" fill="#475569" opacity=".25" />
-                    <path
-                      d="M25 72q-4-14 10-20 4-22 28-16 14-20 34-4 22-9 32 11 19 1 19 19 12 4 9 18-2 11-17 11H44Q25 90 25 72Z"
-                      fill="url(#overcastCloudGrad)"
-                      stroke="#475569"
-                      strokeWidth="2.2"
-                    />
-                    <circle cx="62" cy="68" r="2.5" fill="#334155" />
-                    <circle cx="84" cy="68" r="2.5" fill="#334155" />
-                    <path
-                      d="M68 76q5 4 10 0"
-                      fill="none"
-                      stroke="#334155"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="53" cy="74" r="4.5" fill="#fca5a5" opacity=".5" />
-                    <circle cx="93" cy="74" r="4.5" fill="#fca5a5" opacity=".5" />
-                  </g>
                 ) : (
                   <image
                     className="sun-buddy-image"

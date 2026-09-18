@@ -2,13 +2,21 @@ import { registerPlugin, Capacitor } from '@capacitor/core';
 import type { DashboardWeatherData } from '@/services/weatherData';
 import type { ConditionKey } from './minimal/WeatherIcon';
 
+/** Gradient widget presets the app can render, natively or in React. */
+export type WidgetPreset =
+  | 'sunny'
+  | 'thunderstorm'
+  | 'moon'
+  | 'overcast'
+  | 'overcast-night';
+
 export interface WidgetPayload {
   location: string;
   temperature: string;
   condition: string;
   hi: string;
   lo: string;
-  preset: 'sunny' | 'thunderstorm' | 'moon';
+  preset: WidgetPreset;
   mode: 'dark' | 'light';
   feelsLike: string;
   conditionKey: ConditionKey;
@@ -62,7 +70,7 @@ export function resolveConditionKey(conditionText = '', conditionCode = ''): Con
 /**
  * Resolves which 2x2 gradient widget preset best fits current conditions.
  */
-export function resolveWidgetPreset(weather: DashboardWeatherData): 'sunny' | 'thunderstorm' | 'moon' {
+export function resolveWidgetPreset(weather: DashboardWeatherData): WidgetPreset {
   const current = weather.current;
   const key = resolveConditionKey(current.condition, current.conditionCode);
 
@@ -91,6 +99,16 @@ export function resolveWidgetPreset(weather: DashboardWeatherData): 'sunny' | 't
     const hour = new Date().getHours() + new Date().getMinutes() / 60;
     return hour >= 18 || hour < 5.5;
   })();
+
+  // A fully covered sky gets the overcast character in either daylight state:
+  // 'cloudy' (overcast plus the normalizer's generic fallback) and 'foggy'
+  // (fog / mist / haze / smoke), matching the hero card's bucket in App.tsx.
+  // 'partly-cloudy' is deliberately excluded and still falls through to
+  // sunny / moon. Rain outranks fog in resolveConditionKey above, so a
+  // payload like "Foggy Rain" stays on the thunderstorm preset.
+  if (key === 'cloudy' || key === 'foggy') {
+    return isNightTime ? 'overcast-night' : 'overcast';
+  }
 
   if (isNightTime) {
     return 'moon';
