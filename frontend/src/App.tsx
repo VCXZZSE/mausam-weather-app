@@ -616,7 +616,7 @@ export function HomeTab({
         onClick={onOpenPersonalized}
         aria-label={t("home.briefingAria")}
       >
-        <div className="insight-spark" aria-hidden="true">✦</div>
+        <div className="insight-spark"><Icon name="spark" /></div>
         <div className="home-insight-body">
           <div className="home-insight-title">
             {profile.name ? (
@@ -2379,7 +2379,7 @@ function SunArcCard({
             onClick={() => setScrubT(null)}
             aria-label={t("forecast.resetNow")}
           >
-            ↺ {t("forecast.resetNow")}
+            <Icon name="reset" /> {t("forecast.resetNow")}
           </button>
         </div>
       )}
@@ -2654,7 +2654,7 @@ function SunArcCard({
           </div>
           <div className="timeline-item timeline-center">
             <span className="timeline-noon-pill">
-              ☀️ {t("forecast.solarNoon", { time: astronomy.solarNoon })}
+              <Icon name="sun" /> {t("forecast.solarNoon", { time: astronomy.solarNoon })}
             </span>
           </div>
           <div className="timeline-item timeline-right">
@@ -4736,7 +4736,9 @@ function SetupChip({
       type="button"
       disabled={disabled}
     >
-      <span className="chip-mark">{selected ? "✓" : "+"}</span>
+      <span className="chip-mark">
+              <Icon name={selected ? "tick" : "plus"} />
+            </span>
       {label}
     </button>
   )
@@ -5353,7 +5355,7 @@ function Setup({
       <div className="setup-noise" />
       <div className="setup-topbar">
         <div className="brand-mark">
-          <span>✦</span> MAUSAM
+          <Icon name="spark" className="wordmark-spark" /> MAUSAM
         </div>
         {step !== "welcome" && (
           <div className="setup-progress">
@@ -5362,7 +5364,7 @@ function Setup({
         )}
         {step !== "welcome" && (
           <button className="setup-back" onClick={back} type="button">
-            ←
+            <Icon name="arrow-left" />
           </button>
         )}
       </div>
@@ -5378,7 +5380,7 @@ function Setup({
               <span>{t("setup.menuMausam")}</span>
             </div>
             <div className="welcome-brand">
-              <span>✦</span> MAUSAM
+              <Icon name="spark" className="wordmark-spark" /> MAUSAM
             </div>
             <div className="setup-eyebrow">{t("setup.welcomeEyebrow")}</div>
             <h1>
@@ -5403,7 +5405,7 @@ function Setup({
             </div>
             <button className="welcome-start" onClick={next} type="button">
               <span>{t("setup.start")}</span>
-              <b>→</b>
+              <Icon name="arrow-right" />
             </button>
             <div className="setup-footnote">{t("setup.footnote")}</div>
           </section>
@@ -5436,7 +5438,7 @@ function Setup({
               <div className="setup-error">{t("setup.nameError")}</div>
             )}
             <button className="setup-primary" onClick={next} type="button">
-              {t("setup.continue")} <span>→</span>
+              {t("setup.continue")} <Icon name="arrow-right" />
             </button>
           </section>
         )}
@@ -5474,7 +5476,7 @@ function Setup({
               onClick={() => setStep("sensitivities")}
               type="button"
             >
-              {t("setup.saveBaseline")} <span>→</span>
+              {t("setup.saveBaseline")} <Icon name="arrow-right" />
             </button>
           </section>
         )}
@@ -5516,7 +5518,7 @@ function Setup({
               ))}
             </div>
             <button className="setup-primary" onClick={next} type="button">
-              {t("setup.tuneAlerts")} <span>→</span>
+              {t("setup.tuneAlerts")} <Icon name="arrow-right" />
             </button>
           </section>
         )}
@@ -5580,7 +5582,7 @@ function Setup({
               }
               type="button"
             >
-              {t("setup.continue")} <span>→</span>
+              {t("setup.continue")} <Icon name="arrow-right" />
             </button>
           </section>
         )}
@@ -5698,7 +5700,7 @@ function PersonalizedWeatherPage({
       <article className="personalized-overview personalized-glass">
         <div className="personalized-card-heading">
           <span className="personalized-spark" aria-hidden="true">
-            ✦
+            <Icon name="spark" />
           </span>
           <div>
             <span>{t("briefing.glance")}</span>
@@ -5727,7 +5729,7 @@ function PersonalizedWeatherPage({
           </div>
         </div>
         <div className="personalized-basis" data-i18n-ignore>
-          <span>✦</span>{" "}
+          <Icon name="spark" className="wordmark-spark" />{" "}
           {t("briefing.basis", { basis: td(personalized.basis) })}
         </div>
       </article>
@@ -5906,7 +5908,7 @@ function Ready({
       <div className="setup-noise" />
       <div className="setup-topbar">
         <div className="brand-mark">
-          <span>✦</span> MAUSAM
+          <Icon name="spark" className="wordmark-spark" /> MAUSAM
         </div>
         {onBack && (
           <button
@@ -5915,13 +5917,13 @@ function Ready({
             type="button"
             aria-label={t("location.back")}
           >
-            ←
+            <Icon name="arrow-left" />
           </button>
         )}
       </div>
       <div className="setup-content">
         <section className="setup-panel setup-login setup-animate">
-          <div className="login-symbol">✦</div>
+          <div className="login-symbol"><Icon name="spark" /></div>
           <div className="setup-eyebrow">{t("ready.eyebrow")}</div>
           <h2>
             {t("ready.headingLine1")}
@@ -5952,7 +5954,7 @@ function Ready({
             />
             <span />
             <strong>
-              {t("ready.slide")} <b>→</b>
+              {t("ready.slide")} <Icon name="arrow-right" />
             </strong>
             <i className="entry-handle" aria-hidden="true">
               <svg
@@ -6150,7 +6152,7 @@ export function LocationSetup({
       <div className="setup-noise" />
       <div className="setup-topbar">
         <div className="brand-mark">
-          <span>✦</span> MAUSAM
+          <Icon name="spark" className="wordmark-spark" /> MAUSAM
         </div>
         {onBack && (
           <button
@@ -6159,7 +6161,7 @@ export function LocationSetup({
             type="button"
             aria-label={t("location.back")}
           >
-            ←
+            <Icon name="arrow-left" />
           </button>
         )}
       </div>
@@ -6180,7 +6182,7 @@ export function LocationSetup({
             disabled={locating}
           >
             {locating ? t("location.finding") : t("location.useCurrent")}{" "}
-            <span>→</span>
+            <Icon name="arrow-right" />
           </button>
 
           {errorKey && <div className="setup-error">{t(errorKey)}</div>}
@@ -6251,7 +6253,7 @@ export function LocationSetup({
                   disabled={locating}
                   onClick={() => chooseResult(result)}
                 >
-                  <span className="location-icon">◉</span>
+                  <span className="location-icon"><Icon name="target" /></span>
                   <div>
                     <strong>
                       {result.name}
@@ -6561,7 +6563,7 @@ function MausamApp() {
         <div className="setup-eyebrow">{t("gate.liveWeather", { place: userLocation.locality })}</div>
         <h2>{t(failed ? "gate.errorTitle" : "gate.loadingTitle")}</h2>
         <p className="setup-copy" role="status">{t(failed ? "gate.errorCopy" : "gate.loadingCopy")}</p>
-        {failed && <button type="button" className="setup-primary" onClick={() => setWeatherRetry(value => value + 1)}>{t("gate.tryAgain")} <span>↻</span></button>}
+        {failed && <button type="button" className="setup-primary" onClick={() => setWeatherRetry(value => value + 1)}>{t("gate.tryAgain")} <Icon name="retry" /></button>}
         <button type="button" className="location-manual-toggle" onClick={() => { clearStoredLocation(); setUserLocation(null); setWeather(null); setWeatherLocationKey(null) }}>{t("gate.changeLocation")}</button>
       </section></div>
     </main>

@@ -10,6 +10,7 @@ import {
 } from "./debug"
 import { useTranslation } from "./LanguageContext"
 import { LANGUAGES } from "./bundles/coreTranslations"
+import { Icon } from "@/components/icons/Icon"
 
 // Inlined rather than imported from a .css file so the styles are dropped
 // along with the component in production: a stylesheet import is bundled
@@ -122,7 +123,7 @@ export function I18nDebugOverlay() {
             setEnabled(false)
           }}
         >
-          ✕
+          <Icon name="close" strokeWidth={2} />
         </button>
       </header>
 

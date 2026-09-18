@@ -19,13 +19,17 @@
 // for one of our names and never reach for the library themselves. Named
 // imports keep the bundle to the glyphs actually listed in LUCIDE_ICONS.
 import {
+  ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   Ban,
   BatteryCharging,
   Car,
   Carrot,
+  Check,
   ChevronDown,
   CircleCheck,
+  Crosshair,
   Droplet,
   Eye,
   Fish,
@@ -39,6 +43,9 @@ import {
   Lightbulb,
   PartyPopper,
   Plane,
+  Plus,
+  RotateCcw,
+  RotateCw,
   Route,
   Shirt,
   Siren,
@@ -177,6 +184,14 @@ export type LucideIconName =
   // interface affordances
   | "chevron-down"
   | "external"
+  // navigation and status affordances
+  | "arrow-right"
+  | "arrow-left"
+  | "reset"
+  | "retry"
+  | "tick"
+  | "plus"
+  | "target"
   // advisory tones -- the leading mark on a piece of advice
   | "tip"
   | "warning"
@@ -490,6 +505,13 @@ export const LUCIDE_ICONS: Record<LucideIconName, LucideIcon> = {
   // packing item, the other the tone of a piece of hydration advice.
   hydration: Droplet,
   harvest: Carrot,
+  "arrow-right": ArrowRight,
+  "arrow-left": ArrowLeft,
+  reset: RotateCcw,
+  retry: RotateCw,
+  tick: Check,
+  plus: Plus,
+  target: Crosshair,
 }
 
 export function isLucideIcon(name: IconName): name is LucideIconName {

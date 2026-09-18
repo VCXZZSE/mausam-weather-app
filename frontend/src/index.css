@@ -2447,6 +2447,18 @@ input:-webkit-autofill {
 }
 .icon-asset > svg { width: 1em; height: 1em; display: block; }
 
+/* Glyphs that replaced inline text characters (✦ → ← ↺ ✓ ◉ ✕). They sized
+   themselves from the surrounding font-size as text, so they keep doing that
+   here and inherit the same colour. */
+.mausam-app svg[data-icon] {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex: 0 0 auto;
+}
+.wordmark-spark { margin-right: 0.3em; }
+
 /* The mark leading a line of advice, where an emoji used to sit. Inherits the
    advice text's own colour, so it follows each card's theme. */
 .advice-tone {

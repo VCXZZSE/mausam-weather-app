@@ -1,5 +1,7 @@
 import React from 'react'
 import type { ConditionKey } from './WeatherIcon'
+import { Icon } from "@/components/icons/Icon"
+import type { WeatherIconName } from "@/components/icons/iconMap"
 
 export interface MinimalWeatherData {
   temp: number
@@ -83,10 +85,10 @@ export function WidgetA({ data, dark }: Props) {
         <span style={T(hi, 30, 700)}>{data.feelsLike}°</span>
       </div>
 
-      {/* ⛅ rain  next */}
+      {/* condition  rain  next */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
         <span style={{ fontSize: 26, lineHeight: 1 }}>
-          {conditionEmoji(data.conditionKey)}
+          <Icon name={conditionIcon(data.conditionKey)} />
         </span>
         <span style={T(hi, 28, 700)}>{data.condition}</span>
         <span style={T(lo, 28, 400)}>next</span>
@@ -100,11 +102,20 @@ export function WidgetA({ data, dark }: Props) {
   )
 }
 
-function conditionEmoji(key: string) {
-  const map: Record<string, string> = {
-    clear: '☀️', 'partly-cloudy': '⛅', cloudy: '☁️', foggy: '🌫️',
-    drizzle: '🌦️', rain: '🌧️', 'heavy-rain': '🌧️', snow: '🌨️',
-    thunderstorm: '⛈️', unknown: '🌡️',
+// The widget's own condition keys, which differ from the dashboard's
+// conditionCode vocabulary, so this map is separate from the one in iconMap.
+function conditionIcon(key: string): WeatherIconName {
+  const map: Record<string, WeatherIconName> = {
+    clear: 'clear-day',
+    'partly-cloudy': 'partly-cloudy-day',
+    cloudy: 'overcast',
+    foggy: 'fog-day',
+    drizzle: 'drizzle',
+    rain: 'rain-cloud',
+    'heavy-rain': 'rain-cloud',
+    snow: 'snow',
+    thunderstorm: 'thunderstorms-rain',
+    unknown: 'thermometer',
   }
-  return map[key] ?? '🌡️'
+  return map[key] ?? 'thermometer'
 }

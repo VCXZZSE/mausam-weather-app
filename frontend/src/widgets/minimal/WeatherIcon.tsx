@@ -119,7 +119,11 @@ export function WeatherIcon({ condition, size = 48, color = '#FFD60A', secondary
           <circle cx={s * 0.36} cy={s * 0.33} r={s * 0.15} fill={secondaryColor} />
           <circle cx={s * 0.60} cy={s * 0.33} r={s * 0.13} fill={secondaryColor} />
           {[[0.32,0.64],[0.50,0.70],[0.68,0.64]].map(([x,y],i) => (
-            <text key={i} x={s*x} y={s*y} textAnchor="middle" fontSize={s*0.16} fill="#B0D4F1">❄</text>
+            <g key={i} stroke="#B0D4F1" strokeWidth={s*0.018} strokeLinecap="round">
+              <path d={`M${s*x} ${s*(y-0.055)} V${s*(y+0.055)}`} />
+              <path d={`M${s*(x-0.048)} ${s*(y-0.027)} L${s*(x+0.048)} ${s*(y+0.027)}`} />
+              <path d={`M${s*(x-0.048)} ${s*(y+0.027)} L${s*(x+0.048)} ${s*(y-0.027)}`} />
+            </g>
           ))}
         </svg>
       )

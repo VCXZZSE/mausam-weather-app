@@ -74,7 +74,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
       <header className="sidebar-header"><div className="sidebar-wordmark"><MausamLogo />{t("app.name")}</div><button className="sidebar-close" type="button" aria-label={t("sidebar.close")} onClick={onClose}><Icon name="close" /></button></header>
       <div className="sidebar-scroll">
         <section className="sidebar-identity">
-          <div className="sidebar-avatar-wrap"><Avatar profile={profile} /><span className="sidebar-avatar-spark" aria-hidden="true">✦</span></div>
+          <div className="sidebar-avatar-wrap"><Avatar profile={profile} /><span className="sidebar-avatar-spark"><Icon name="spark" /></span></div>
           <p className="sidebar-eyebrow">{t("sidebar.eyebrow")}</p>
           <h2 id="sidebar-title" data-i18n-ignore>{profile.name}</h2>
           <p className="sidebar-subtitle">{t("sidebar.subtitle")}</p>
@@ -125,7 +125,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
           <button className="sidebar-action" type="button" onClick={onFAQ}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="help" /></span><span><strong>{t("sidebar.faq")}</strong><small>{t("sidebar.faqHint")}</small></span><Icon name="arrow" /></button>
         </nav>
       </div>
-      <footer className="sidebar-footer"><button type="button" className="sidebar-logout" onClick={onLogout}><Icon name="logout" /><span>{t("sidebar.logout")}</span><Icon name="arrow" /></button><p>{t("sidebar.logoutNote")}</p><div className="sidebar-signoff"><span aria-hidden="true">✦</span> {t("sidebar.signoff")}</div></footer>
+      <footer className="sidebar-footer"><button type="button" className="sidebar-logout" onClick={onLogout}><Icon name="logout" /><span>{t("sidebar.logout")}</span><Icon name="arrow" /></button><p>{t("sidebar.logoutNote")}</p><div className="sidebar-signoff"><Icon name="spark" /> {t("sidebar.signoff")}</div></footer>
     </div>
   </dialog>, document.body)
 }
