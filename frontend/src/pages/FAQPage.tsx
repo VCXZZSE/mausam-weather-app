@@ -9,6 +9,7 @@ import {
 } from "react"
 import faqSource from "../../../Mausam — Frequently Asked Questions.md?raw"
 import { blocksToPlainText, parseMarkdown } from "@/services/markdownService"
+import { Icon } from "@/components/icons/Icon"
 import {
   BackChevron,
   Blocks,
@@ -38,30 +39,6 @@ const TOAST_MS = 2000
 const CHECK_MS = 1400
 
 
-
-function Icon({ name }: { name: "copy" | "check" | "link" | "search" | "close" }) {
-  const paths = {
-    copy: "M9 9V5.5A1.5 1.5 0 0 1 10.5 4h8A1.5 1.5 0 0 1 20 5.5v8a1.5 1.5 0 0 1-1.5 1.5H15M5.5 9h8A1.5 1.5 0 0 1 15 10.5v8A1.5 1.5 0 0 1 13.5 20h-8A1.5 1.5 0 0 1 4 18.5v-8A1.5 1.5 0 0 1 5.5 9Z",
-    check: "m5 13 4.5 4.5L19 7",
-    link: "M10 13.5a3.5 3.5 0 0 0 5 0l3-3a3.54 3.54 0 0 0-5-5l-1.2 1.2M14 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.54 3.54 0 0 0 5 5l1.2-1.2",
-    search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm9 2-3.6-3.6",
-    close: "m6 6 12 12M6 18 18 6",
-    help: "M9.8 9.7A2.3 2.3 0 0 1 12 8.1c1.3 0 2.2.8 2.2 1.9 0 1.8-2.2 1.7-2.2 3.4M12 16.6h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
-  }
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={paths[name]} />
-    </svg>
-  )
-}
 
 /**
  * Marks every case-insensitive occurrence of `needle` in `text`, keeping the
@@ -320,7 +297,7 @@ export function FAQPage({
             onClick={() => setQuery("")}
             aria-label="Clear search"
           >
-            <Icon name="close" />
+            <Icon name="close" strokeWidth={2} />
           </button>
         )}
       </div>

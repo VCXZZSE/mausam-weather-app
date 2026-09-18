@@ -3,6 +3,8 @@ import { OfficialAdvisories } from "@/components/advisories/OfficialAdvisories"
 import { ComfortIndicator, comfortTone } from "@/components/common/ComfortIndicator"
 import { syncWeatherToWidget } from "@/widgets/widgetBridge"
 import { PullToRefresh } from "@/components/common/PullToRefresh"
+import { Icon } from "@/components/icons/Icon"
+import type { PersonalizedIcon } from "@/components/icons/iconMap"
 import {
   useState,
   useEffect,
@@ -3607,7 +3609,7 @@ export function calculateAge(dobStr?: string): number {
   return Math.max(13, Math.min(100, age))
 }
 type PersonalizationVariant = "skin-sun" | "uv-heat" | "uv-sun" | "air-quality" | "cold" | "general"
-export type PersonalizedIcon = "sun" | "outdoor" | "comfort" | "shield" | "cold" | "temperature" | "evening" | "air" | "indoor" | "rain" | "wind"
+export type { PersonalizedIcon }
 export type PersonalizedTone = "blue" | "amber" | "green" | "violet" | "rose"
 export type PersonalizedTile = {
   icon: PersonalizedIcon
@@ -5528,81 +5530,6 @@ function Setup({
 
 // ── Personalised Weather ──────────────────────────────────────────────────────
 
-function PersonalizedIconGraphic({ name }: { name: PersonalizedIcon }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {name === "sun" && (
-        <>
-          <circle cx="12" cy="12" r="3.5" />
-          <path d="M12 2.5v2M12 19.5v2M4.7 4.7l1.4 1.4M17.9 17.9l1.4 1.4M2.5 12h2M19.5 12h2M4.7 19.3l1.4-1.4M17.9 6.1l1.4-1.4" />
-        </>
-      )}
-      {name === "outdoor" && (
-        <>
-          <path d="M3 18h18M5 18l4-7 3 4 2-3 5 6" />
-          <path d="M16 5h5v5M21 5l-6 6" />
-        </>
-      )}
-      {name === "comfort" && (
-        <>
-          <circle cx="12" cy="12" r="8.5" />
-          <path d="m8.5 12 2.2 2.2 4.8-5" />
-        </>
-      )}
-      {name === "shield" && (
-        <>
-          <path d="M12 3 5.5 5.7v5.2c0 4.2 2.6 7.8 6.5 10.1 3.9-2.3 6.5-5.9 6.5-10.1V5.7Z" />
-          <path d="M9.2 12.2 11 14l3.9-4" />
-        </>
-      )}
-      {name === "cold" && (
-        <>
-          <path d="M12 2.5v19M4.6 6.8l14.8 10.4M19.4 6.8 4.6 17.2M8 4.8l4 2.3 4-2.3M8 19.2l4-2.3 4 2.3" />
-        </>
-      )}
-      {name === "temperature" && (
-        <>
-          <path d="M14.5 14.2V5.5a3 3 0 0 0-6 0v8.7a5 5 0 1 0 6 0Z" />
-          <path d="M11.5 7v9" />
-        </>
-      )}
-      {name === "evening" && (
-        <path d="M20 15.3A8.5 8.5 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z" />
-      )}
-      {name === "air" && (
-        <>
-          <path d="M3 8h10.5a2.5 2.5 0 1 0-2.3-3.5M3 12h16a2.5 2.5 0 1 1-2.3 3.5M3 16h7" />
-        </>
-      )}
-      {name === "indoor" && (
-        <>
-          <path d="m3 11 9-7 9 7" />
-          <path d="M5.5 9.5V20h13V9.5M10 20v-6h4v6" />
-        </>
-      )}
-      {name === "rain" && (
-        <>
-          <path d="M6.5 15.5h10a4 4 0 0 0 .4-8A5.5 5.5 0 0 0 6.6 9.2a3.2 3.2 0 0 0-.1 6.3Z" />
-          <path d="m8 18-1 2M12.5 18l-1 2M17 18l-1 2" />
-        </>
-      )}
-      {name === "wind" && (
-        <>
-          <path d="M3 8h11a2.5 2.5 0 1 0-2.3-3.5M3 12h17M3 16h11a2.5 2.5 0 1 1-2.3 3.5" />
-        </>
-      )}
-    </svg>
-  )
-}
-
 function PersonalizedWeatherPage({
   profile,
   location,
@@ -5726,7 +5653,7 @@ function PersonalizedWeatherPage({
         </div>
         <div className="personalized-window">
           <span className="personalized-window-icon">
-            <PersonalizedIconGraphic name="outdoor" />
+            <Icon name="outdoor" />
           </span>
           <div>
             <small>{td(personalized.windowLabel)}</small>
@@ -5759,7 +5686,7 @@ function PersonalizedWeatherPage({
               key={tile.title}
             >
               <span className="personalized-tile-icon">
-                <PersonalizedIconGraphic name={tile.icon} />
+                <Icon name={tile.icon} />
               </span>
               <span className="personalized-tile-title">{td(tile.title)}</span>
               <strong>{td(tile.value)}</strong>
@@ -5784,7 +5711,7 @@ function PersonalizedWeatherPage({
             <article key={recommendation.title}>
               <span className="personalized-action-number">0{index + 1}</span>
               <span className="personalized-action-icon">
-                <PersonalizedIconGraphic name={recommendation.icon} />
+                <Icon name={recommendation.icon} />
               </span>
               <div>
                 <strong>{td(recommendation.title)}</strong>

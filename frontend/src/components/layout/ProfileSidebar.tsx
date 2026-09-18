@@ -5,20 +5,8 @@ import { getPersonaById } from "@/App"
 import type { UserLocation } from "@/services/locationService"
 import { useTranslation } from "@/i18n"
 import { LanguageSelector } from "@/components/language/LanguageSelector"
+import { Icon } from "@/components/icons/Icon"
 import "./ProfileSidebar.css"
-
-function Icon({ name }: { name: "close" | "pin" | "spark" | "logout" | "arrow" | "shield" | "help" }) {
-  const paths = {
-    close: "m6 6 12 12M6 18 18 6",
-    pin: "M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0ZM15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
-    spark: "m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z",
-    logout: "M9 4H5v16h4m5-12 4 4-4 4m-5-4h12",
-    arrow: "m9 5 7 7-7 7",
-    shield: "M12 3 5 5.6v5.2c0 4.4 3 8.3 7 9.2 4-.9 7-4.8 7-9.2V5.6L12 3Zm-2.2 8.4h4.4v4h-4.4v-4Zm.8 0V9.8a1.4 1.4 0 0 1 2.8 0v1.6",
-    help: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-2.2-11.3A2.3 2.3 0 0 1 12 8.1c1.3 0 2.2.8 2.2 1.9 0 1.8-2.2 1.7-2.2 3.4M12 16.6h.01",
-  }
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
-}
 
 function MausamLogo() {
   return <span className="app-weather-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round"><circle className="app-weather-sun" cx="29" cy="18" r="9" fill="#ffd45a" stroke="none" /><path d="M29 4v3M43 18h-3M39 8l-2 2M19 8l2 2" /><path d="M10 35h22c5 0 7-3 7-7s-3-7-7-7c-1-6-10-8-14-2-5-1-9 2-9 7-4 0-6 2-6 5s3 4 7 4Z" className="app-weather-cloud" fill="#ffffff" /></svg></span>
@@ -133,7 +121,7 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
         <nav className="sidebar-actions" aria-label={t("sidebar.settingsAria")}>
           <button className="sidebar-action" type="button" onClick={onChangeLocation}><span className="sidebar-action-icon"><Icon name="pin" /></span><span><strong>{t("sidebar.changeLocation")}</strong><small data-i18n-ignore>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</small></span><Icon name="arrow" /></button>
           <button className="sidebar-action" type="button" onClick={onBriefing}><span className="sidebar-action-icon sidebar-icon-violet"><Icon name="spark" /></span><span><strong>{t("sidebar.briefing")}</strong><small>{t("sidebar.briefingHint")}</small></span><Icon name="arrow" /></button>
-          <button className="sidebar-action" type="button" onClick={onPrivacy}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="shield" /></span><span><strong>{t("sidebar.privacy")}</strong><small>{t("sidebar.privacyHint")}</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onPrivacy}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="shield-lock" /></span><span><strong>{t("sidebar.privacy")}</strong><small>{t("sidebar.privacyHint")}</small></span><Icon name="arrow" /></button>
           <button className="sidebar-action" type="button" onClick={onFAQ}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="help" /></span><span><strong>{t("sidebar.faq")}</strong><small>{t("sidebar.faqHint")}</small></span><Icon name="arrow" /></button>
         </nav>
       </div>
