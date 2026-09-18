@@ -69,10 +69,10 @@ export function computeEvent(input: EventInput): DashboardWeatherData["event"] {
 
   const advice =
     avgRainChance >= 60
-      ? "💡 High rain chance this weekend — plan indoor alternatives or flexible timing."
+      ? "High rain chance this weekend — plan indoor alternatives or flexible timing."
       : avgRainChance >= 30
-        ? "💡 Some rain possible — keep an eye on the forecast closer to the date."
-        : "💡 Favorable weather expected — good window for outdoor plans."
+        ? "Some rain possible — keep an eye on the forecast closer to the date."
+        : "Favorable weather expected — good window for outdoor plans."
 
   return {
     sectionLabel: "Event Planner",
@@ -85,5 +85,7 @@ export function computeEvent(input: EventInput): DashboardWeatherData["event"] {
     rainLabel,
     rainChance: avgRainChance,
     advice,
+    // All three branches are guidance, not a warning: the mark stays a tip.
+    adviceTone: "tip",
   }
 }

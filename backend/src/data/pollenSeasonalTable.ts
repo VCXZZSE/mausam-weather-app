@@ -77,10 +77,11 @@ export function computePollen(month: number): DashboardWeatherData["pollen"] {
     icon: "pollen",
     advice:
       overall === "High"
-        ? "🤧 Keep windows closed during peak hours · Antihistamine recommended if allergy-prone"
+        ? "Keep windows closed during peak hours · Antihistamine recommended if allergy-prone"
         : overall === "Moderate"
-          ? "🌿 Sensitive individuals should monitor symptoms outdoors"
-          : "🌿 Pollen levels are low — minimal precaution needed",
+          ? "Sensitive individuals should monitor symptoms outdoors"
+          : "Pollen levels are low — minimal precaution needed",
+    adviceTone: overall === "High" ? "mask" : "pollen",
     items,
   }
 }

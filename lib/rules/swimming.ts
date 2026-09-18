@@ -21,25 +21,33 @@ export function computeSwimming(
 ): DashboardWeatherData["swimming"] {
   let badge: string
   let advice: string
+  // Names the icon that leads the advice. Kept beside the text rather than
+  // glued to the front of it, so the string stays translatable on its own.
+  let adviceTone: string
 
   if (UNSAFE_CONDITIONS.has(input.conditionCode)) {
     badge = "UNSAFE"
-    advice = "🚫 Swimming not advised due to thunderstorm risk"
+    advice = "Swimming not advised due to thunderstorm risk"
+    adviceTone = "blocked"
   } else if (
     POOR_CONDITIONS.has(input.conditionCode) &&
     input.rainChanceToday >= 60
   ) {
     badge = "ROUGH"
-    advice = "🚫 Swimming not advised due to heavy rain"
+    advice = "Swimming not advised due to heavy rain"
+    adviceTone = "blocked"
   } else if (input.windSpeed >= 35) {
     badge = "CAUTION"
-    advice = "⚠️ Rough conditions expected due to strong wind"
+    advice = "Rough conditions expected due to strong wind"
+    adviceTone = "warning"
   } else if (input.uvIndex >= 8) {
     badge = "CAUTION"
-    advice = "🧴 High UV — use waterproof sunscreen and limit exposure time"
+    advice = "High UV — use waterproof sunscreen and limit exposure time"
+    adviceTone = "sunscreen"
   } else {
     badge = "FAVORABLE"
-    advice = "✅ Good conditions for swimming"
+    advice = "Good conditions for swimming"
+    adviceTone = "success"
   }
 
   // Approximation only: water temperature is not independently measured.
@@ -56,5 +64,6 @@ export function computeSwimming(
     waterTemperature,
     peakTime: input.peakTime,
     advice,
+    adviceTone,
   }
 }

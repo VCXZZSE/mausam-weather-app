@@ -2447,6 +2447,17 @@ input:-webkit-autofill {
 }
 .icon-asset > svg { width: 1em; height: 1em; display: block; }
 
+/* The mark leading a line of advice, where an emoji used to sit. Inherits the
+   advice text's own colour, so it follows each card's theme. */
+.advice-tone {
+  width: 1.05em;
+  height: 1.05em;
+  display: inline-block;
+  vertical-align: -0.16em;
+  margin-right: 0.45em;
+  flex: 0 0 auto;
+}
+
 /* ── Final dashboard theme and reference header alignment ───────────────── */
 /* The theme class is on .mausam-app itself, so these compound selectors must
    stay outside the phone-only rules above. */

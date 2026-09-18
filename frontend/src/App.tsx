@@ -220,6 +220,24 @@ function IconByName({ name, label }: { name: string; label?: string }) {
   return <Icon name={resolved} label={label} />
 }
 
+/**
+ * A line of advice with the icon that leads it. The icon used to be an emoji
+ * glued to the front of the sentence, which meant every hi/bn translation had
+ * to carry its own copy and the i18n layer had to strip it back off before it
+ * could match a key. `tone` is optional, so a payload from before the change
+ * still renders — just without the mark.
+ */
+function AdviceLine({ text, tone }: { text: string; tone?: string }) {
+  const icon = tone ? resolveIconName(tone) : null
+  if (!icon) return <>{text}</>
+  return (
+    <>
+      <Icon name={icon} className="advice-tone" />
+      {text}
+    </>
+  )
+}
+
 function WeatherIcon({
   conditionCode,
   icon,
@@ -1739,7 +1757,10 @@ function HealthTab({
                 lineHeight: 1.55,
               }}
             >
-              {td(weather.airQuality.advice)}
+              <AdviceLine
+                text={td(weather.airQuality.advice)}
+                tone={weather.airQuality.adviceTone}
+              />
             </div>
             {weather.airQuality.stationName && (
               <div
@@ -1905,7 +1926,7 @@ function HealthTab({
             lineHeight: 1.6,
           }}
         >
-          {td(weather.uv.advice)}
+          <AdviceLine text={td(weather.uv.advice)} tone={weather.uv.adviceTone} />
         </div>
       </Card>
 
@@ -1969,7 +1990,10 @@ function HealthTab({
             lineHeight: 1.55,
           }}
         >
-          {td(weather.pollen.advice)}
+          <AdviceLine
+            text={td(weather.pollen.advice)}
+            tone={weather.pollen.adviceTone}
+          />
         </div>
       </Card>
 
@@ -2057,7 +2081,7 @@ function HealthTab({
             lineHeight: 1.6,
           }}
         >
-          {td(weather.current.hydrationAdvice)}
+          <AdviceLine text={td(weather.current.hydrationAdvice)} tone="hydration" />
         </div>
       </Card>
     </div>
@@ -3089,7 +3113,10 @@ function ForecastTab({
             lineHeight: 1.55,
           }}
         >
-          {td(weather.comfort.advice)}
+          <AdviceLine
+            text={td(weather.comfort.advice)}
+            tone={weather.comfort.adviceTone}
+          />
         </div>
       </Card>
     </div>
@@ -3445,7 +3472,10 @@ function AlertsTab({
             lineHeight: 1.55,
           }}
         >
-          {td(weather.event.advice)}
+          <AdviceLine
+            text={td(weather.event.advice)}
+            tone={weather.event.adviceTone}
+          />
         </div>
       </Card>
     </div>

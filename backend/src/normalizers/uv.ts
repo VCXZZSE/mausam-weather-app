@@ -60,7 +60,10 @@ export function normalizeUv(source: UvSourceData): DashboardWeatherData["uv"] {
     burnTime: `~${burnMinutes} min`,
     advice:
       index >= 6
-        ? "☂️ Carry umbrella · 😎 Wear sunglasses · 🧴 Reapply SPF every 2h"
-        : "🧴 Light sun protection recommended for extended outdoor time",
+        ? "Carry umbrella · Wear sunglasses · Reapply SPF every 2h"
+        : "Light sun protection recommended for extended outdoor time",
+    // The emoji this text used to carry only repeated words already in the
+    // sentence, so nothing is lost by dropping them; one leading mark remains.
+    adviceTone: "sunscreen",
   }
 }

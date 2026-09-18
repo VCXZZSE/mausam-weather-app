@@ -35,18 +35,27 @@ export function computeComfort(
   const icon =
     input.temperature <= 15 ? "cold" : label === "Comfortable" ? "comfortable" : "hot"
 
+  // Advice text and the icon that leads it, kept apart so the string stays
+  // translatable on its own.
   const advice =
     label === "Comfortable"
-      ? "🙂 Pleasant conditions for outdoor activity."
+      ? "Pleasant conditions for outdoor activity."
       : label === "Uncomfortable"
-        ? "💧 Stay hydrated and take breaks if outdoors for long."
-        : "⚠️ Limit prolonged outdoor exposure; conditions are taxing."
+        ? "Stay hydrated and take breaks if outdoors for long."
+        : "Limit prolonged outdoor exposure; conditions are taxing."
+  const adviceTone =
+    label === "Comfortable"
+      ? "comfortable"
+      : label === "Uncomfortable"
+        ? "hydration"
+        : "warning"
 
   return {
     index,
     label,
     icon,
     advice,
+    adviceTone,
     factors: [
       {
         label: "Temperature",
@@ -100,10 +109,10 @@ export function computeRainfall(
 // computeComfort above — not a measured value, just rule-based guidance.
 export function computeHydrationAdvice(heatIndex: number): string {
   if (heatIndex >= 41)
-    return "💧 Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated"
+    return "Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated"
   if (heatIndex >= 35)
-    return "💧 Drink 2–3L water today · Limit strenuous activity during peak heat"
-  return "💧 Stay hydrated — drink water regularly through the day"
+    return "Drink 2–3L water today · Limit strenuous activity during peak heat"
+  return "Stay hydrated — drink water regularly through the day"
 }
 
 export type OverviewInput = {

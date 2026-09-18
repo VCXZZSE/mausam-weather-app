@@ -79,6 +79,9 @@ export type DashboardWeatherData = {
     updatedLabel: string
     icon: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
     pollutants: Array<{
       label: string
       value: number
@@ -101,6 +104,9 @@ export type DashboardWeatherData = {
     peakHours: string
     burnTime: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
   }
   running: {
     dayLabel?: "Today" | "Tomorrow"
@@ -135,17 +141,25 @@ export type DashboardWeatherData = {
     waterTemperature: number
     peakTime: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
   }
   garden: {
     badge: string
     title: string
     soil: string
     note: string
+    /** Icon name leading `note`. Optional, as above. */
+    noteTone?: string
   }
   pollen: {
     overall: string
     icon: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
     items: Array<{ type: string; level: string; percent: number; color: string }>
   }
   astronomy: {
@@ -161,6 +175,9 @@ export type DashboardWeatherData = {
     label: string
     icon: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
     factors: Array<{
       label: string
       value: string
@@ -201,6 +218,9 @@ export type DashboardWeatherData = {
     rainLabel: string
     rainChance: number
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
   }
 }
 

@@ -105,7 +105,7 @@ export function normalizeCpcbAirQuality(
     result={
       index,scaleMax: 500,
       scaleLabels: IN_NAQI_CATEGORIES.map((category) => category.label),
-      label,icon,advice: adviceForNaqi(label),
+      label,icon,...adviceForNaqi(label),
       updatedLabel: `Station update: ${station.updatedLabel} IST`,
       standard: "IN_NAQI",source: "CPCB",
       stationName: station.name,stationDistanceKm: Math.round(distance*10)/10,
@@ -117,19 +117,22 @@ export function normalizeCpcbAirQuality(
   return result
 }
 
-function adviceForNaqi(label: string): string {
+// The advice text and the icon that leads it. The icon used to be glued to
+// the front of the string, which meant every translation had to carry it too
+// and the i18n layer had to strip it back off to match a key.
+function adviceForNaqi(label: string): { advice: string; adviceTone: string } {
   switch(label) {
     case "Good":
-      return "✅ Air quality is good — safe for outdoor activity."
+      return { advice: "Air quality is good — safe for outdoor activity.",adviceTone: "success" }
     case "Satisfactory":
-      return "🙂 Air quality is acceptable for most people."
+      return { advice: "Air quality is acceptable for most people.",adviceTone: "comfortable" }
     case "Moderate":
-      return "💡 Sensitive groups should reduce prolonged outdoor exertion."
+      return { advice: "Sensitive groups should reduce prolonged outdoor exertion.",adviceTone: "tip" }
     case "Poor":
-      return "😷 Limit prolonged outdoor exertion; consider a mask."
+      return { advice: "Limit prolonged outdoor exertion; consider a mask.",adviceTone: "mask" }
     case "Very Poor":
-      return "🚫 Avoid outdoor exertion; keep windows closed."
+      return { advice: "Avoid outdoor exertion; keep windows closed.",adviceTone: "blocked" }
     default:
-      return "🚨 Severe air quality — stay indoors if possible."
+      return { advice: "Severe air quality — stay indoors if possible.",adviceTone: "alert" }
   }
 }

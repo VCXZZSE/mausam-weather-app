@@ -82,6 +82,9 @@ export type DashboardWeatherData = {
     updatedLabel: string
     icon: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
     pollutants: Array<{
       label: string
       value: number
@@ -104,6 +107,9 @@ export type DashboardWeatherData = {
     peakHours: string
     burnTime: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
   }
   running: {
     dayLabel?: "Today" | "Tomorrow"
@@ -143,17 +149,25 @@ export type DashboardWeatherData = {
     waterTemperature: number
     peakTime: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
   }
   garden: {
     badge: string
     title: string
     soil: string
     note: string
+    /** Icon name leading `note`. Optional, as above. */
+    noteTone?: string
   }
   pollen: {
     overall: string
     icon: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
     items: Array<{ type: string; level: string; percent: number; color: string }>
   }
   astronomy: {
@@ -169,6 +183,9 @@ export type DashboardWeatherData = {
     label: string
     icon: string
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
     factors: Array<{
       label: string
       value: string
@@ -209,6 +226,9 @@ export type DashboardWeatherData = {
     rainLabel: string
     rainChance: number
     advice: string
+    /** Icon name leading `advice`. Optional: payloads written before the
+     * icon system carried the mark inside the string instead. */
+    adviceTone?: string
   }
 }
 
@@ -232,7 +252,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
     dewPoint: 28,
     heatIndex: 41,
     hydrationAdvice:
-      "💧 Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated",
+      "Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated",
   },
   hourly: [
     {
@@ -410,7 +430,8 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
     recommendation: "Use SPF 30+",
     peakHours: "11 AM–2 PM",
     burnTime: "~25 min",
-    advice: "☂️ Carry umbrella · 😎 Wear sunglasses · 🧴 Reapply SPF every 2h",
+    advice: "Carry umbrella · Wear sunglasses · Reapply SPF every 2h",
+    adviceTone: "sunscreen",
   },
   running: {
     badge: "FITNESS",
@@ -463,19 +484,22 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
     depthUnit: "m",
     waterTemperature: 28,
     peakTime: "11:23 AM",
-    advice: "🚫 Swimming not advised due to heavy rain",
+    advice: "Swimming not advised due to heavy rain",
+    adviceTone: "blocked",
   },
   garden: {
     badge: "AMAN",
     title: "Aman rice transplanting season",
     soil: "Saturated",
-    note: "🐟 Hilsa season active!",
+    note: "Hilsa season active!",
+    noteTone: "fish",
   },
   pollen: {
     overall: "Moderate",
     icon: "pollen",
     advice:
-      "🤧 Keep windows closed 10 AM–3 PM · Antihistamine recommended if allergy-prone",
+      "Keep windows closed 10 AM–3 PM · Antihistamine recommended if allergy-prone",
+    adviceTone: "mask",
     items: [
       { type: "Tree", level: "Low", percent: 20, color: "#4ade80" },
       { type: "Grass", level: "Moderate", percent: 55, color: "#eab308" },
@@ -495,7 +519,8 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
     label: "Uncomfortable",
     icon: "hot",
     advice:
-      "🎪 Event planners: Provide shade and water stations. Rain disruption probability is about 30%.",
+      "Event planners: Provide shade and water stations. Rain disruption probability is about 30%.",
+    adviceTone: "tip",
     factors: [
       { label: "Temperature", value: "31°C", percent: 60, color: "#f59e0b" },
       { label: "Humidity", value: "89%", percent: 89, color: "#60a5fa" },
@@ -594,7 +619,8 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
     rainLabel: "Low Rain",
     rainChance: 15,
     advice:
-      "💡 Plan pandal visits 5–9 AM for best weather. Avoid afternoons during the first two days.",
+      "Plan pandal visits 5–9 AM for best weather. Avoid afternoons during the first two days.",
+    adviceTone: "tip",
   },
 }
 

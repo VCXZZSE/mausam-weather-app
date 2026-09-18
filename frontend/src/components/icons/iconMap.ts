@@ -20,9 +20,12 @@
 // imports keep the bundle to the glyphs actually listed in LUCIDE_ICONS.
 import {
   ArrowUpRight,
+  Ban,
   BatteryCharging,
   Car,
+  Carrot,
   ChevronDown,
+  CircleCheck,
   Droplet,
   Eye,
   Fish,
@@ -33,16 +36,19 @@ import {
   House,
   Lamp,
   Leaf,
+  Lightbulb,
   PartyPopper,
   Plane,
   Route,
   Shirt,
+  Siren,
   Smile,
   SportShoe,
   SprayCan,
   Sprout,
   TrainFront,
   TrendingUp,
+  TriangleAlert,
   Umbrella,
   Waves,
   Wheat,
@@ -171,6 +177,14 @@ export type LucideIconName =
   // interface affordances
   | "chevron-down"
   | "external"
+  // advisory tones -- the leading mark on a piece of advice
+  | "tip"
+  | "warning"
+  | "alert"
+  | "success"
+  | "blocked"
+  | "hydration"
+  | "harvest"
 
 /** One per CPCB National AQI band. Drawn in currentColor. */
 export type AqiIconName =
@@ -467,6 +481,15 @@ export const LUCIDE_ICONS: Record<LucideIconName, LucideIcon> = {
   party: PartyPopper,
   "chevron-down": ChevronDown,
   external: ArrowUpRight,
+  tip: Lightbulb,
+  warning: TriangleAlert,
+  alert: Siren,
+  success: CircleCheck,
+  blocked: Ban,
+  // Same glyph as water-bottle by coincidence, not by accident: one names a
+  // packing item, the other the tone of a piece of hydration advice.
+  hydration: Droplet,
+  harvest: Carrot,
 }
 
 export function isLucideIcon(name: IconName): name is LucideIconName {

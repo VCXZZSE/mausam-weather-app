@@ -9,19 +9,19 @@ export type GardenSeasonalInfo = { title: string; note: string }
 const GARDEN_SEASONAL: Record<IndiaSeason, GardenSeasonalInfo> = {
   Monsoon: {
     title: "Aman rice transplanting season",
-    note: "🐟 Hilsa season active!",
+    note: "Hilsa season active!",
   },
   "Post-Monsoon": {
     title: "Aman rice harvesting season",
-    note: "🌾 Harvest season for local paddy fields",
+    note: "Harvest season for local paddy fields",
   },
   Winter: {
     title: "Boro rice & winter vegetable season",
-    note: "🥦 Good season for leafy greens and winter vegetables",
+    note: "Good season for leafy greens and winter vegetables",
   },
   Summer: {
     title: "Pre-monsoon planting preparation",
-    note: "🌱 Prepare soil ahead of monsoon sowing",
+    note: "Prepare soil ahead of monsoon sowing",
   },
 }
 

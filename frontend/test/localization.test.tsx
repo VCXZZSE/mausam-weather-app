@@ -12,6 +12,10 @@ import {
   type TranslationKey,
 } from "@/i18n/bundles/coreTranslations"
 import { translateDynamic } from "@/i18n/bundles/dynamicTranslations"
+
+/** Any pictograph, used to compare translations ignoring the marks. */
+const EMOJI_ANYWHERE =
+  /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu
 import { LANGUAGE_STORAGE_KEY, setLanguage } from "@/i18n/languageStore"
 import type { Profile } from "@/App"
 
@@ -383,5 +387,47 @@ describe("dashboard renders in every language", () => {
     expect(localStorage.getItem("mausam-language")).toBeNull()
     expect(localStorage.getItem("mausam-profile")).toBeNull()
     expect(localStorage.getItem("mausam-location")).toBeNull()
+  })
+})
+
+// Commit 4 stripped the emoji prefix off every advice/note string the rules
+// engine emits. The translation keys were already emoji-free (the EMOJI_PREFIX
+// branch stripped the mark at runtime before looking one up), so this should
+// have changed nothing about what hi/bn readers see. These cases pin that:
+// each pair is the old emoji-prefixed string and its replacement, and both
+// must come out as the same words.
+describe("removing emoji prefixes did not change any translation", () => {
+  const stripMarks = (value: string) =>
+    value
+      .replace(EMOJI_ANYWHERE, "")
+      .replace(/\s+/g, " ")
+      .trim()
+
+  const PAIRS: Array<[string, string]> = [
+    ["✅ Air quality is good — safe for outdoor activity.", "Air quality is good — safe for outdoor activity."],
+    ["🙂 Air quality is acceptable for most people.", "Air quality is acceptable for most people."],
+    ["💡 Sensitive groups should reduce prolonged outdoor exertion.", "Sensitive groups should reduce prolonged outdoor exertion."],
+    ["😷 Limit prolonged outdoor exertion; consider a mask.", "Limit prolonged outdoor exertion; consider a mask."],
+    ["🚫 Avoid outdoor exertion; keep windows closed.", "Avoid outdoor exertion; keep windows closed."],
+    ["🚨 Severe air quality — stay indoors if possible.", "Severe air quality — stay indoors if possible."],
+    ["🙂 Pleasant conditions for outdoor activity.", "Pleasant conditions for outdoor activity."],
+    ["💧 Stay hydrated and take breaks if outdoors for long.", "Stay hydrated and take breaks if outdoors for long."],
+    ["⚠️ Limit prolonged outdoor exposure; conditions are taxing.", "Limit prolonged outdoor exposure; conditions are taxing."],
+    ["💧 Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated", "Drink 3–4L water today · Avoid exertion 11 AM–4 PM · Use ORS if feeling dehydrated"],
+    ["🧴 Light sun protection recommended for extended outdoor time", "Light sun protection recommended for extended outdoor time"],
+    ["🚫 Swimming not advised due to heavy rain", "Swimming not advised due to heavy rain"],
+    ["🐟 Hilsa season active!", "Hilsa season active!"],
+    ["🌿 Pollen levels are low — minimal precaution needed", "Pollen levels are low — minimal precaution needed"],
+    ["🤧 Keep windows closed during peak hours · Antihistamine recommended if allergy-prone", "Keep windows closed during peak hours · Antihistamine recommended if allergy-prone"],
+    ["☂️ Carry umbrella · 😎 Wear sunglasses · 🧴 Reapply SPF every 2h", "Carry umbrella · Wear sunglasses · Reapply SPF every 2h"],
+  ]
+
+  it.each(PAIRS)("%s", (before, after) => {
+    for (const language of ["hi", "bn"] as const) {
+      expect(
+        stripMarks(translateDynamic(language, after)),
+        `"${after}" reads differently than it did with its emoji`,
+      ).toBe(stripMarks(translateDynamic(language, before)))
+    }
   })
 })
