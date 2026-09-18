@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from "react"
 import type { InlineToken, MarkdownBlock } from "@/services/markdownService"
-import "./documentPage.css"
+import "./DocumentPage.css"
 
 // Rendering primitives shared by the Markdown-backed document pages
 // (PrivacyPolicy.tsx, FAQPage.tsx). Keeping them here is what makes the two
