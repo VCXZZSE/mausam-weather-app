@@ -128,7 +128,7 @@ export type AqiIconName = "aqi-good" | "aqi-satisfactory" | "aqi-moderate" | "aq
 export type LineIconName = Exclude<IconName, WeatherIconName | AqiIconName | LucideIconName>
 
 /** A circle primitive, for the few icons whose art is not a single path. */
-export type IconCircle = { cx: number cy: number r: number }
+export type IconCircle = { cx: number; cy: number; r: number }
 
 export type IconSpec = {
   /** `d` attributes, rendered in order as sibling <path> elements. */
