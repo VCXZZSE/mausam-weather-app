@@ -86,141 +86,49 @@ import aqiVeryPoor from "@/assets/icons/aqi/aqi-very-poor.svg?raw"
 import aqiSevere from "@/assets/icons/aqi/aqi-severe.svg?raw"
 
 /** Every icon name the app may render. Adding art means extending this union. */
-export type IconName =
-  // --- interface / navigation (was ProfileSidebar's local Icon) ---
-  | "close"
-  | "pin"
-  | "spark"
-  | "logout"
-  | "arrow"
-  | "shield-lock"
-  | "help"
-  // --- interface / documents (was FAQPage's local Icon) ---
-  | "copy"
-  | "check"
-  | "link"
-  | "search"
-  // --- personalized briefing (was App's PersonalizedIconGraphic) ---
-  | "sun"
-  | "outdoor"
-  | "comfort"
-  | "shield"
-  | "cold"
-  | "temperature"
-  | "evening"
-  | "air"
-  | "indoor"
-  | "rain"
-  | "wind"
-  // --- weather conditions (vendored Meteocons, see assets/icons/weather) ---
-  | WeatherIconName
-  // --- CPCB NAQI bands (hand-drawn, see assets/icons/aqi) ---
-  | AqiIconName
-  // --- payload icons the rules engine names (lucide-react) ---
-  | LucideIconName
-  // --- payload icons lucide has no equivalent for (hand-drawn) ---
-  | "scarf"
-  | "mask"
+export type IconName = // --- interface / navigation (was ProfileSidebar's local Icon) ---
+"close" | "pin" | "spark" | "logout" | "arrow" | "shield-lock" | "help" | // --- interface / documents (was FAQPage's local Icon) ---
+"copy" | "check" | "link" | "search" | // --- personalized briefing (was App's PersonalizedIconGraphic) ---
+"sun" | "outdoor" | "comfort" | "shield" | "cold" | "temperature" | "evening" | "air" | "indoor" | "rain" | "wind" | // --- weather conditions (vendored Meteocons, see assets/icons/weather) ---
+WeatherIconName | // --- CPCB NAQI bands (hand-drawn, see assets/icons/aqi) ---
+AqiIconName | // --- payload icons the rules engine names (lucide-react) ---
+LucideIconName | // --- payload icons lucide has no equivalent for (hand-drawn) ---
+"scarf" | "mask"
 
 /**
  * Weather artwork, named after the source SVG. These are full-colour icons —
  * a sun should read as a sun — so unlike the line icons they do not inherit
  * `currentColor`.
  */
-export type WeatherIconName =
-  | "clear-day"
-  | "clear-night"
-  | "partly-cloudy-day"
-  | "partly-cloudy-night"
-  | "overcast"
-  | "overcast-night"
-  | "drizzle"
-  | "rain-cloud"
-  | "thunderstorms-rain"
-  | "fog-day"
-  | "fog-night"
-  | "wind-gust"
-  | "snow"
-  | "thermometer"
+export type WeatherIconName = "clear-day" | "clear-night" | "partly-cloudy-day" | "partly-cloudy-night" | "overcast" | "overcast-night" | "drizzle" | "rain-cloud" | "thunderstorms-rain" | "fog-day" | "fog-night" | "wind-gust" | "snow" | "thermometer"
 
 /**
  * Icons taken from lucide-react. The name on the left is ours and is what the
  * rules engine emits; which lucide glyph draws it is an implementation detail
  * that can change without touching the wire format.
  */
-export type LucideIconName =
-  // focus tiles
-  | "heart"
-  | "trending-up"
-  | "commute"
-  | "home"
-  // comfort band
-  | "comfortable"
-  | "hot"
-  // packing list
-  | "umbrella"
-  | "boots"
-  | "sunscreen"
-  | "sunglasses"
-  | "jacket"
-  | "water-bottle"
-  | "power-bank"
-  // commute detail
-  | "train"
-  | "car"
-  | "visibility"
-  // seasonal / advisory subjects
-  | "pollen"
-  | "festival"
-  | "fish"
-  | "wheat"
-  // personas
-  | "leaf"
-  | "bolt"
-  | "waves"
-  | "plane"
-  | "sprout"
-  | "party"
-  // interface affordances
-  | "chevron-down"
-  | "external"
-  // navigation and status affordances
-  | "arrow-right"
-  | "arrow-left"
-  | "reset"
-  | "retry"
-  | "tick"
-  | "plus"
-  | "target"
-  // advisory tones -- the leading mark on a piece of advice
-  | "tip"
-  | "warning"
-  | "alert"
-  | "success"
-  | "blocked"
-  | "hydration"
-  | "harvest"
+export type LucideIconName = // focus tiles
+"heart" | "trending-up" | "commute" | "home" | // comfort band
+"comfortable" | "hot" | // packing list
+"umbrella" | "boots" | "sunscreen" | "sunglasses" | "jacket" | "water-bottle" | "power-bank" | // commute detail
+"train" | "car" | "visibility" | // seasonal / advisory subjects
+"pollen" | "festival" | "fish" | "wheat" | // personas
+"leaf" | "bolt" | "waves" | "plane" | "sprout" | "party" | // interface affordances
+"chevron-down" | "external" | // navigation and status affordances
+"arrow-right" | "arrow-left" | "reset" | "retry" | "tick" | "plus" | "target" | // advisory tones -- the leading mark on a piece of advice
+"tip" | "warning" | "alert" | "success" | "blocked" | "hydration" | "harvest"
 
 /** One per CPCB National AQI band. Drawn in currentColor. */
-export type AqiIconName =
-  | "aqi-good"
-  | "aqi-satisfactory"
-  | "aqi-moderate"
-  | "aqi-poor"
-  | "aqi-very-poor"
-  | "aqi-severe"
+export type AqiIconName = "aqi-good" | "aqi-satisfactory" | "aqi-moderate" | "aqi-poor" | "aqi-very-poor" | "aqi-severe"
 
 /**
  * The icons drawn from inline path data in `ICON_SPECS`, as opposed to the
  * weather and AQI art loaded from SVG files. All of them inherit colour.
  */
-export type LineIconName = Exclude<
-  IconName,
-  WeatherIconName | AqiIconName | LucideIconName
->
+export type LineIconName = Exclude<IconName, WeatherIconName | AqiIconName | LucideIconName>
 
 /** A circle primitive, for the few icons whose art is not a single path. */
-export type IconCircle = { cx: number; cy: number; r: number }
+export type IconCircle = { cx: number cy: number r: number }
 
 export type IconSpec = {
   /** `d` attributes, rendered in order as sibling <path> elements. */
@@ -236,20 +144,7 @@ export type IconSpec = {
  * services/personalizedBriefing.ts). It is kept as its own type so those
  * lookup tables stay exhaustively checked against the art that exists.
  */
-export type PersonalizedIcon = Extract<
-  IconName,
-  | "sun"
-  | "outdoor"
-  | "comfort"
-  | "shield"
-  | "cold"
-  | "temperature"
-  | "evening"
-  | "air"
-  | "indoor"
-  | "rain"
-  | "wind"
->
+export type PersonalizedIcon = Extract<IconName, "sun" | "outdoor" | "comfort" | "shield" | "cold" | "temperature" | "evening" | "air" | "indoor" | "rain" | "wind">
 
 export const ICON_SPECS: Record<LineIconName, IconSpec> = {
   // --- interface / navigation, stroke 1.6 ---
@@ -339,7 +234,9 @@ export const ICON_SPECS: Record<LineIconName, IconSpec> = {
     strokeWidth: 1.8,
   },
   air: {
-    paths: ["M3 8h10.5a2.5 2.5 0 1 0-2.3-3.5M3 12h16a2.5 2.5 0 1 1-2.3 3.5M3 16h7"],
+    paths: [
+      "M3 8h10.5a2.5 2.5 0 1 0-2.3-3.5M3 12h16a2.5 2.5 0 1 1-2.3 3.5M3 16h7",
+    ],
     strokeWidth: 1.8,
   },
   indoor: {
@@ -354,7 +251,9 @@ export const ICON_SPECS: Record<LineIconName, IconSpec> = {
     strokeWidth: 1.8,
   },
   wind: {
-    paths: ["M3 8h11a2.5 2.5 0 1 0-2.3-3.5M3 12h17M3 16h11a2.5 2.5 0 1 1-2.3 3.5"],
+    paths: [
+      "M3 8h11a2.5 2.5 0 1 0-2.3-3.5M3 12h17M3 16h11a2.5 2.5 0 1 1-2.3 3.5",
+    ],
     strokeWidth: 1.8,
   },
 
@@ -399,18 +298,27 @@ export const LEGACY_EMOJI_ALIASES: Readonly<Record<string, IconName>> = {
   "☀️": "clear-day",
   "🌞": "clear-day",
   "🌤️": "partly-cloudy-day",
+  "🌤": "partly-cloudy-day",
   "⛅": "partly-cloudy-day",
   "☁️": "overcast",
+  "☁": "overcast",
   "🌙": "clear-night",
   "🌙☁️": "overcast-night",
   "🌦️": "drizzle",
+  "🌦": "drizzle",
   "🌧️": "rain-cloud",
+  "🌧": "rain-cloud",
   "⛈️": "thunderstorms-rain",
+  "⛈": "thunderstorms-rain",
   "🌫️": "fog-day",
+  "🌫": "fog-day",
   "💨": "wind-gust",
   "🌬️": "wind-gust",
+  "🌬": "wind-gust",
   "🌨️": "snow",
+  "🌨": "snow",
   "🌡️": "thermometer",
+  "🌡": "thermometer",
   // CPCB NAQI bands
   "😊": "aqi-good",
   "🙂": "aqi-satisfactory",
@@ -418,12 +326,58 @@ export const LEGACY_EMOJI_ALIASES: Readonly<Record<string, IconName>> = {
   "😷": "aqi-poor",
   "🚫": "aqi-very-poor",
   "☠️": "aqi-severe",
+  "☠": "aqi-severe",
   // briefing / interface
   "🛡️": "shield",
+  "🛡": "shield",
   "🥶": "cold",
+  "🥵": "hot",
   "🏡": "indoor",
   "🏠": "indoor",
   "🏃": "outdoor",
+  // focus tiles (overview)
+  "♥": "heart",
+  "❤️": "heart",
+  "❤": "heart",
+  "↗": "trending-up",
+  "⌁": "commute",
+  "⌂": "home",
+  // commute detail
+  "🚇": "train",
+  "🚆": "train",
+  "🚗": "car",
+  "🚘": "car",
+  "👁️": "visibility",
+  "👁": "visibility",
+  // packing list
+  "☂️": "umbrella",
+  "☂": "umbrella",
+  "👟": "boots",
+  "🧴": "sunscreen",
+  "😎": "sunglasses",
+  "🕶️": "sunglasses",
+  "🕶": "sunglasses",
+  "🧥": "jacket",
+  "💧": "water-bottle",
+  "🔋": "power-bank",
+  "🧣": "scarf",
+  // seasonal / advisory subjects & tones
+  "🌿": "pollen",
+  "🐟": "fish",
+  "🌾": "wheat",
+  "💡": "tip",
+  "⚠️": "warning",
+  "⚠": "warning",
+  "🚨": "alert",
+  "✅": "success",
+  // user personas
+  "⚡": "bolt",
+  "⚡️": "bolt",
+  "🌊": "waves",
+  "✈️": "plane",
+  "✈": "plane",
+  "🌱": "sprout",
+  "🎉": "party",
 }
 
 /**
@@ -431,11 +385,16 @@ export const LEGACY_EMOJI_ALIASES: Readonly<Record<string, IconName>> = {
  * names and the legacy emoji above. Returns `null` for anything unrecognised
  * so callers can fall back rather than render a broken glyph.
  */
-export function resolveIconName(value: string | null | undefined): IconName | null {
+export function resolveIconName(
+  value: string | null | undefined,
+): IconName | null {
   if (!value) return null
   const trimmed = value.trim()
   if (isIconName(trimmed)) return trimmed
-  return LEGACY_EMOJI_ALIASES[trimmed] ?? null
+  const direct = LEGACY_EMOJI_ALIASES[trimmed]
+  if (direct) return direct
+  const withoutVariation = trimmed.replace(/\uFE0F/g, "")
+  return LEGACY_EMOJI_ALIASES[withoutVariation] ?? null
 }
 
 // --- file-backed artwork ----------------------------------------------------
@@ -582,7 +541,10 @@ export function weatherIconForCondition(
   conditionCode: string,
   isDay?: boolean,
 ): WeatherIconName {
-  const key = conditionCode.trim().toLowerCase().replace(/[\s-]+/g, "_")
+  const key = conditionCode
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
   if (isDay === false && NIGHT_CONDITION_ICONS[key])
     return NIGHT_CONDITION_ICONS[key]
   return CONDITION_ICONS[key] ?? FALLBACK_WEATHER_ICON
@@ -595,24 +557,64 @@ export function weatherIconForCondition(
  * cannot drift apart.
  */
 export const AQI_BANDS = [
-  { max: 50, label: "Good", icon: "aqi-good", token: "--aqi-good" },
-  { max: 100, label: "Satisfactory", icon: "aqi-satisfactory", token: "--aqi-satisfactory" },
-  { max: 200, label: "Moderate", icon: "aqi-moderate", token: "--aqi-moderate" },
-  { max: 300, label: "Poor", icon: "aqi-poor", token: "--aqi-poor" },
-  { max: 400, label: "Very Poor", icon: "aqi-very-poor", token: "--aqi-very-poor" },
-  { max: Infinity, label: "Severe", icon: "aqi-severe", token: "--aqi-severe" },
+  {
+    max: 50,
+    label: "Good",
+    icon: "aqi-good",
+    token: "--aqi-good",
+    color: "#22c55e",
+  },
+  {
+    max: 100,
+    label: "Satisfactory",
+    icon: "aqi-satisfactory",
+    token: "--aqi-satisfactory",
+    color: "#84cc16",
+  },
+  {
+    max: 200,
+    label: "Moderate",
+    icon: "aqi-moderate",
+    token: "--aqi-moderate",
+    color: "#facc15",
+  },
+  {
+    max: 300,
+    label: "Poor",
+    icon: "aqi-poor",
+    token: "--aqi-poor",
+    color: "#f97316",
+  },
+  {
+    max: 400,
+    label: "Very Poor",
+    icon: "aqi-very-poor",
+    token: "--aqi-very-poor",
+    color: "#a855f7",
+  },
+  {
+    max: Infinity,
+    label: "Severe",
+    icon: "aqi-severe",
+    token: "--aqi-severe",
+    color: "#7f1d1d",
+  },
 ] as const satisfies ReadonlyArray<{
   max: number
   label: string
   icon: AqiIconName
   token: string
+  color: string
 }>
 
-export type AqiBand = (typeof AQI_BANDS)[number]
+export type AqiBand = typeof AQI_BANDS[number]
 
 /** The band an index falls in. Values above 400 are Severe. */
 export function aqiBandForIndex(index: number): AqiBand {
-  return AQI_BANDS.find((band) => index <= band.max) ?? AQI_BANDS[AQI_BANDS.length - 1]
+  return (
+    AQI_BANDS.find((band) => index <= band.max) ??
+    AQI_BANDS[AQI_BANDS.length - 1]
+  )
 }
 
 /** Resolves the band by its English label, for payloads that carry only that. */

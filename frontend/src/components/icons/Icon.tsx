@@ -60,15 +60,29 @@ function prepareAssetSvg(
 
   const head = markup.slice(0, open)
   const viewBox = head.match(/viewBox="([^"]+)"/)?.[1] ?? "0 0 24 24"
+  const fill = head.match(/\bfill="([^"]+)"/)?.[1]
+  const stroke = head.match(/\bstroke="([^"]+)"/)?.[1]
+  const strokeWidth = head.match(/\bstroke-width="([^"]+)"/)?.[1]
+  const strokeLinecap = head.match(/\bstroke-linecap="([^"]+)"/)?.[1]
+  const strokeLinejoin = head.match(/\bstroke-linejoin="([^"]+)"/)?.[1]
+  const strokeMiterlimit = head.match(/\bstroke-miterlimit="([^"]+)"/)?.[1]
   const rest = markup.slice(open + 1)
 
   const attrs = [
     'xmlns="http://www.w3.org/2000/svg"',
     'xmlns:xlink="http://www.w3.org/1999/xlink"',
     `viewBox="${viewBox}"`,
+    fill ? `fill="${fill}"` : "",
+    stroke ? `stroke="${stroke}"` : "",
+    strokeWidth ? `stroke-width="${strokeWidth}"` : "",
+    strokeLinecap ? `stroke-linecap="${strokeLinecap}"` : "",
+    strokeLinejoin ? `stroke-linejoin="${strokeLinejoin}"` : "",
+    strokeMiterlimit ? `stroke-miterlimit="${strokeMiterlimit}"` : "",
     size === undefined ? "" : `width="${size}" height="${size}"`,
     className ? `class="${className}"` : "",
-    label ? `role="img" aria-label="${label.replace(/"/g, "&quot;")}"` : 'aria-hidden="true"',
+    label
+      ? `role="img" aria-label="${label.replace(/"/g, "&quot;")}"`
+      : 'aria-hidden="true"',
   ]
     .filter(Boolean)
     .join(" ")
@@ -122,8 +136,8 @@ export function Icon({ name, size, label, className, strokeWidth }: IconProps) {
 
   const spec = ICON_SPECS[name]
   const accessibility = label
-    ? ({ role: "img" as const, "aria-label": label })
-    : ({ "aria-hidden": true as const })
+    ? { role: "img" as const, "aria-label": label }
+    : { "aria-hidden": true as const }
 
   return (
     <svg

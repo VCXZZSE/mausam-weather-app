@@ -224,14 +224,14 @@ input:-webkit-autofill {
   flex: 0 0 auto;
   width: min(100%, 530px);
   box-sizing: border-box;
-  padding: max(30px, calc(env(safe-area-inset-top) + 14px)) 20px 0;
+  padding: max(18px, calc(env(safe-area-inset-top) + 8px)) 20px 0;
 }
 .setup-content {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 20px 18px;
+  padding: 8px 20px 16px;
   overflow: hidden;
 }
 .setup-panel,
@@ -318,13 +318,13 @@ input:-webkit-autofill {
   background: linear-gradient(115deg, rgba(255,255,255,.08), transparent 38%, rgba(255,255,255,.1));
 }
 .setup-noise { opacity: .12; mix-blend-mode: overlay; }
-.setup-topbar { padding-top: max(30px, calc(env(safe-area-inset-top) + 14px)); }
-.brand-mark { color: rgba(255,255,255,.9); text-shadow: 0 4px 18px rgba(0,30,100,.25); }
+.setup-topbar { padding-top: max(16px, calc(env(safe-area-inset-top) + 8px)); }
+.brand-mark { color: rgba(255,255,255,.9); text-shadow: 0 4px 18px rgba(0,30,100,.25); line-height: 1; }
 .setup-progress { height: 3px; border-radius: 10px; background: rgba(255,255,255,.2); overflow: hidden; }
 .setup-progress span { background: #fff; box-shadow: 0 0 12px rgba(255,255,255,.8); }
 .setup-back { color: rgba(255,255,255,.8); }
 .setup-panel {
-  padding: 30px;
+  padding: 22px 20px;
   border: 1px solid rgba(255,255,255,.34);
   border-radius: 28px;
   background: rgba(7, 52, 112, .25);
@@ -2415,6 +2415,7 @@ input:-webkit-autofill {
    the hues stay put in light and dark, and only the surrounding surface
    changes. Icons carry the band in their shape as well as their colour, so
    the scale still reads without it. */
+:root,
 #root .mausam-app {
   --aqi-good: #22c55e;
   --aqi-satisfactory: #84cc16;
@@ -2435,6 +2436,7 @@ input:-webkit-autofill {
 
 /* Severe is near-black; on the dark surface it needs lifting to stay visible
    against the card behind it. */
+:root[data-theme="dark"],
 #root .mausam-app.theme-dark { --aqi-severe: #b91c1c; }
 
 /* Wrapper around an inlined SVG asset (weather and AQI art). Sizing comes from
@@ -2447,10 +2449,24 @@ input:-webkit-autofill {
 }
 .icon-asset > svg { width: 1em; height: 1em; display: block; }
 
+.aqi-band-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.aqi-band-icon .icon-asset > svg,
+.aqi-band-icon svg {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+}
+
 /* Glyphs that replaced inline text characters (✦ → ← ↺ ✓ ◉ ✕). They sized
    themselves from the surrounding font-size as text, so they keep doing that
    here and inherit the same colour. */
-.mausam-app svg[data-icon] {
+.mausam-app svg[data-icon],
+.setup-shell svg[data-icon] {
   width: 1em;
   height: 1em;
   display: inline-block;

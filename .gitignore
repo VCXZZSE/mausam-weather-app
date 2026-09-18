@@ -23,6 +23,8 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+/.agents/
+skills-lock.json
 .vercel
 
 # Local-only backend handoff doc — never commit

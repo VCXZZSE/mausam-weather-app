@@ -25,9 +25,9 @@ afterEach(cleanup)
 describe("Icon", () => {
   it("renders every name in the union", () => {
     const names: IconName[] = [
-      ...(Object.keys(ICON_SPECS) as IconName[]),
-      ...(Object.keys(SVG_ASSETS) as IconName[]),
-      ...(Object.keys(LUCIDE_ICONS) as IconName[]),
+      ...Object.keys(ICON_SPECS) as IconName[],
+      ...Object.keys(SVG_ASSETS) as IconName[],
+      ...Object.keys(LUCIDE_ICONS) as IconName[],
     ]
     for (const name of names) {
       const { container, unmount } = render(<Icon name={name} />)
@@ -65,17 +65,25 @@ describe("Icon", () => {
   it("keeps each icon's original stroke weight, and allows an override", () => {
     // The three components this replaced drew at 1.6, 2 and 1.8.
     const { container: sidebar } = render(<Icon name="close" />)
-    expect(sidebar.querySelector("svg")!.getAttribute("stroke-width")).toBe("1.6")
+    expect(sidebar.querySelector("svg")!.getAttribute("stroke-width")).toBe(
+      "1.6",
+    )
 
     const { container: faq } = render(<Icon name="copy" />)
     expect(faq.querySelector("svg")!.getAttribute("stroke-width")).toBe("2")
 
     const { container: briefing } = render(<Icon name="sun" />)
-    expect(briefing.querySelector("svg")!.getAttribute("stroke-width")).toBe("1.8")
+    expect(briefing.querySelector("svg")!.getAttribute("stroke-width")).toBe(
+      "1.8",
+    )
 
     // FAQPage draws `close` heavier than the sidebar does.
-    const { container: override } = render(<Icon name="close" strokeWidth={2} />)
-    expect(override.querySelector("svg")!.getAttribute("stroke-width")).toBe("2")
+    const { container: override } = render(
+      <Icon name="close" strokeWidth={2} />,
+    )
+    expect(override.querySelector("svg")!.getAttribute("stroke-width")).toBe(
+      "2",
+    )
   })
 
   it("inherits colour so theme rules drive it", () => {
@@ -106,6 +114,16 @@ describe("resolveIconName", () => {
     // CPCB band faces
     expect(resolveIconName("😊")).toBe("aqi-good")
     expect(resolveIconName("☠️")).toBe("aqi-severe")
+    // overview / focus tile symbols
+    expect(resolveIconName("♥")).toBe("heart")
+    expect(resolveIconName("↗")).toBe("trending-up")
+    expect(resolveIconName("⌁")).toBe("commute")
+    expect(resolveIconName("⌂")).toBe("home")
+    // commute items
+    expect(resolveIconName("🚇")).toBe("train")
+    expect(resolveIconName("🚗")).toBe("car")
+    expect(resolveIconName("👁️")).toBe("visibility")
+    expect(resolveIconName("👁")).toBe("visibility")
   })
 
   it("returns null for anything unrecognised, so callers can fall back", () => {
@@ -173,7 +191,8 @@ describe("weatherIconForCondition", () => {
       for (const isDay of [true, false]) {
         const icon = weatherIconForCondition(code, isDay)
         expect(SVG_ASSETS[icon], `${code} has no artwork`).toBeDefined()
-        if (icon === FALLBACK_WEATHER_ICON) unmapped.push(`${code} (isDay=${isDay})`)
+        if (icon === FALLBACK_WEATHER_ICON)
+          unmapped.push(`${code} (isDay=${isDay})`)
       }
     }
     expect(
@@ -183,7 +202,9 @@ describe("weatherIconForCondition", () => {
   })
 
   it("is keyed on the code, not on casing or separator style", () => {
-    expect(weatherIconForCondition("PARTLY-CLOUDY", true)).toBe("partly-cloudy-day")
+    expect(weatherIconForCondition("PARTLY-CLOUDY", true)).toBe(
+      "partly-cloudy-day",
+    )
     expect(weatherIconForCondition("  partly cloudy  ", true)).toBe(
       "partly-cloudy-day",
     )
@@ -194,7 +215,9 @@ describe("weatherIconForCondition", () => {
     expect(weatherIconForCondition("overcast", false)).toBe("overcast-night")
     // rain and storms look the same at any hour
     expect(weatherIconForCondition("rain", false)).toBe("rain-cloud")
-    expect(weatherIconForCondition("thunderstorm", false)).toBe("thunderstorms-rain")
+    expect(weatherIconForCondition("thunderstorm", false)).toBe(
+      "thunderstorms-rain",
+    )
   })
 
   it("falls back to the thermometer rather than rendering nothing", () => {
@@ -248,16 +271,12 @@ describe("CPCB AQI bands", () => {
   // declared in the stylesheet, which is the thing that would actually break
   // the colour scale.
   it("declares every band's custom property in index.css", () => {
-    const css = readFileSync(
-      resolve(__dirname, "../src/index.css"),
-      "utf8",
-    )
+    const css = readFileSync(resolve(__dirname, "../src/index.css"), "utf8")
     for (const band of AQI_BANDS) {
       expect(css, `${band.token} is not declared`).toContain(`${band.token}:`)
-      expect(
-        css,
-        `${band.token} is not used by the meter gradient`,
-      ).toContain(`var(${band.token})`)
+      expect(css, `${band.token} is not used by the meter gradient`).toContain(
+        `var(${band.token})`,
+      )
     }
   })
 })

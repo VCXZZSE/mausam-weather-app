@@ -3,6 +3,7 @@ import { OfficialAdvisories } from "@/components/advisories/OfficialAdvisories"
 import { ComfortIndicator, comfortTone } from "@/components/common/ComfortIndicator"
 import { syncWeatherToWidget } from "@/widgets/widgetBridge"
 import { PullToRefresh } from "@/components/common/PullToRefresh"
+import { SlideToDiveIn } from "@/components/common/SlideToDiveIn"
 import { Icon } from "@/components/icons/Icon"
 import {
   aqiBandForIndex,
@@ -580,21 +581,40 @@ export function HomeTab({
   )
   // Palette for the overcast character, ported from OvercastIcon.tsx. The
   // disc behind the cloud is background scenery: dimmed, and with no face.
+  const isLightMode = theme === "light"
   const overcastArt = isNight
-    ? {
-        cloud: ["#cbd5e1", "#94a3b8"],
-        back: ["#b5c2d5", "#8393ab"],
-        disc: ["#e9effc", "#b1c1df"],
-        // 0.62 (the day value) leaves the moon darker than the cloud in
-        // front of it on the navy card; it needs to sit brighter to read.
-        discOpacity: 0.7,
-        ink: "#1e293b",
-        blush: "#e3a2b6",
-      }
+    ? isLightMode
+      ? {
+          cloud: ["#cbd5e1", "#94a3b8"],
+          back: ["#b5c2d5", "#8393ab"],
+          // Warm golden-cream moon with strong contrast against light mode card
+          disc: ["#fff8db", "#f59e0b"],
+          glow: "#fde68a",
+          crater: "#d97706",
+          craterOpacity: [0.45, 0.38],
+          discOpacity: 0.94,
+          ink: "#1e293b",
+          blush: "#e3a2b6",
+        }
+      : {
+          cloud: ["#cbd5e1", "#94a3b8"],
+          back: ["#b5c2d5", "#8393ab"],
+          // Luminous celestial moonlight with warm golden aura on dark card
+          disc: ["#fffef0", "#facc15"],
+          glow: "#fef08a",
+          crater: "#ca8a04",
+          craterOpacity: [0.45, 0.38],
+          discOpacity: 0.92,
+          ink: "#1e293b",
+          blush: "#e3a2b6",
+        }
     : {
         cloud: ["#f4f7fc", "#b8c6da"],
         back: ["#dee6f2", "#aebbcf"],
         disc: ["#ffe6b0", "#f0b75f"],
+        glow: "#ffe6b0",
+        crater: "#f0b75f",
+        craterOpacity: [0.3, 0.25],
         discOpacity: 0.62,
         ink: "#334155",
         blush: "#fca5a5",
@@ -919,8 +939,8 @@ export function HomeTab({
                       </linearGradient>
                       {/* Fades out rather than stopping flat, so no hard rim */}
                       <radialGradient id="overcastGlowGrad" cx="50%" cy="50%" r="50%">
-                        <stop offset="52%" stopColor={overcastArt.disc[0]} stopOpacity=".4" />
-                        <stop offset="100%" stopColor={overcastArt.disc[0]} stopOpacity="0" />
+                        <stop offset="52%" stopColor={overcastArt.glow || overcastArt.disc[0]} stopOpacity={isNight ? ".55" : ".4"} />
+                        <stop offset="100%" stopColor={overcastArt.glow || overcastArt.disc[0]} stopOpacity="0" />
                       </radialGradient>
                       <radialGradient id="overcastDiscGrad" cx="38%" cy="32%" r="72%">
                         <stop offset="0%" stopColor={overcastArt.disc[0]} />
@@ -938,12 +958,34 @@ export function HomeTab({
                         and their opacities multiply instead. */}
                     <g className="overcast-disc" opacity={overcastArt.discOpacity}>
                       <g className="overcast-disc-breathe">
-                        <circle cx="96.8" cy="57.6" r="32.9" fill="url(#overcastGlowGrad)" />
-                        <circle cx="96.8" cy="57.6" r="25.7" fill="url(#overcastDiscGrad)" />
+                        <circle
+                          cx={isNight ? "99" : "96.8"}
+                          cy={isNight ? "49" : "57.6"}
+                          r={isNight ? "38" : "32.9"}
+                          fill="url(#overcastGlowGrad)"
+                        />
+                        <circle
+                          cx={isNight ? "99" : "96.8"}
+                          cy={isNight ? "49" : "57.6"}
+                          r={isNight ? "29.5" : "25.7"}
+                          fill="url(#overcastDiscGrad)"
+                        />
                         {isNight ? (
                           <>
-                            <circle cx="104" cy="43.2" r="4.7" fill={overcastArt.disc[1]} opacity=".5" />
-                            <circle cx="89.6" cy="40.2" r="2.9" fill={overcastArt.disc[1]} opacity=".4" />
+                            <circle
+                              cx="105"
+                              cy="37"
+                              r="5"
+                              fill={overcastArt.crater || overcastArt.disc[1]}
+                              opacity={overcastArt.craterOpacity ? overcastArt.craterOpacity[0] : ".5"}
+                            />
+                            <circle
+                              cx="91.5"
+                              cy="34"
+                              r="3.4"
+                              fill={overcastArt.crater || overcastArt.disc[1]}
+                              opacity={overcastArt.craterOpacity ? overcastArt.craterOpacity[1] : ".4"}
+                            />
                           </>
                         ) : null}
                       </g>
@@ -1204,7 +1246,7 @@ export function HomeTab({
               </div>
               <div
                 data-testid={i === 0 ? "hourly-now-icon" : undefined}
-                style={{ display: "grid", placeItems: "center", fontSize: 20 }}
+                style={{ display: "grid", placeItems: "center", fontSize: 26 }}
               >
                 <WeatherIcon
                   conditionCode={hour.conditionCode}
@@ -1622,7 +1664,7 @@ function HealthTab({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "flex-end",
+                alignItems: "flex-start",
                 marginBottom: 16,
               }}
             >
@@ -1660,7 +1702,8 @@ function HealthTab({
               <div
                 className="aqi-band-icon"
                 style={{
-                  fontSize: 40,
+                  fontSize: 44,
+                  marginTop: 4,
                   color: `var(${aqiBandForIndex(weather.airQuality.index).token})`,
                 }}
               >
@@ -5354,9 +5397,7 @@ function Setup({
     <main className="setup-shell">
       <div className="setup-noise" />
       <div className="setup-topbar">
-        <div className="brand-mark">
-          <Icon name="spark" className="wordmark-spark" /> MAUSAM
-        </div>
+        <div className="brand-mark">MAUSAM</div>
         {step !== "welcome" && (
           <div className="setup-progress">
             <span style={{ width: `${Math.max(9, (stepIndex / 4) * 100)}%` }} />
@@ -5379,9 +5420,7 @@ function Setup({
               <span>{t("setup.menuForYou")}</span>
               <span>{t("setup.menuMausam")}</span>
             </div>
-            <div className="welcome-brand">
-              <Icon name="spark" className="wordmark-spark" /> MAUSAM
-            </div>
+            <div className="welcome-brand">MAUSAM</div>
             <div className="setup-eyebrow">{t("setup.welcomeEyebrow")}</div>
             <h1>
               {t("setup.welcomeLine1")}
@@ -5902,14 +5941,11 @@ function Ready({
   onBack?: () => void
 }) {
   const { t } = useTranslation()
-  const [entryProgress, setEntryProgress] = useState(0)
   return (
     <main className="setup-shell">
       <div className="setup-noise" />
       <div className="setup-topbar">
-        <div className="brand-mark">
-          <Icon name="spark" className="wordmark-spark" /> MAUSAM
-        </div>
+        <div className="brand-mark">MAUSAM</div>
         {onBack && (
           <button
             className="setup-back"
@@ -5923,7 +5959,6 @@ function Ready({
       </div>
       <div className="setup-content">
         <section className="setup-panel setup-login setup-animate">
-          <div className="login-symbol"><Icon name="spark" /></div>
           <div className="setup-eyebrow">{t("ready.eyebrow")}</div>
           <h2>
             {t("ready.headingLine1")}
@@ -5931,47 +5966,7 @@ function Ready({
             <em>{t("ready.headingLine2")}</em>
           </h2>
           <p className="setup-copy">{t("ready.copy")}</p>
-          <div
-            className="entry-slider"
-            style={
-              {
-                "--entry-progress": `${entryProgress}%`,
-                "--entry-progress-ratio": entryProgress / 100,
-              } as React.CSSProperties
-            }
-          >
-            <input
-              aria-label={t("ready.sliderAria")}
-              type="range"
-              min="0"
-              max="100"
-              value={entryProgress}
-              onChange={(event) => {
-                const value = Number(event.target.value)
-                setEntryProgress(value)
-                if (value === 100) onComplete()
-              }}
-            />
-            <span />
-            <strong>
-              {t("ready.slide")} <Icon name="arrow-right" />
-            </strong>
-            <i className="entry-handle" aria-hidden="true">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            </i>
-          </div>
+          <SlideToDiveIn onComplete={onComplete} />
           <div className="setup-consent">{t("ready.consent")}</div>
         </section>
       </div>
