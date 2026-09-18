@@ -218,29 +218,52 @@ describe("fetchWeatherDashboard — demo-data-leak prevention (v0.2 review, Requ
 
 describe("resolveWeatherIcon — is_day handling", () => {
   it("shows the daytime icon for a clear condition when isDay is true", () => {
-    expect(resolveWeatherIcon("clear", undefined, true)).toBe("☀️")
+    expect(resolveWeatherIcon("clear", undefined, true)).toBe("clear-day")
   })
 
   it("shows a moon for a clear condition when isDay is explicitly false", () => {
-    expect(resolveWeatherIcon("clear", undefined, false)).toBe("🌙")
+    expect(resolveWeatherIcon("clear", undefined, false)).toBe("clear-night")
   })
 
   it("defaults to the daytime icon when isDay is omitted (backward compatible with demo/older data)", () => {
-    expect(resolveWeatherIcon("clear", undefined, undefined)).toBe("☀️")
+    expect(resolveWeatherIcon("clear", undefined, undefined)).toBe("clear-day")
   })
 
   it("does not change non-sun conditions at night (e.g. rain stays rain)", () => {
-    expect(resolveWeatherIcon("rain", undefined, false)).toBe("🌧️")
+    expect(resolveWeatherIcon("rain", undefined, false)).toBe("rain-cloud")
   })
 
-  it("shows a moon with cloud for cloudy nighttime conditions", () => {
-    expect(resolveWeatherIcon("partly_cloudy", undefined, false)).toBe("🌙☁️")
-    expect(resolveWeatherIcon("cloudy", undefined, false)).toBe("🌙☁️")
-    expect(resolveWeatherIcon("overcast", undefined, false)).toBe("🌙☁️")
+  it("shows the night artwork for cloudy nighttime conditions", () => {
+    expect(resolveWeatherIcon("partly_cloudy", undefined, false)).toBe(
+      "partly-cloudy-night",
+    )
+    expect(resolveWeatherIcon("cloudy", undefined, false)).toBe("overcast-night")
+    expect(resolveWeatherIcon("overcast", undefined, false)).toBe("overcast-night")
   })
 
+  it("falls back to the thermometer for an unrecognised condition code", () => {
+    expect(resolveWeatherIcon("hailstorm-of-frogs", undefined, true)).toBe(
+      "thermometer",
+    )
+  })
+
+  // The sentinel is a real icon name rather than an arbitrary glyph: the
+  // override path now resolves through the icon registry, so an unrecognised
+  // value is deliberately ignored (see the next case).
   it("an explicit icon override always wins regardless of isDay", () => {
-    expect(resolveWeatherIcon("clear", "🖼️", false)).toBe("🖼️")
+    expect(resolveWeatherIcon("clear", "snow", false)).toBe("snow")
+  })
+
+  it("ignores an override it cannot resolve, falling back to the condition code", () => {
+    expect(resolveWeatherIcon("clear", "not-a-real-icon", true)).toBe("clear-day")
+  })
+
+  // A frozen Android bundle can hold an emoji `icon` from before the icon
+  // system landed; it must still resolve rather than render nothing.
+  it("accepts a legacy emoji override from a stale payload", () => {
+    expect(resolveWeatherIcon("clear", "⛈️", true)).toBe(
+      "thunderstorms-rain",
+    )
   })
 })
 

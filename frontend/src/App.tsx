@@ -4,6 +4,7 @@ import { ComfortIndicator, comfortTone } from "@/components/common/ComfortIndica
 import { syncWeatherToWidget } from "@/widgets/widgetBridge"
 import { PullToRefresh } from "@/components/common/PullToRefresh"
 import { Icon } from "@/components/icons/Icon"
+import { aqiBandForIndex } from "@/components/icons/iconMap"
 import type { PersonalizedIcon } from "@/components/icons/iconMap"
 import {
   useState,
@@ -199,8 +200,9 @@ function Bar({
   )
 }
 
-const INDIA_NAQI_GRADIENT =
-  "linear-gradient(90deg,#22c55e 0 10%,#84cc16 10% 20%,#facc15 20% 40%,#f97316 40% 60%,#a855f7 60% 80%,#7f1d1d 80% 100%)"
+// The scale itself is defined once in index.css as --aqi-* custom properties,
+// so the meter and the band icons cannot drift apart.
+const INDIA_NAQI_GRADIENT = "var(--aqi-gradient)"
 
 function WeatherIcon({
   conditionCode,
@@ -213,11 +215,12 @@ function WeatherIcon({
   label: string
   isDay?: boolean
 }) {
-  const resolvedIcon = resolveWeatherIcon(conditionCode, icon, isDay)
-  if (/^(https?:\/\/|\/)/.test(resolvedIcon)) {
+  // A payload may still carry a URL in `icon` (a provider-supplied image), and
+  // that wins, as it always did.
+  if (icon && /^(https?:\/\/|\/)/.test(icon)) {
     return (
       <img
-        src={resolvedIcon}
+        src={icon}
         alt={label}
         loading="lazy"
         decoding="async"
@@ -226,9 +229,7 @@ function WeatherIcon({
     )
   }
   return (
-    <span role="img" aria-label={label}>
-      {resolvedIcon}
-    </span>
+    <Icon name={resolveWeatherIcon(conditionCode, icon, isDay)} label={label} />
   )
 }
 
@@ -1618,7 +1619,18 @@ function HealthTab({
                   {td(weather.airQuality.updatedLabel)}
                 </div>
               </div>
-              <div style={{ fontSize: 40 }}>{weather.airQuality.icon}</div>
+              <div
+                className="aqi-band-icon"
+                style={{
+                  fontSize: 40,
+                  color: `var(${aqiBandForIndex(weather.airQuality.index).token})`,
+                }}
+              >
+                <Icon
+                  name={aqiBandForIndex(weather.airQuality.index).icon}
+                  label={td(weather.airQuality.label)}
+                />
+              </div>
             </div>
             <Bar
               pct={

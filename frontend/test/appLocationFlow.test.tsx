@@ -814,8 +814,13 @@ describe("App — location-first state machine", () => {
     // summarize a whole day, not a single instant), so a document-wide
     // "no sun anywhere" assertion would be wrong, not this behavior.
     const nowIcon = await screen.findByTestId("hourly-now-icon")
-    expect(nowIcon).toHaveTextContent("🌙")
-    expect(nowIcon).not.toHaveTextContent("☀️")
+    // Icons are SVG now, so identity is asserted on data-icon rather than on
+    // the emoji text this used to match.
+    expect(nowIcon.querySelector("[data-icon]")).toHaveAttribute(
+      "data-icon",
+      "clear-night",
+    )
+    expect(nowIcon.querySelector('[data-icon="clear-day"]')).toBeNull()
     const hero = document.querySelector(".weather-hero-card")
     expect(hero).toHaveAttribute("data-weather-variant", "night")
     expect(screen.getByLabelText(/animated smiling moon/i)).toBeInTheDocument()

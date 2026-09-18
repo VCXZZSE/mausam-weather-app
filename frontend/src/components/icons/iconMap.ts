@@ -11,6 +11,32 @@
 // so the refactor is pixel-identical. `strokeWidth` is per-icon for the same
 // reason: the three originals used 1.6, 2 and 1.8 respectively.
 
+// Weather and AQI artwork is imported as raw SVG strings and inlined by
+// <Icon>, rather than referenced with <img src>: that needs no network and no
+// extra request inside the Android WebView, and lets the AQI set inherit
+// `currentColor` from the theme.
+import clearDay from "@/assets/icons/weather/clear-day.svg?raw"
+import clearNight from "@/assets/icons/weather/clear-night.svg?raw"
+import partlyCloudyDay from "@/assets/icons/weather/partly-cloudy-day.svg?raw"
+import partlyCloudyNight from "@/assets/icons/weather/partly-cloudy-night.svg?raw"
+import overcast from "@/assets/icons/weather/overcast.svg?raw"
+import overcastNight from "@/assets/icons/weather/overcast-night.svg?raw"
+import drizzle from "@/assets/icons/weather/drizzle.svg?raw"
+import rainCloud from "@/assets/icons/weather/rain.svg?raw"
+import thunderstormsRain from "@/assets/icons/weather/thunderstorms-rain.svg?raw"
+import fogDay from "@/assets/icons/weather/fog-day.svg?raw"
+import fogNight from "@/assets/icons/weather/fog-night.svg?raw"
+import windGust from "@/assets/icons/weather/wind.svg?raw"
+import snow from "@/assets/icons/weather/snow.svg?raw"
+import thermometer from "@/assets/icons/weather/thermometer.svg?raw"
+
+import aqiGood from "@/assets/icons/aqi/aqi-good.svg?raw"
+import aqiSatisfactory from "@/assets/icons/aqi/aqi-satisfactory.svg?raw"
+import aqiModerate from "@/assets/icons/aqi/aqi-moderate.svg?raw"
+import aqiPoor from "@/assets/icons/aqi/aqi-poor.svg?raw"
+import aqiVeryPoor from "@/assets/icons/aqi/aqi-very-poor.svg?raw"
+import aqiSevere from "@/assets/icons/aqi/aqi-severe.svg?raw"
+
 /** Every icon name the app may render. Adding art means extending this union. */
 export type IconName =
   // --- interface / navigation (was ProfileSidebar's local Icon) ---
@@ -38,6 +64,46 @@ export type IconName =
   | "indoor"
   | "rain"
   | "wind"
+  // --- weather conditions (vendored Meteocons, see assets/icons/weather) ---
+  | WeatherIconName
+  // --- CPCB NAQI bands (hand-drawn, see assets/icons/aqi) ---
+  | AqiIconName
+
+/**
+ * Weather artwork, named after the source SVG. These are full-colour icons —
+ * a sun should read as a sun — so unlike the line icons they do not inherit
+ * `currentColor`.
+ */
+export type WeatherIconName =
+  | "clear-day"
+  | "clear-night"
+  | "partly-cloudy-day"
+  | "partly-cloudy-night"
+  | "overcast"
+  | "overcast-night"
+  | "drizzle"
+  | "rain-cloud"
+  | "thunderstorms-rain"
+  | "fog-day"
+  | "fog-night"
+  | "wind-gust"
+  | "snow"
+  | "thermometer"
+
+/** One per CPCB National AQI band. Drawn in currentColor. */
+export type AqiIconName =
+  | "aqi-good"
+  | "aqi-satisfactory"
+  | "aqi-moderate"
+  | "aqi-poor"
+  | "aqi-very-poor"
+  | "aqi-severe"
+
+/**
+ * The icons drawn from inline path data in `ICON_SPECS`, as opposed to the
+ * weather and AQI art loaded from SVG files. All of them inherit colour.
+ */
+export type LineIconName = Exclude<IconName, WeatherIconName | AqiIconName>
 
 /** A circle primitive, for the few icons whose art is not a single path. */
 export type IconCircle = { cx: number; cy: number; r: number }
@@ -71,7 +137,7 @@ export type PersonalizedIcon = Extract<
   | "wind"
 >
 
-export const ICON_SPECS: Record<IconName, IconSpec> = {
+export const ICON_SPECS: Record<LineIconName, IconSpec> = {
   // --- interface / navigation, stroke 1.6 ---
   close: { paths: ["m6 6 12 12M6 18 18 6"], strokeWidth: 1.6 },
   pin: {
@@ -179,8 +245,6 @@ export const ICON_SPECS: Record<IconName, IconSpec> = {
   },
 }
 
-const ICON_NAMES = new Set<string>(Object.keys(ICON_SPECS))
-
 export function isIconName(value: string): value is IconName {
   return ICON_NAMES.has(value)
 }
@@ -198,20 +262,35 @@ export function isIconName(value: string): value is IconName {
  * on it. Grows as later commits retire more emoji.
  */
 export const LEGACY_EMOJI_ALIASES: Readonly<Record<string, IconName>> = {
-  "☀️": "sun",
-  "🌞": "sun",
+  // weather conditions
+  "☀️": "clear-day",
+  "🌞": "clear-day",
+  "🌤️": "partly-cloudy-day",
+  "⛅": "partly-cloudy-day",
+  "☁️": "overcast",
+  "🌙": "clear-night",
+  "🌙☁️": "overcast-night",
+  "🌦️": "drizzle",
+  "🌧️": "rain-cloud",
+  "⛈️": "thunderstorms-rain",
+  "🌫️": "fog-day",
+  "💨": "wind-gust",
+  "🌬️": "wind-gust",
+  "🌨️": "snow",
+  "🌡️": "thermometer",
+  // CPCB NAQI bands
+  "😊": "aqi-good",
+  "🙂": "aqi-satisfactory",
+  "😐": "aqi-moderate",
+  "😷": "aqi-poor",
+  "🚫": "aqi-very-poor",
+  "☠️": "aqi-severe",
+  // briefing / interface
   "🛡️": "shield",
   "🥶": "cold",
-  "🌡️": "temperature",
-  "🌙": "evening",
-  "💨": "wind",
-  "🌬️": "wind",
-  "🌧️": "rain",
-  "🌦️": "rain",
   "🏡": "indoor",
   "🏠": "indoor",
   "🏃": "outdoor",
-  "🙂": "comfort",
 }
 
 /**
@@ -224,4 +303,131 @@ export function resolveIconName(value: string | null | undefined): IconName | nu
   const trimmed = value.trim()
   if (isIconName(trimmed)) return trimmed
   return LEGACY_EMOJI_ALIASES[trimmed] ?? null
+}
+
+// --- file-backed artwork ----------------------------------------------------
+
+export const SVG_ASSETS: Record<WeatherIconName | AqiIconName, string> = {
+  "clear-day": clearDay,
+  "clear-night": clearNight,
+  "partly-cloudy-day": partlyCloudyDay,
+  "partly-cloudy-night": partlyCloudyNight,
+  overcast,
+  "overcast-night": overcastNight,
+  drizzle,
+  "rain-cloud": rainCloud,
+  "thunderstorms-rain": thunderstormsRain,
+  "fog-day": fogDay,
+  "fog-night": fogNight,
+  "wind-gust": windGust,
+  snow,
+  thermometer,
+  "aqi-good": aqiGood,
+  "aqi-satisfactory": aqiSatisfactory,
+  "aqi-moderate": aqiModerate,
+  "aqi-poor": aqiPoor,
+  "aqi-very-poor": aqiVeryPoor,
+  "aqi-severe": aqiSevere,
+}
+
+export function isSvgAssetIcon(
+  name: IconName,
+): name is WeatherIconName | AqiIconName {
+  return name in SVG_ASSETS
+}
+
+/** Both registries together: every name `isIconName` should accept. */
+const ICON_NAMES = new Set<string>([
+  ...Object.keys(ICON_SPECS),
+  ...Object.keys(SVG_ASSETS),
+])
+
+// --- semantic resolvers -----------------------------------------------------
+
+/**
+ * Weather icon for a `conditionCode`, which is what the rules engine emits
+ * (see backend/src/normalizers/conditionCode.ts, where WMO codes are mapped).
+ * Deliberately keyed on the code and not on whatever emoji used to sit there.
+ *
+ * `isDay === false` picks the night artwork for the conditions that read
+ * differently after dark; rain and storms look the same at any hour. When
+ * `isDay` is omitted the daytime icon is used, matching the previous behaviour
+ * for demo data and pre-v0.2 backend responses.
+ */
+const CONDITION_ICONS: Record<string, WeatherIconName> = {
+  sunny: "clear-day",
+  clear: "clear-day",
+  fair: "clear-day",
+  partly_cloudy: "partly-cloudy-day",
+  cloudy: "overcast",
+  overcast: "overcast",
+  drizzle: "drizzle",
+  showers: "drizzle",
+  rain: "rain-cloud",
+  // Meteocons 2.0 has no heavier rain variant, so heavy rain shares the rain
+  // artwork — as it did before, when both were the same emoji.
+  heavy_rain: "rain-cloud",
+  thunderstorm: "thunderstorms-rain",
+  storm: "thunderstorms-rain",
+  fog: "fog-day",
+  mist: "fog-day",
+  wind: "wind-gust",
+  snow: "snow",
+}
+
+const NIGHT_CONDITION_ICONS: Record<string, WeatherIconName> = {
+  sunny: "clear-night",
+  clear: "clear-night",
+  fair: "clear-night",
+  partly_cloudy: "partly-cloudy-night",
+  cloudy: "overcast-night",
+  overcast: "overcast-night",
+  fog: "fog-night",
+  mist: "fog-night",
+}
+
+/** Shown when a condition code is unrecognised. */
+export const FALLBACK_WEATHER_ICON: WeatherIconName = "thermometer"
+
+export function weatherIconForCondition(
+  conditionCode: string,
+  isDay?: boolean,
+): WeatherIconName {
+  const key = conditionCode.trim().toLowerCase().replace(/[\s-]+/g, "_")
+  if (isDay === false && NIGHT_CONDITION_ICONS[key])
+    return NIGHT_CONDITION_ICONS[key]
+  return CONDITION_ICONS[key] ?? FALLBACK_WEATHER_ICON
+}
+
+/**
+ * CPCB National AQI bands, in the order the standard defines them. The upper
+ * bounds mirror backend/src/normalizers/cpcbAqi.ts; `token` names the CSS
+ * custom property that colours both this icon and the AQI meter, so the two
+ * cannot drift apart.
+ */
+export const AQI_BANDS = [
+  { max: 50, label: "Good", icon: "aqi-good", token: "--aqi-good" },
+  { max: 100, label: "Satisfactory", icon: "aqi-satisfactory", token: "--aqi-satisfactory" },
+  { max: 200, label: "Moderate", icon: "aqi-moderate", token: "--aqi-moderate" },
+  { max: 300, label: "Poor", icon: "aqi-poor", token: "--aqi-poor" },
+  { max: 400, label: "Very Poor", icon: "aqi-very-poor", token: "--aqi-very-poor" },
+  { max: Infinity, label: "Severe", icon: "aqi-severe", token: "--aqi-severe" },
+] as const satisfies ReadonlyArray<{
+  max: number
+  label: string
+  icon: AqiIconName
+  token: string
+}>
+
+export type AqiBand = (typeof AQI_BANDS)[number]
+
+/** The band an index falls in. Values above 400 are Severe. */
+export function aqiBandForIndex(index: number): AqiBand {
+  return AQI_BANDS.find((band) => index <= band.max) ?? AQI_BANDS[AQI_BANDS.length - 1]
+}
+
+/** Resolves the band by its English label, for payloads that carry only that. */
+export function aqiBandForLabel(label: string): AqiBand | null {
+  const needle = label.trim().toLowerCase()
+  return AQI_BANDS.find((band) => band.label.toLowerCase() === needle) ?? null
 }

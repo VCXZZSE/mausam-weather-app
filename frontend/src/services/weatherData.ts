@@ -1,3 +1,9 @@
+import {
+  resolveIconName,
+  weatherIconForCondition,
+  type IconName,
+} from "@/components/icons/iconMap"
+
 export type WeatherHeroVariant = "rainy" | "sunny" | "night"
 
 export type HourlyForecast = {
@@ -234,7 +240,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 31,
       condition: "Thunderstorms",
       conditionCode: "thunderstorm",
-      icon: "⛈️",
+      icon: "thunderstorms-rain",
       rainChance: 92,
     },
     {
@@ -242,7 +248,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 30,
       condition: "Thunderstorms",
       conditionCode: "thunderstorm",
-      icon: "⛈️",
+      icon: "thunderstorms-rain",
       rainChance: 95,
     },
     {
@@ -250,7 +256,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 29,
       condition: "Thunderstorms",
       conditionCode: "thunderstorm",
-      icon: "⛈️",
+      icon: "thunderstorms-rain",
       rainChance: 88,
     },
     {
@@ -258,7 +264,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 30,
       condition: "Showers",
       conditionCode: "showers",
-      icon: "🌦️",
+      icon: "drizzle",
       rainChance: 72,
     },
     {
@@ -266,7 +272,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 31,
       condition: "Showers",
       conditionCode: "showers",
-      icon: "🌦️",
+      icon: "drizzle",
       rainChance: 65,
     },
     {
@@ -274,7 +280,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 30,
       condition: "Rain",
       conditionCode: "rain",
-      icon: "🌧️",
+      icon: "rain-cloud",
       rainChance: 80,
     },
     {
@@ -282,7 +288,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 29,
       condition: "Rain",
       conditionCode: "rain",
-      icon: "🌧️",
+      icon: "rain-cloud",
       rainChance: 85,
     },
     {
@@ -290,7 +296,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 28,
       condition: "Showers",
       conditionCode: "showers",
-      icon: "🌦️",
+      icon: "drizzle",
       rainChance: 68,
     },
     {
@@ -298,7 +304,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 27,
       condition: "Rain",
       conditionCode: "rain",
-      icon: "🌧️",
+      icon: "rain-cloud",
       rainChance: 58,
     },
     {
@@ -306,7 +312,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 27,
       condition: "Rain",
       conditionCode: "rain",
-      icon: "🌧️",
+      icon: "rain-cloud",
       rainChance: 45,
     },
   ],
@@ -317,7 +323,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       low: 25,
       condition: "Thunderstorms",
       conditionCode: "thunderstorm",
-      icon: "⛈️",
+      icon: "thunderstorms-rain",
       rainChance: 92,
     },
     {
@@ -326,7 +332,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       low: 25,
       condition: "Heavy Rain",
       conditionCode: "heavy_rain",
-      icon: "🌧️",
+      icon: "rain-cloud",
       rainChance: 85,
     },
     {
@@ -335,7 +341,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       low: 26,
       condition: "Showers",
       conditionCode: "showers",
-      icon: "🌦️",
+      icon: "drizzle",
       rainChance: 60,
     },
     {
@@ -344,7 +350,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       low: 27,
       condition: "Partly Cloudy",
       conditionCode: "partly_cloudy",
-      icon: "🌤️",
+      icon: "partly-cloudy-day",
       rainChance: 30,
     },
     {
@@ -353,7 +359,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       low: 27,
       condition: "Cloudy",
       conditionCode: "cloudy",
-      icon: "⛅",
+      icon: "partly-cloudy-day",
       rainChance: 40,
     },
     {
@@ -362,7 +368,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       low: 25,
       condition: "Rain",
       conditionCode: "rain",
-      icon: "🌧️",
+      icon: "rain-cloud",
       rainChance: 80,
     },
     {
@@ -371,7 +377,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       low: 24,
       condition: "Storms",
       conditionCode: "storm",
-      icon: "⛈️",
+      icon: "thunderstorms-rain",
       rainChance: 90,
     },
   ],
@@ -534,7 +540,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 16,
       condition: "Foggy Rain",
       conditionCode: "fog",
-      icon: "🌧️",
+      icon: "rain-cloud",
       distance: "600 km",
     },
     {
@@ -542,7 +548,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 28,
       condition: "Rough Seas",
       conditionCode: "storm",
-      icon: "⛈️",
+      icon: "thunderstorms-rain",
       distance: "180 km",
     },
     {
@@ -550,7 +556,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 30,
       condition: "Showers",
       conditionCode: "showers",
-      icon: "🌦️",
+      icon: "drizzle",
       distance: "130 km",
     },
     {
@@ -558,7 +564,7 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
       temperature: 24,
       condition: "Heavy Rain",
       conditionCode: "heavy_rain",
-      icon: "🌧️",
+      icon: "rain-cloud",
       distance: "570 km",
     },
   ],
@@ -592,55 +598,26 @@ export const DEMO_WEATHER_DATA: DashboardWeatherData = {
   },
 }
 
-const CONDITION_ICONS: Record<string, string> = {
-  sunny: "☀️",
-  clear: "☀️",
-  fair: "☀️",
-  partly_cloudy: "🌤️",
-  cloudy: "☁️",
-  overcast: "☁️",
-  drizzle: "🌦️",
-  showers: "🌦️",
-  rain: "🌧️",
-  heavy_rain: "🌧️",
-  thunderstorm: "⛈️",
-  storm: "⛈️",
-  fog: "🌫️",
-  mist: "🌫️",
-  wind: "💨",
-  snow: "🌨️",
-}
-
-// Only these conditions have a distinct nighttime look (a "clear"/"sunny"
-// sky after dark should show a moon, not a sun); everything else (rain,
-// clouds, storms, etc.) reads fine at any hour.
-const NIGHT_ICON_OVERRIDES: Record<string, string> = {
-  sunny: "🌙",
-  clear: "🌙",
-  fair: "🌙",
-  partly_cloudy: "🌙☁️",
-  cloudy: "🌙☁️",
-  overcast: "🌙☁️",
-}
-
 /**
  * `isDay` (v0.2, from Open-Meteo's own day/night flag) is optional — when
- * omitted (e.g. demo data or an older backend response), the
- * daytime icon is used, matching pre-v0.2 behavior exactly.
+ * omitted (e.g. demo data or an older backend response), the daytime icon is
+ * used, matching pre-v0.2 behavior exactly.
+ *
+ * `override` accepts a current icon name, a URL (handled by the caller), or an
+ * emoji from a payload written before the icon system landed — see
+ * LEGACY_EMOJI_ALIASES. Anything unrecognised falls through to the condition
+ * code, which is the value actually worth trusting.
  */
 export function resolveWeatherIcon(
   conditionCode: string,
   override?: string,
   isDay?: boolean,
-): string {
-  if (override) return override
-  const key = conditionCode
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, "_")
-  if (isDay === false && NIGHT_ICON_OVERRIDES[key])
-    return NIGHT_ICON_OVERRIDES[key]
-  return CONDITION_ICONS[key] || "🌡️"
+): IconName {
+  if (override) {
+    const resolved = resolveIconName(override)
+    if (resolved) return resolved
+  }
+  return weatherIconForCondition(conditionCode, isDay)
 }
 
 export function getWeatherHeroVariant(
