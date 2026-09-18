@@ -1,0 +1,41 @@
+# Runs on Linux, which is the point.
+#
+# The frontend builds clean on a contributor's Windows or macOS machine even
+# when an import's casing disagrees with the file it names, because those
+# filesystems are case-insensitive. Vercel builds on Linux and rejects it. CI
+# runs here so that mismatch surfaces on the pull request instead of as a red
+# deployment.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      # Before the build: this failure is about the source, and its message is
+      # far clearer than the resolution error the bundler would raise instead.
+      - name: Check import casing
+        run: npm run check:case
+
+      - name: Check TypeScript
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
