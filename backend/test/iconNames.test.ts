@@ -18,6 +18,9 @@ const REPO = resolve(__dirname, "..", "..")
 const EMOJI =
   /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{25A0}-\u{25FF}\u{2660}-\u{2667}]/u
 
+/** A line assigning an icon or tone field a string literal. */
+const ICON_FIELD = /(?:^|[\s{,])(?:icon|[A-Za-z]+Tone):\s*"/
+
 function walk(dir: string): string[] {
   const out: string[] = []
   for (const entry of readdirSync(dir)) {
@@ -28,25 +31,54 @@ function walk(dir: string): string[] {
   return out
 }
 
+/** Every shared module, both trees. lib/ is what the serverless side serves. */
+function sharedModules(): Array<{ rel: string; source: string }> {
+  const files: string[] = []
+  for (const dir of [join(REPO, "backend", "src"), join(REPO, "lib")]) {
+    files.push(...walk(dir))
+  }
+  return files.map((file) => ({
+    rel: relative(REPO, file).split(sep).join("/"),
+    source: readFileSync(file, "utf8"),
+  }))
+}
+
 describe("icon fields carry names, not emoji", () => {
-  // Both trees: lib/ is what the serverless deployment serves.
-  const files = [
-    ...walk(join(REPO, "backend", "src")),
-    ...walk(join(REPO, "lib")),
-  ].map((f) => relative(REPO, f).split(sep).join("/"))
-
-  it.each(files)("%s", (rel) => {
-    const source = readFileSync(join(REPO, rel), "utf8")
-    const offenders = source
-      .split("\n")
-      .map((line, i) => ({ line: line.trim(), number: i + 1 }))
-      .filter(({ line }) => /\bicon:\s*"/.test(line) && EMOJI.test(line))
-      .map(({ line, number }) => `${number}: ${line}`)
-
+  // One sweep rather than a test per file: 64 of the 82 shared modules contain
+  // no icon field at all, so a per-file assertion reported 64 passes that could
+  // never have failed. This names every offender at once, which is the part
+  // that is actually useful when it does fail.
+  it("nowhere in backend/src or lib/", () => {
+    const offenders: string[] = []
+    for (const { rel, source } of sharedModules()) {
+      source.split("\n").forEach((line, i) => {
+        if (ICON_FIELD.test(line) && EMOJI.test(line)) {
+          offenders.push(`${rel}:${i + 1}  ${line.trim()}`)
+        }
+      })
+    }
     expect(
       offenders,
-      "emoji in an icon field — use a name from the frontend icon registry",
+      "emoji in an icon or tone field — use a name from the frontend icon registry",
     ).toEqual([])
+  })
+
+  // Guards the sweep. An earlier version of it carried a literal backspace
+  // byte where \b was meant, so ICON_FIELD matched nothing and the sweep
+  // passed on an empty set; nothing noticed until a mutation test did. This
+  // fails if the sweep ever stops seeing the modules it is supposed to read.
+  it("actually inspected the modules that emit one", () => {
+    const emitters = sharedModules()
+      .filter(({ source }) =>
+        source.split("\n").some((line) => ICON_FIELD.test(line)),
+      )
+      .map(({ rel }) => rel)
+
+    expect(emitters.length, `only matched: ${emitters.join(", ")}`)
+      .toBeGreaterThanOrEqual(14)
+    // Both trees, not just one.
+    expect(emitters.some((r) => r.startsWith("backend/src/"))).toBe(true)
+    expect(emitters.some((r) => r.startsWith("lib/"))).toBe(true)
   })
 })
 
@@ -71,6 +103,14 @@ describe("computeComfort", () => {
     expect(cold.label).toBe(hot.label)
     expect(cold.icon).toBe("cold")
     expect(hot.icon).toBe("hot")
+  })
+
+  it("pairs each comfort band with its own advice tone", () => {
+    const cold = computeComfort({ temperature: 8, humidity: 90, windSpeed: 8 })
+    const fine = computeComfort({ temperature: 22, humidity: 45, windSpeed: 8 })
+    expect(fine.adviceTone).toBe("comfortable")
+    expect(cold.adviceTone).toBe("warning")
+    expect(fine.advice).not.toBe(cold.advice)
   })
 })
 
@@ -97,6 +137,13 @@ describe("computeOverview", () => {
 describe("CPCB AQI bands", () => {
   const KOLKATA = { latitude: 22.5726, longitude: 88.3639 }
 
+  const at = (index: number) =>
+    normalizeCpcbAirQuality(
+      cpcbRecords({ pollutant_avg: String(index) }),
+      KOLKATA,
+      50,
+    )
+
   it.each([
     [50, "aqi-good"],
     [51, "aqi-satisfactory"],
@@ -109,12 +156,12 @@ describe("CPCB AQI bands", () => {
     [400, "aqi-very-poor"],
     [401, "aqi-severe"],
   ])("names AQI %s as %s", (index, icon) => {
-    expect(
-      normalizeCpcbAirQuality(
-        cpcbRecords({ pollutant_avg: String(index) }),
-        KOLKATA,
-        50,
-      )?.icon,
-    ).toBe(icon)
+    expect(at(index)?.icon).toBe(icon)
+  })
+
+  it("gives each band its own advice and tone, not one generic line", () => {
+    const bands = [30, 80, 150, 250, 350, 450].map(at)
+    expect(new Set(bands.map((b) => b?.advice)).size).toBe(6)
+    expect(new Set(bands.map((b) => b?.adviceTone)).size).toBe(6)
   })
 })

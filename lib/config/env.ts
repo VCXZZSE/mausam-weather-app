@@ -1,3 +1,24 @@
+// THIS FILE IS DELIBERATELY NOT IDENTICAL TO backend/src/config/env.ts.
+//
+// lib/ is otherwise a byte-for-byte mirror of backend/src/ — it is the copy the
+// Vercel serverless functions in api/ import, and a test enforces the mirroring
+// (backend/test/libMirror.test.ts). This file is the single allow-listed
+// exception, and the difference is one line: the default value of
+// ALLOWED_ORIGINS.
+//
+//   lib/ (this file)         localhost:8443, localhost:5173
+//   backend/src              the same, plus 127.0.0.1:8443, 127.0.0.1:5173
+//
+// Why: this copy only ever runs on Vercel, where ALLOWED_ORIGINS is set
+// explicitly from the environment and this default is never reached. Adding the
+// 127.0.0.1 origins here would widen the production CORS policy for no benefit.
+// The backend/src copy runs the local Fastify dev server, which the Android
+// emulator and a phone on the same network reach over 127.0.0.1 rather than the
+// "localhost" hostname, so it needs them.
+//
+// If you change anything else in this file, copy it across to
+// backend/src/config/env.ts.
+
 import { z } from "zod"
 
 const envSchema = z.object({

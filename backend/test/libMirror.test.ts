@@ -21,7 +21,9 @@ const LIB = join(REPO, "lib")
  */
 const ALLOWED_DRIFT: Record<string, string> = {
   "config/env.ts":
-    "CORS origin defaults differ: the Fastify server also allows the 127.0.0.1 forms used by the Android emulator.",
+    "ALLOWED_ORIGINS default differs: the Fastify dev server also allows the " +
+    "127.0.0.1 forms the Android emulator uses, which the Vercel copy has no " +
+    "reason to widen to. Both files carry a header comment explaining it.",
 }
 
 function walk(dir: string): string[] {

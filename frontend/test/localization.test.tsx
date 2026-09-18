@@ -422,12 +422,49 @@ describe("removing emoji prefixes did not change any translation", () => {
     ["☂️ Carry umbrella · 😎 Wear sunglasses · 🧴 Reapply SPF every 2h", "Carry umbrella · Wear sunglasses · Reapply SPF every 2h"],
   ]
 
+  // Split deliberately. Comparing before-vs-after alone is symmetric: when a
+  // string has no translation at all, both sides come back as English and the
+  // comparison passes while proving nothing. So each pair is first classified
+  // by whether the language actually translates it, and the two cases assert
+  // different things.
+  const isTranslated = (language: "hi" | "bn", text: string) =>
+    stripMarks(translateDynamic(language, text)) !== stripMarks(text)
+
   it.each(PAIRS)("%s", (before, after) => {
     for (const language of ["hi", "bn"] as const) {
+      const wasTranslated = isTranslated(language, before)
+      const nowTranslated = isTranslated(language, after)
+
+      // Stripping the mark must never cost a translation.
       expect(
-        stripMarks(translateDynamic(language, after)),
-        `"${after}" reads differently than it did with its emoji`,
-      ).toBe(stripMarks(translateDynamic(language, before)))
+        nowTranslated,
+        `"${after}" used to translate into ${language} and no longer does`,
+      ).toBe(wasTranslated)
+
+      if (nowTranslated) {
+        // It translates: the words must come out the same as before, and must
+        // genuinely differ from the English.
+        expect(stripMarks(translateDynamic(language, after))).toBe(
+          stripMarks(translateDynamic(language, before)),
+        )
+        expect(stripMarks(translateDynamic(language, after))).not.toBe(
+          stripMarks(after),
+        )
+      }
     }
+  })
+
+  // Names the strings that reach a reader untranslated, so the gap is recorded
+  // rather than hidden behind a comparison that passes either way. Update this
+  // count when these get translated — downwards only.
+  it("records how many of these still reach hi/bn readers in English", () => {
+    const untranslated = PAIRS.filter(
+      ([, after]) => !isTranslated("hi", after) && !isTranslated("bn", after),
+    ).map(([, after]) => after)
+
+    expect(
+      untranslated.length,
+      `still English in both hi and bn: ${untranslated.join(" | ")}`,
+    ).toBe(10)
   })
 })

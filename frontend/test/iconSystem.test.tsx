@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { cleanup, render, screen } from "@testing-library/react"
 import { Icon } from "@/components/icons/Icon"
 import {
@@ -9,6 +11,7 @@ import {
   SVG_ASSETS,
   aqiBandForIndex,
   aqiBandForLabel,
+  FALLBACK_WEATHER_ICON,
   isIconName,
   isLucideIcon,
   isSvgAssetIcon,
@@ -113,16 +116,23 @@ describe("resolveIconName", () => {
     expect(resolveIconName(null)).toBeNull()
   })
 
-  it("every alias points at art that exists", () => {
+  // Was: assert each alias value satisfies isIconName(). TypeScript already
+  // types those values as IconName, so that could not fail. Rendering each one
+  // can: it catches a registry entry that exists by name but whose art is
+  // missing or empty.
+  it("renders real art for every alias, not just a known name", () => {
     for (const [emoji, name] of Object.entries(LEGACY_EMOJI_ALIASES)) {
-      expect(isIconName(name), `${emoji} -> ${name} is not a real icon`).toBe(true)
+      const resolved = resolveIconName(emoji)
+      expect(resolved, `${emoji} did not resolve`).toBe(name)
+
+      const { container, unmount } = render(<Icon name={resolved!} />)
+      const svg = container.querySelector("svg")
+      expect(svg, `${emoji} -> ${name} rendered no svg`).not.toBeNull()
       expect(
-        isSvgAssetIcon(name)
-          ? SVG_ASSETS[name]
-          : isLucideIcon(name)
-            ? LUCIDE_ICONS[name]
-            : ICON_SPECS[name],
-      ).toBeDefined()
+        svg!.querySelectorAll("path, circle, ellipse, rect, polygon, g").length,
+        `${emoji} -> ${name} rendered an empty svg`,
+      ).toBeGreaterThan(0)
+      unmount()
     }
   })
 
@@ -135,18 +145,41 @@ describe("resolveIconName", () => {
 })
 
 describe("weatherIconForCondition", () => {
-  // Every conditionCode backend/src/normalizers/conditionCode.ts can emit.
+  // Read out of the normalizer's own source rather than hand-copied here, so
+  // adding a WMO mapping without artwork fails this instead of drifting
+  // silently past a stale list.
   const CODES = [
-    "clear", "fair", "partly_cloudy", "overcast", "cloudy", "fog", "mist",
-    "drizzle", "rain", "heavy_rain", "showers", "snow", "thunderstorm",
-    "storm", "sunny", "wind",
+    ...new Set(
+      [
+        ...readFileSync(
+          resolve(__dirname, "../../backend/src/normalizers/conditionCode.ts"),
+          "utf8",
+        ).matchAll(/conditionCode:\s*"([^"]+)"/g),
+      ].map((m) => m[1]),
+    ),
   ]
 
-  it("maps every condition code the rules engine emits", () => {
+  it("reads a non-trivial set of codes out of the normalizer", () => {
+    expect(CODES.length).toBeGreaterThanOrEqual(10)
+  })
+
+  // Asserting the resolved name has artwork is not enough: the fallback has
+  // artwork too, so an unmapped code passes that check while silently showing
+  // a thermometer. Each code must resolve to something that is NOT the
+  // fallback — which is what makes adding a WMO mapping without artwork fail.
+  it("maps every condition code to real artwork, never the fallback", () => {
+    const unmapped: string[] = []
     for (const code of CODES) {
-      const icon = weatherIconForCondition(code, true)
-      expect(SVG_ASSETS[icon], `${code} has no artwork`).toBeDefined()
+      for (const isDay of [true, false]) {
+        const icon = weatherIconForCondition(code, isDay)
+        expect(SVG_ASSETS[icon], `${code} has no artwork`).toBeDefined()
+        if (icon === FALLBACK_WEATHER_ICON) unmapped.push(`${code} (isDay=${isDay})`)
+      }
     }
+    expect(
+      unmapped,
+      "these codes fell through to the fallback instead of naming artwork",
+    ).toEqual([])
   })
 
   it("is keyed on the code, not on casing or separator style", () => {
@@ -210,9 +243,21 @@ describe("CPCB AQI bands", () => {
     }
   })
 
-  it("names a CSS custom property for every band", () => {
+  // Was: assert band.token starts with "--aqi-", which is a literal in the
+  // same file checking its own spelling. This checks the property is really
+  // declared in the stylesheet, which is the thing that would actually break
+  // the colour scale.
+  it("declares every band's custom property in index.css", () => {
+    const css = readFileSync(
+      resolve(__dirname, "../src/index.css"),
+      "utf8",
+    )
     for (const band of AQI_BANDS) {
-      expect(band.token).toMatch(/^--aqi-/)
+      expect(css, `${band.token} is not declared`).toContain(`${band.token}:`)
+      expect(
+        css,
+        `${band.token} is not used by the meter gradient`,
+      ).toContain(`var(${band.token})`)
     }
   })
 })
