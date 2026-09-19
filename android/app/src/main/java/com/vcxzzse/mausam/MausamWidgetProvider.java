@@ -74,14 +74,14 @@ public class MausamWidgetProvider extends AppWidgetProvider {
             iconDrawable = R.drawable.ic_widget_overcast;
             if (isLight) {
                 bgDrawable = R.drawable.widget_bg_overcast_light;
-                tempColor = 0xFF1E2A40;
-                labelColor = 0xFF2A3852;
-                subColor = 0xFF2A3852;
+                tempColor = 0xFF1F2E3D;
+                labelColor = 0xFF2F4154;
+                subColor = 0xFF2F4154;
             } else {
                 bgDrawable = R.drawable.widget_bg_overcast;
-                tempColor = 0xFFD6E0F0;
-                labelColor = 0xFFB0BED6;
-                subColor = 0xFF94A4BE;
+                tempColor = 0xFFE4EDF6;
+                labelColor = 0xFFC6D7E8;
+                subColor = 0xFFAFC3D7;
             }
         } else if ("overcast-night".equalsIgnoreCase(preset)) {
             iconDrawable = R.drawable.ic_widget_overcast_night;

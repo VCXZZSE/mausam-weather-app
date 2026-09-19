@@ -1,0 +1,436 @@
+/* ── Apple Spotlight Glassmorphic Location Search ───────────────────────── */
+
+.spotlight-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(4, 5, 12, 0.55);
+  backdrop-filter: blur(36px) saturate(200%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: max(16px, env(safe-area-inset-top, 16px)) 16px 16px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: spotlightFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes spotlightFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.spotlight-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 12px auto 20px auto;
+  max-height: calc(100dvh - 36px);
+  background: rgba(22, 25, 38, 0.88);
+  backdrop-filter: blur(48px) saturate(220%);
+  -webkit-backdrop-filter: blur(48px) saturate(220%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.72),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border-radius: 22px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: spotlightSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+@keyframes spotlightSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Search Bar Input Row - Pinned First Priority */
+.spotlight-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(22, 25, 38, 0.92);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  flex-shrink: 0;
+}
+
+.spotlight-search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(96, 165, 250, 0.95);
+  font-size: 18px;
+  filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.45));
+  flex-shrink: 0;
+}
+
+.spotlight-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.spotlight-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+}
+
+.spotlight-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.spotlight-clear-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.spotlight-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+/* Suggestions & Quick Chips - Compact Design */
+.spotlight-suggestions {
+  padding: 12px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.spotlight-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.spotlight-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.spotlight-chip {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.spotlight-chip:hover {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.25);
+}
+
+.spotlight-chip:active {
+  transform: scale(0.97);
+}
+
+/* Results Dropdown */
+.spotlight-results {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spotlight-results::-webkit-scrollbar {
+  width: 5px;
+}
+
+.spotlight-results::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+}
+
+.spotlight-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  text-align: left;
+  width: 100%;
+}
+
+.spotlight-result-item:hover,
+.spotlight-result-item.selected {
+  background: rgba(96, 165, 250, 0.14);
+  border-color: rgba(96, 165, 250, 0.32);
+}
+
+.spotlight-result-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.spotlight-pin-icon {
+  font-size: 16px;
+  color: rgba(96, 165, 250, 0.9);
+  flex-shrink: 0;
+}
+
+.spotlight-text-block {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spotlight-place-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotlight-place-meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotlight-distance-pill {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(96, 165, 250, 0.95);
+  background: rgba(96, 165, 250, 0.14);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+/* Status States */
+.spotlight-status {
+  padding: 22px 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spotlight-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: spotlightSpin 0.7s linear infinite;
+}
+
+@keyframes spotlightSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Light Mode Authentic Apple Glassmorphism ──────────────────────────── */
+
+.theme-light.spotlight-backdrop,
+.theme-light .spotlight-backdrop,
+[data-theme="light"].spotlight-backdrop,
+[data-theme="light"] .spotlight-backdrop {
+  background: rgba(230, 240, 255, 0.32);
+  backdrop-filter: blur(40px) saturate(230%) brightness(104%);
+  -webkit-backdrop-filter: blur(40px) saturate(230%) brightness(104%);
+}
+
+.theme-light .spotlight-container,
+[data-theme="light"] .spotlight-container {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(48px) saturate(240%) contrast(104%);
+  -webkit-backdrop-filter: blur(48px) saturate(240%) contrast(104%);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 30px 80px rgba(15, 30, 60, 0.16),
+    0 8px 24px rgba(15, 30, 60, 0.08),
+    inset 0 1.5px 1px rgba(255, 255, 255, 1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.theme-light .spotlight-bar,
+[data-theme="light"] .spotlight-bar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.theme-light .spotlight-search-icon,
+[data-theme="light"] .spotlight-search-icon {
+  color: #2563eb;
+  filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.45));
+}
+
+.theme-light .spotlight-input,
+[data-theme="light"] .spotlight-input {
+  color: #0f172a !important;
+  font-weight: 600;
+}
+
+.theme-light .spotlight-input::placeholder,
+[data-theme="light"] .spotlight-input::placeholder {
+  color: #64748b !important;
+  font-weight: 500;
+}
+
+.theme-light .spotlight-clear-btn,
+[data-theme="light"] .spotlight-clear-btn {
+  background: rgba(15, 23, 42, 0.08);
+  color: #334155;
+}
+
+.theme-light .spotlight-clear-btn:hover,
+[data-theme="light"] .spotlight-clear-btn:hover {
+  background: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+.theme-light .spotlight-section-title,
+[data-theme="light"] .spotlight-section-title {
+  color: #334155;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.theme-light .spotlight-chip,
+[data-theme="light"] .spotlight-chip {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(15, 30, 60, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.theme-light .spotlight-chip:hover,
+[data-theme="light"] .spotlight-chip:hover {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.5);
+  color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+  transform: translateY(-1px);
+}
+
+.theme-light .spotlight-result-item:hover,
+.theme-light .spotlight-result-item.selected,
+[data-theme="light"] .spotlight-result-item:hover,
+[data-theme="light"] .spotlight-result-item.selected {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 14px rgba(15, 30, 60, 0.07), inset 0 1px 0 #ffffff;
+}
+
+.theme-light .spotlight-pin-icon,
+[data-theme="light"] .spotlight-pin-icon {
+  color: #2563eb;
+}
+
+.theme-light .spotlight-place-name,
+[data-theme="light"] .spotlight-place-name {
+  color: #0f172a !important;
+  font-weight: 800;
+}
+
+.theme-light .spotlight-place-meta,
+[data-theme="light"] .spotlight-place-meta {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+.theme-light .spotlight-distance-pill,
+[data-theme="light"] .spotlight-distance-pill {
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  color: #1d4ed8;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+}
+
+.theme-light .spotlight-status,
+[data-theme="light"] .spotlight-status {
+  color: #475569;
+  font-weight: 600;
+}
+
+.theme-light .spotlight-spinner,
+[data-theme="light"] .spotlight-spinner {
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  border-top-color: #2563eb;
+}

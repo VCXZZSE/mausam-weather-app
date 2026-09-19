@@ -137,7 +137,7 @@ export function calculateNextHours(weather: DashboardWeatherData, currentKey: Co
  */
 export async function syncWeatherToWidget(
   weather: DashboardWeatherData | null | undefined,
-  isDark = true,
+  isDark = false,
   locationLabel?: string
 ): Promise<void> {
   if (!weather || !weather.current) return;

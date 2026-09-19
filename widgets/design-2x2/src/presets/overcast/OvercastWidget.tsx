@@ -1,5 +1,7 @@
 /**
  * OvercastWidget — 2×2 weather widget preset for cloudy / overcast conditions.
+ *
+ * All data values are dynamic — supply them from your API response.
  */
 
 import OvercastIcon from '../../components/icons/OvercastIcon';
@@ -40,7 +42,6 @@ export default function OvercastWidget({ data, mode }: WidgetProps) {
         justifyContent: 'space-between',
         background: t.bg,
         position: 'relative',
-        boxSizing: 'border-box',
       }}
     >
       <div
@@ -64,7 +65,7 @@ export default function OvercastWidget({ data, mode }: WidgetProps) {
           </div>
         </div>
         <div style={{ transform: 'scale(0.66)', transformOrigin: 'top right', marginTop: -4, marginRight: -4 }}>
-          <OvercastIcon phase="day" />
+          <OvercastIcon />
         </div>
       </div>
 

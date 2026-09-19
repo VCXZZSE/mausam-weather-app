@@ -4,6 +4,7 @@ import { ComfortIndicator, comfortTone } from "@/components/common/ComfortIndica
 import { syncWeatherToWidget } from "@/widgets/widgetBridge"
 import { PullToRefresh } from "@/components/common/PullToRefresh"
 import { SlideToDiveIn } from "@/components/common/SlideToDiveIn"
+import { TravelTilesGrid } from "@/components/travel/TravelTilesGrid"
 import { Icon } from "@/components/icons/Icon"
 import {
   aqiBandForIndex,
@@ -2805,7 +2806,7 @@ function SunArcCard({
 
 function ForecastTab({
   weather,
-  theme = "dark",
+  theme = "light",
   onOpenMenu,
   menuOpen,
 }: {
@@ -3170,10 +3171,14 @@ function ForecastTab({
 
 function AlertsTab({
   weather,
+  userLocation,
+  theme = "light",
   onOpenMenu,
   menuOpen,
 }: {
   weather: DashboardWeatherData
+  userLocation?: UserLocation | null
+  theme?: "dark" | "light"
   onOpenMenu: () => void
   menuOpen: boolean
 }) {
@@ -3188,7 +3193,7 @@ function AlertsTab({
         style={{
           fontSize: 22,
           fontWeight: 800,
-          color: "white",
+          color: theme === "light" ? "#0f172a" : "white",
           letterSpacing: "-0.03em",
           marginBottom: 18,
         }}
@@ -3232,14 +3237,21 @@ function AlertsTab({
                     }}
                   >
                     <div
-                      style={{ fontSize: 13, fontWeight: 700, color: "white" }}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: theme === "light" ? "#0f172a" : "white",
+                      }}
                     >
                       {td(a.title)}
                     </div>
                     <div
                       style={{
                         fontSize: 10,
-                        color: "rgba(255,255,255,0.28)",
+                        color:
+                          theme === "light"
+                            ? "#64748b"
+                            : "rgba(255,255,255,0.28)",
                         marginLeft: 8,
                         flexShrink: 0,
                       }}
@@ -3250,7 +3262,10 @@ function AlertsTab({
                   <div
                     style={{
                       fontSize: 11,
-                      color: "rgba(255,255,255,0.52)",
+                      color:
+                        theme === "light"
+                          ? "#334155"
+                          : "rgba(255,255,255,0.52)",
                       lineHeight: 1.55,
                     }}
                   >
@@ -3284,74 +3299,7 @@ function AlertsTab({
       {/* Saved Locations */}
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>{t("alerts.saved")}</SectionLabel>
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
-        >
-          {weather.locations.map((location) => (
-            <div
-              key={location.name}
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 16,
-                padding: 14,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: 8,
-                }}
-              >
-                <div
-                  style={{
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: 22,
-                  }}
-                >
-                  <WeatherIcon
-                    conditionCode={location.conditionCode}
-                    icon={location.icon}
-                    label={td(location.condition)}
-                  />
-                </div>
-                <div
-                  style={{
-                    fontSize: 9,
-                    color: "rgba(255,255,255,0.28)",
-                    fontWeight: 600,
-                  }}
-                >
-                  {td(location.distance)}
-                </div>
-              </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "white",
-                  marginBottom: 2,
-                }}
-              >
-                <span data-i18n-ignore>{td(location.name)}</span>
-              </div>
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "rgba(255,255,255,0.38)",
-                  marginBottom: 8,
-                }}
-              >
-                {td(location.condition)}
-              </div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: "white" }}>
-                {nu(location.temperature, "unit.degree")}
-              </div>
-            </div>
-          ))}
-        </div>
+        <TravelTilesGrid userLocation={userLocation ?? null} theme={theme} />
       </div>
 
       {/* Packing List */}
@@ -3789,6 +3737,7 @@ function resetOnboardingPreviewIfRequested(): void {
   if (url.searchParams.get("preview") !== "onboarding") return
 
   localStorage.removeItem(PROFILE_STORAGE_KEY)
+  localStorage.removeItem("mausam-theme")
   clearStoredLocation()
   url.searchParams.delete("preview")
   window.history.replaceState(
@@ -6354,7 +6303,7 @@ function MausamApp() {
     changeLocation()
     localStorage.removeItem(PROFILE_STORAGE_KEY)
     localStorage.removeItem("mausam-theme")
-    setTheme("dark")
+    setTheme("light")
     setLanguage(DEFAULT_LANGUAGE)
     localStorage.removeItem(LANGUAGE_STORAGE_KEY)
     setProfile(null)
@@ -6570,7 +6519,7 @@ function MausamApp() {
       data-theme={theme}
       data-weather-source={weatherSource}
       style={{
-        background: "#04050a",
+        background: theme === "light" ? "#cce4f2" : "#04050a",
         height: "100dvh",
         minHeight: "100dvh",
         display: "flex",
@@ -6585,7 +6534,7 @@ function MausamApp() {
           maxWidth: 630,
           height: "100dvh",
           minHeight: "100dvh",
-          background: "#07080e",
+          background: theme === "light" ? "#e9fbff" : "#07080e",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -6656,6 +6605,8 @@ function MausamApp() {
                 {tab === "alerts" && (
                   <AlertsTab
                     weather={weather}
+                    userLocation={userLocation}
+                    theme={theme}
                     onOpenMenu={() => setMenuOpen(true)}
                     menuOpen={menuOpen}
                   />

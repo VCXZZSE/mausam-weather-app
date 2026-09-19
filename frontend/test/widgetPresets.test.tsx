@@ -3,7 +3,13 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { DEMO_WEATHER_DATA } from "@/services/weatherData"
 import type { DashboardWeatherData } from "@/services/weatherData"
 import { resolveWidgetPreset } from "@/widgets/widgetBridge"
-import { OvercastNightWidget, OvercastWidget } from "@/widgets/presets"
+import {
+  MoonWidget,
+  OvercastNightWidget,
+  OvercastWidget,
+  SunnyWidget,
+  ThunderstormWidget,
+} from "@/widgets/presets"
 
 afterEach(() => {
   cleanup()
@@ -127,51 +133,59 @@ describe("OvercastWidget / OvercastNightWidget", () => {
     expect(card).toHaveStyle({ width: "170px", height: "170px" })
   })
 
-  it("draws the character's face and leaves the disc bare", () => {
+  it("renders the new glassmorphic multi-layered cloud icon and mist line", () => {
     const { container } = render(
       <OvercastWidget data={WIDGET_DATA} mode="dark" />,
     )
     const svg = container.querySelector("svg")!
 
-    // Two eyes and a mouth on the cloud.
-    expect(svg.querySelector("path[stroke-linecap='round']")).not.toBeNull()
-
-    // The sun is background scenery: dimmed, and with no face of its own.
-    // It is the only dimmed group, and holds nothing but its own circles.
-    const disc = [...svg.querySelectorAll("g")].find(
-      g => g.getAttribute("opacity") === "0.62",
-    )!
-    expect(disc).toBeDefined()
-    expect(disc.querySelector("path")).toBeNull()
-    expect(disc.querySelectorAll("circle")).toHaveLength(2)
+    expect(svg.querySelector(".overcast-cloud-front")).not.toBeNull()
+    expect(svg.querySelector(".overcast-cloud-back")).not.toBeNull()
+    expect(svg.querySelector(".mist-line")).not.toBeNull()
   })
 
-  // These presets feed the native Android tile, which renders through
-  // RemoteViews and never sees CSS. Carrying animation hooks here would be
-  // dead markup, and a CSS opacity rule matching the disc would override its
-  // dimming attribute — so the art stays static and class-free.
-  it("carries no animation hooks, so nothing can override the disc dimming", () => {
-    for (const Widget of [OvercastWidget, OvercastNightWidget]) {
-      const { container } = render(<Widget data={WIDGET_DATA} mode="dark" />)
-      const svg = container.querySelector("svg")!
-      expect(svg.querySelectorAll("[class]")).toHaveLength(0)
-      cleanup()
-    }
-  })
-
-  it("draws the sun by day and the moon by night", () => {
+  it("applies phase-appropriate gradients for day and night", () => {
     const { container: day } = render(
       <OvercastWidget data={WIDGET_DATA} mode="dark" />,
     )
-    expect(day.querySelector("#oci-disc-day")).not.toBeNull()
-    expect(day.querySelector("#oci-disc-night")).toBeNull()
+    expect(day.querySelector("#overcast-back-day")).not.toBeNull()
+    expect(day.querySelector("#overcast-front-day")).not.toBeNull()
 
     cleanup()
 
     const { container: night } = render(
       <OvercastNightWidget data={WIDGET_DATA} mode="dark" />,
     )
-    expect(night.querySelector("#oci-disc-night")).not.toBeNull()
-    expect(night.querySelector("#oci-disc-day")).toBeNull()
+    expect(night.querySelector("#overcast-back-night")).not.toBeNull()
+    expect(night.querySelector("#overcast-front-night")).not.toBeNull()
+  })
+})
+
+describe("SunnyWidget, ThunderstormWidget, MoonWidget", () => {
+  it("renders SunnyWidget with sun icon, aura, and rays ring", () => {
+    const { container } = render(<SunnyWidget data={WIDGET_DATA} mode="dark" />)
+    expect(screen.getByText("Kolkata")).toBeInTheDocument()
+    const svg = container.querySelector("svg")!
+    expect(svg.querySelector(".sun-core")).not.toBeNull()
+    expect(svg.querySelector(".sun-aura")).not.toBeNull()
+    expect(svg.querySelector(".sun-rays-ring")).not.toBeNull()
+  })
+
+  it("renders ThunderstormWidget with storm clouds and lightning bolt", () => {
+    const { container } = render(<ThunderstormWidget data={WIDGET_DATA} mode="dark" />)
+    expect(screen.getByText("Kolkata")).toBeInTheDocument()
+    const svg = container.querySelector("svg")!
+    expect(svg.querySelector(".cloud-main")).not.toBeNull()
+    expect(svg.querySelector(".lightning-bolt")).not.toBeNull()
+    expect(svg.querySelectorAll(".svg-rain-drop").length).toBeGreaterThan(0)
+  })
+
+  it("renders MoonWidget with stars and crescent mask", () => {
+    const { container } = render(<MoonWidget data={WIDGET_DATA} mode="dark" />)
+    expect(screen.getByText("Kolkata")).toBeInTheDocument()
+    const svg = container.querySelector("svg")!
+    expect(svg.querySelector(".moon-body")).not.toBeNull()
+    expect(svg.querySelector(".moon-aura")).not.toBeNull()
+    expect(svg.querySelector("#crescent-mask")).not.toBeNull()
   })
 })

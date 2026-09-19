@@ -1,0 +1,303 @@
+/* ── Travel Tiles Grid ─────────────────────────────────────────────────── */
+
+.travel-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+/* Card Common */
+.travel-tile {
+  min-height: 128px;
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+/* Empty Tile State - Dark Mode Default */
+.travel-tile-empty {
+  background: rgba(255, 255, 255, 0.025);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px dashed rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 12px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.travel-tile-empty:hover {
+  background: rgba(96, 165, 250, 0.06);
+  border-color: rgba(96, 165, 250, 0.45);
+  transform: translateY(-2px);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.travel-tile-empty:active {
+  transform: scale(0.98);
+}
+
+.travel-tile-plus-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: rgba(96, 165, 250, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.travel-tile-empty:hover .travel-tile-plus-icon {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.55);
+  transform: scale(1.08);
+  box-shadow: 0 0 16px rgba(96, 165, 250, 0.35);
+}
+
+.travel-tile-empty-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Filled Tile State - Dark Mode Default */
+.travel-tile-filled {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.travel-tile-filled:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.travel-tile-filled:active {
+  transform: scale(0.98);
+}
+
+.travel-tile-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.travel-tile-icon-box {
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+
+.travel-tile-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.travel-tile-distance {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.travel-tile-remove-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.travel-tile-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+.travel-tile-mid {
+  margin-bottom: 6px;
+}
+
+.travel-tile-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.travel-tile-condition {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.travel-tile-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.travel-tile-temp {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.travel-tile-updating {
+  font-size: 9px;
+  color: rgba(96, 165, 250, 0.85);
+  font-style: italic;
+}
+
+/* ── Light Mode Authentic Frosted Glass ────────────────────────────────── */
+
+.theme-light.travel-tiles-grid .travel-tile-empty,
+.theme-light .travel-tile-empty,
+[data-theme="light"] .travel-tile-empty {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1.5px dashed rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 16px rgba(15, 30, 60, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-empty:hover,
+.theme-light .travel-tile-empty:hover,
+[data-theme="light"] .travel-tile-empty:hover {
+  background: rgba(239, 246, 255, 0.85);
+  border-color: rgba(37, 99, 235, 0.65);
+  color: #1d4ed8;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.12);
+}
+
+.theme-light.travel-tiles-grid .travel-tile-plus-icon,
+.theme-light .travel-tile-plus-icon,
+[data-theme="light"] .travel-tile-plus-icon {
+  background: rgba(37, 99, 235, 0.1);
+  border: 1.5px solid rgba(37, 99, 235, 0.35);
+  color: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
+.theme-light.travel-tiles-grid .travel-tile-empty:hover .travel-tile-plus-icon,
+.theme-light .travel-tile-empty:hover .travel-tile-plus-icon,
+[data-theme="light"] .travel-tile-empty:hover .travel-tile-plus-icon {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: rgba(37, 99, 235, 0.7);
+  color: #1d4ed8;
+  box-shadow: 0 0 14px rgba(37, 99, 235, 0.25);
+}
+
+.theme-light.travel-tiles-grid .travel-tile-empty-label,
+.theme-light .travel-tile-empty-label,
+[data-theme="light"] .travel-tile-empty-label {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-filled,
+.theme-light .travel-tile-filled,
+[data-theme="light"] .travel-tile-filled {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 24px rgba(15, 30, 60, 0.08), inset 0 1px 1px rgba(255, 255, 255, 1);
+}
+
+.theme-light.travel-tiles-grid .travel-tile-filled:hover,
+.theme-light .travel-tile-filled:hover,
+[data-theme="light"] .travel-tile-filled:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 12px 30px rgba(15, 30, 60, 0.12);
+}
+
+.theme-light.travel-tiles-grid .travel-tile-name,
+.theme-light .travel-tile-name,
+[data-theme="light"] .travel-tile-name {
+  color: #0f172a;
+  font-weight: 750;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-condition,
+.theme-light .travel-tile-condition,
+[data-theme="light"] .travel-tile-condition {
+  color: #334155;
+  font-weight: 600;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-temp,
+.theme-light .travel-tile-temp,
+[data-theme="light"] .travel-tile-temp {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-distance,
+.theme-light .travel-tile-distance,
+[data-theme="light"] .travel-tile-distance {
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-remove-btn,
+.theme-light .travel-tile-remove-btn,
+[data-theme="light"] .travel-tile-remove-btn {
+  background: rgba(0, 0, 0, 0.08);
+  color: #475569;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-remove-btn:hover,
+.theme-light .travel-tile-remove-btn:hover,
+[data-theme="light"] .travel-tile-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #dc2626;
+}
+
+.theme-light.travel-tiles-grid .travel-tile-updating,
+.theme-light .travel-tile-updating,
+[data-theme="light"] .travel-tile-updating {
+  color: #2563eb;
+  font-weight: 600;
+}

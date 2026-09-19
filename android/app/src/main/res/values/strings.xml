@@ -8,6 +8,4 @@
     <string name="widget_description">Current temperature and weather at a glance</string>
     <string name="widget_a_name">Mausam Typographic (2x2)</string>
     <string name="widget_a_description">Minimalist typography showing current and upcoming weather (2x2)</string>
-    <string name="widget_1x1_name">Mausam Typographic (1x1)</string>
-    <string name="widget_1x1_description">Minimalist typography showing current and upcoming weather (1x1)</string>
 </resources>

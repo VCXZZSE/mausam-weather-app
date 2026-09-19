@@ -1,3 +1,7 @@
+/**
+ * ThunderstormWidget — 2×2 weather widget preset for storm / rain conditions.
+ */
+
 import ThunderstormIcon from '../../components/icons/ThunderstormIcon';
 import type { WidgetProps } from '../../types/weather';
 
@@ -66,7 +70,7 @@ export default function ThunderstormWidget({ data, mode }: WidgetProps) {
       </div>
 
       {/* Temperature */}
-      <div style={{ position: 'relative', fontSize: 50, fontWeight: 200, color: t.temp, lineHeight: 1, letterSpacing: '-0.03em', marginLeft: -2 }}>
+      <div style={{ position: 'relative', fontSize: 54, fontWeight: 200, color: t.temp, lineHeight: 1, letterSpacing: '-0.03em', marginLeft: -2 }}>
         {data.temperature}
       </div>
 

@@ -1,32 +1,36 @@
 /**
- * OvercastWidget — 2×2 weather widget preset for cloudy / overcast conditions.
+ * MoonWidget — 2×2 weather widget preset for clear night conditions.
+ *
+ * Usage:
+ *   <MoonWidget mode="dark" data={{ temperature, location, condition, hi, lo }} />
+ *
+ * All data values are dynamic — supply them from your API response.
  */
 
-import OvercastIcon from '../../components/icons/OvercastIcon';
+import MoonIcon from '../../components/icons/MoonIcon';
 import type { WidgetProps } from '../../types/weather';
 
 const THEME = {
   dark: {
-    bg: 'linear-gradient(140deg, #101721 0%, #263343 42%, #465568 100%)',
-    glass: 'rgba(12, 19, 29, 0.38)',
-    border: 'rgba(205, 222, 240, 0.14)',
-    temp: 'rgba(228, 237, 246, 0.96)',
-    label: 'rgba(198, 215, 232, 0.7)',
-    sub: 'rgba(175, 195, 215, 0.52)',
+    bg: 'linear-gradient(135deg, #020510 0%, #08102A 35%, #0E183C 70%, #06102E 100%)',
+    glass: 'rgba(6, 10, 30, 0.5)',
+    border: 'rgba(160, 185, 255, 0.12)',
+    temp: 'rgba(215, 225, 255, 0.95)',
+    label: 'rgba(180, 200, 255, 0.65)',
+    sub: 'rgba(150, 175, 240, 0.5)',
   },
   light: {
-    bg: 'linear-gradient(140deg, #F1F5F8 0%, #C9D5E0 42%, #91A2B4 100%)',
-    glass: 'rgba(255, 255, 255, 0.25)',
-    border: 'rgba(255, 255, 255, 0.52)',
-    temp: 'rgba(31, 46, 61, 0.92)',
-    label: 'rgba(47, 65, 84, 0.68)',
-    sub: 'rgba(47, 65, 84, 0.48)',
+    bg: 'linear-gradient(135deg, #D0D8F8 0%, #A8B8E8 30%, #7080C0 70%, #4050A0 100%)',
+    glass: 'rgba(255, 255, 255, 0.22)',
+    border: 'rgba(255, 255, 255, 0.42)',
+    temp: 'rgba(15, 25, 80, 0.92)',
+    label: 'rgba(30, 50, 130, 0.65)',
+    sub: 'rgba(30, 50, 130, 0.45)',
   },
 } as const;
 
-export default function OvercastWidget({ data, mode }: WidgetProps) {
+export default function MoonWidget({ data, mode }: WidgetProps) {
   const t = THEME[mode];
-
   return (
     <div
       className="widget-enter relative overflow-hidden"
@@ -40,9 +44,9 @@ export default function OvercastWidget({ data, mode }: WidgetProps) {
         justifyContent: 'space-between',
         background: t.bg,
         position: 'relative',
-        boxSizing: 'border-box',
       }}
     >
+      {/* Frosted glass overlay */}
       <div
         style={{
           position: 'absolute', inset: 0, borderRadius: 28,
@@ -54,6 +58,7 @@ export default function OvercastWidget({ data, mode }: WidgetProps) {
         }}
       />
 
+      {/* Top row: location + icon */}
       <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.label, lineHeight: 1 }}>
@@ -64,14 +69,16 @@ export default function OvercastWidget({ data, mode }: WidgetProps) {
           </div>
         </div>
         <div style={{ transform: 'scale(0.66)', transformOrigin: 'top right', marginTop: -4, marginRight: -4 }}>
-          <OvercastIcon phase="day" />
+          <MoonIcon />
         </div>
       </div>
 
+      {/* Temperature */}
       <div style={{ position: 'relative', fontSize: 54, fontWeight: 200, color: t.temp, lineHeight: 1, letterSpacing: '-0.03em', marginLeft: -2 }}>
         {data.temperature}
       </div>
 
+      {/* Hi / Lo */}
       <div style={{ position: 'relative', display: 'flex', gap: 10, fontSize: 10, fontWeight: 500, color: t.label, letterSpacing: '0.02em' }}>
         <span>H: {data.hi}</span>
         <span>L: {data.lo}</span>
