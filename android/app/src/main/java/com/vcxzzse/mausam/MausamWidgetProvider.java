@@ -96,6 +96,58 @@ public class MausamWidgetProvider extends AppWidgetProvider {
                 labelColor = 0xFFA8BCE2;
                 subColor = 0xFF8CA2CE;
             }
+        } else if ("drizzle".equalsIgnoreCase(preset)) {
+            iconDrawable = R.drawable.ic_widget_drizzle;
+            if (isLight) {
+                bgDrawable = R.drawable.widget_bg_drizzle_light;
+                tempColor = 0xFF182637;
+                labelColor = 0xFF24364C;
+                subColor = 0xFF24364C;
+            } else {
+                bgDrawable = R.drawable.widget_bg_drizzle;
+                tempColor = 0xFFE1ECF8;
+                labelColor = 0xFFBED2E8;
+                subColor = 0xFFA4BCD6;
+            }
+        } else if ("heavy-rain".equalsIgnoreCase(preset)) {
+            iconDrawable = R.drawable.ic_widget_heavy_rain;
+            if (isLight) {
+                bgDrawable = R.drawable.widget_bg_heavy_rain_light;
+                tempColor = 0xFF101C2C;
+                labelColor = 0xFF18283E;
+                subColor = 0xFF18283E;
+            } else {
+                bgDrawable = R.drawable.widget_bg_heavy_rain;
+                tempColor = 0xFFD6E5F6;
+                labelColor = 0xFFAEC7E4;
+                subColor = 0xFF92AFD0;
+            }
+        } else if ("fog".equalsIgnoreCase(preset)) {
+            iconDrawable = R.drawable.ic_widget_fog;
+            if (isLight) {
+                bgDrawable = R.drawable.widget_bg_fog_light;
+                tempColor = 0xFF232E39;
+                labelColor = 0xFF34414F;
+                subColor = 0xFF34414F;
+            } else {
+                bgDrawable = R.drawable.widget_bg_fog;
+                tempColor = 0xFFE6EDF3;
+                labelColor = 0xFFC8D6E2;
+                subColor = 0xFFB2C1CF;
+            }
+        } else if ("fog-night".equalsIgnoreCase(preset)) {
+            iconDrawable = R.drawable.ic_widget_fog_night;
+            if (isLight) {
+                bgDrawable = R.drawable.widget_bg_fog_night_light;
+                tempColor = 0xFF161E34;
+                labelColor = 0xFF212C48;
+                subColor = 0xFF212C48;
+            } else {
+                bgDrawable = R.drawable.widget_bg_fog_night;
+                tempColor = 0xFFD2DDEE;
+                labelColor = 0xFFACBEDA;
+                subColor = 0xFF92A6C6;
+            }
         } else if ("moon".equalsIgnoreCase(preset)) {
             iconDrawable = R.drawable.ic_widget_moon;
             if (isLight) {

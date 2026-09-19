@@ -23,6 +23,7 @@ import {
 import {
   DEMO_WEATHER_DATA,
   fetchWeatherDashboard,
+  getRainCharacter,
   getWeatherHeroVariant,
   isLiveWeatherEnabled,
   isCurrentWeatherFresh,
@@ -576,21 +577,45 @@ export function HomeTab({
           ))
   const isRainy = weatherHeroVariant === "rainy"
   const isNight = weatherHeroVariant === "night"
-  // Fog, mist and haze stay in the overcast bucket — the sky reads as covered
-  // either way. Partly cloudy does not: the sun or moon is still the subject,
-  // so its "cloudy" is stripped before the test rather than excluded after it,
-  // which keeps a payload like "partly_cloudy Fog" on the fog side.
-  // Note: this matches the literal strings "haze"/"mist", so a provider that
-  // reports "Hazy" would not match here (nor in widgetBridge's resolver).
-  const isOvercast = /overcast|cloudy|fog|mist|haze/i.test(
-    `${current.conditionCode} ${current.condition}`.replace(
-      /partly[\s_-]*cloudy/gi,
-      "",
-    ),
+  // Which rain character, once isRainy has already won the chain below.
+  // Shared with widgetBridge's resolver so the two systems agree.
+  const rainCharacter = getRainCharacter(
+    current.conditionCode,
+    current.condition,
   )
-  // Palette for the overcast character, ported from OvercastIcon.tsx. The
-  // disc behind the cloud is background scenery: dimmed, and with no face.
+  // Partly cloudy keeps the sun or moon as its subject, so its "cloudy" is
+  // stripped before either sky test rather than excluded after it, which
+  // keeps a payload like "partly_cloudy Fog" on the fog side.
+  // Note: both tests below match literal substrings, so a provider that
+  // reports "Hazy" would not match here (nor in widgetBridge's resolver).
+  const skyText = `${current.conditionCode} ${current.condition}`.replace(
+    /partly[\s_-]*cloudy/gi,
+    "",
+  )
+  // Fog has its own character, and the render chain below checks it ahead of
+  // overcast: a payload that says both ("Overcast fog") reads as fog, which
+  // is the one that actually changes what you can see. "smoke" belongs to
+  // this family in widgetBridge's resolver too, so the two systems agree on
+  // all four spellings.
+  const isFoggy = /fog|mist|haze|smoke/i.test(skyText)
+  const isOvercast = /overcast|cloudy/i.test(skyText)
+  // Palette for the overcast character, ported from OvercastIcon.tsx, and
+  // shared with the fog character, which is the same cloud in the same
+  // weather — only `band` (the drifting fog) is fog's alone. The disc behind
+  // the overcast cloud is background scenery: dimmed, and with no face.
+  //
+  // `band` is the one value keyed on the app theme rather than the sky. A
+  // non-rainy hero card is .is-sunny / .is-night, which in light mode is a
+  // cream, near-white card; a white band on it is invisible, and the fog
+  // character then reads as the overcast one with its sun removed. On a pale
+  // card the fog has to be the darker element, so it flips to slate.
   const isLightMode = theme === "light"
+  // Colour alone was not enough: measured against the card, light-theme
+  // bands came in at about a third of the dark-theme ones. The alpha scale
+  // brings them to a comparable weight without darkening the hue into
+  // something that reads as scratches rather than mist.
+  const bandOnPaleCard = "#445c74"
+  const bandAlpha = isLightMode ? 1.55 : 1
   const overcastArt = isNight
     ? isLightMode
       ? {
@@ -604,6 +629,8 @@ export function HomeTab({
           discOpacity: 0.94,
           ink: "#1e293b",
           blush: "#e3a2b6",
+          band: bandOnPaleCard,
+          bandAlpha,
         }
       : {
           cloud: ["#cbd5e1", "#94a3b8"],
@@ -616,6 +643,8 @@ export function HomeTab({
           discOpacity: 0.92,
           ink: "#1e293b",
           blush: "#e3a2b6",
+          band: "#e8eefa",
+          bandAlpha,
         }
     : {
         cloud: ["#f4f7fc", "#b8c6da"],
@@ -627,7 +656,14 @@ export function HomeTab({
         discOpacity: 0.62,
         ink: "#334155",
         blush: "#fca5a5",
+        band: isLightMode ? bandOnPaleCard : "#ffffff",
+        bandAlpha,
       }
+
+  // Per-band opacity, scaled for the theme. Each band keeps its own relative
+  // weight; only the overall presence changes.
+  const fogBandOpacity = (base: number) =>
+    Math.min(1, base * overcastArt.bandAlpha).toFixed(3)
 
   return (
     <div className="home-screen app-page">
@@ -804,12 +840,18 @@ export function HomeTab({
               className={`weather-companion weather-companion-${weatherHeroVariant}`}
               aria-label={t(
                 isRainy
-                  ? "hero.ariaRain"
-                  : isOvercast
-                    ? "hero.ariaOvercast"
-                    : isNight
-                      ? "hero.ariaNight"
-                      : "hero.ariaSun",
+                  ? rainCharacter === "drizzle"
+                    ? "hero.ariaDrizzle"
+                    : rainCharacter === "heavy-rain"
+                      ? "hero.ariaHeavyRain"
+                      : "hero.ariaRain"
+                  : isFoggy
+                    ? "hero.ariaFog"
+                    : isOvercast
+                      ? "hero.ariaOvercast"
+                      : isNight
+                        ? "hero.ariaNight"
+                        : "hero.ariaSun",
               )}
             >
               <svg
@@ -829,7 +871,129 @@ export function HomeTab({
                     <stop offset="100%" stopColor="#8c96a5" />
                   </radialGradient>
                 </defs>
-                {isRainy ? (
+                {isRainy && rainCharacter === "drizzle" ? (
+                  <>
+                    {/* Drizzle: the rain cloud's own body and palette, so the
+                        three rain characters stay one family. A shallower
+                        puddle and three widely-spaced drops carry the
+                        difference, not a new silhouette. */}
+                    <ellipse
+                      className="illustration-puddle"
+                      cx="78"
+                      cy="124"
+                      rx="36"
+                      ry="6"
+                      fill="#b9e7ef"
+                      opacity=".22"
+                    />
+                    <ellipse
+                      className="illustration-reflection"
+                      cx="77"
+                      cy="125"
+                      rx="19"
+                      ry="2.4"
+                      fill="#d9f3f4"
+                      opacity=".26"
+                    />
+                    <g className="cloud-character cloud-character-drizzle">
+                      <path
+                        d="M25 62q-4-12 8-18 3-20 24-15 13-18 31-4 20-8 29 10 17 1 17 17 11 4 8 16-2 10-15 10H42Q25 78 25 62Z"
+                        fill="#78b5d5"
+                        stroke="#263f5c"
+                        strokeWidth="2.2"
+                      />
+                      {/* Content: eyes a shade wider and the smile opened up
+                          and lightened, which reads better at hero size than
+                          the small-tile weights. */}
+                      <g className="drizzle-eyes" fill="#26313c">
+                        <circle cx="60" cy="56" r="2.6" />
+                        <circle cx="83" cy="56" r="2.6" />
+                      </g>
+                      <path
+                        d="M65 64q6 4 12 0"
+                        fill="none"
+                        stroke="#26313c"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
+                      <g className="drizzle-drops">
+                        <path
+                          className="drizzle-drop"
+                          d="M52 84q-2.6 4 0 8q2.6-4 0-8Z"
+                        />
+                        <path
+                          className="drizzle-drop"
+                          d="M76 83q-2.6 4.5 0 9q2.6-4.5 0-9Z"
+                        />
+                        <path
+                          className="drizzle-drop"
+                          d="M99 84q-2.6 4 0 8q2.6-4 0-8Z"
+                        />
+                      </g>
+                    </g>
+                  </>
+                ) : isRainy && rainCharacter === "heavy-rain" ? (
+                  <>
+                    {/* Heavy rain: same body again, a broader puddle, and
+                        eight tightly-spaced drops falling roughly twice as
+                        fast as the drizzle's three. */}
+                    <ellipse
+                      className="illustration-puddle"
+                      cx="78"
+                      cy="124"
+                      rx="50"
+                      ry="8.5"
+                      fill="#b9e7ef"
+                      opacity=".34"
+                    />
+                    <ellipse
+                      className="illustration-reflection"
+                      cx="77"
+                      cy="125"
+                      rx="30"
+                      ry="3.2"
+                      fill="#d9f3f4"
+                      opacity=".38"
+                    />
+                    <g className="cloud-character cloud-character-heavy-rain">
+                      <path
+                        d="M25 62q-4-12 8-18 3-20 24-15 13-18 31-4 20-8 29 10 17 1 17 17 11 4 8 16-2 10-15 10H42Q25 78 25 62Z"
+                        fill="#78b5d5"
+                        stroke="#263f5c"
+                        strokeWidth="2.2"
+                      />
+                      {/* Squinting: the eyes are arcs braced against the
+                          downpour rather than open circles. */}
+                      <g
+                        className="heavy-rain-eyes"
+                        fill="none"
+                        stroke="#26313c"
+                        strokeWidth="2.6"
+                        strokeLinecap="round"
+                      >
+                        <path d="M55 57q5-4 10 0" />
+                        <path d="M78 57q5-4 10 0" />
+                      </g>
+                      <path
+                        d="M67 66q4-2.5 8 0"
+                        fill="none"
+                        stroke="#26313c"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
+                      <g className="heavy-rain-drops">
+                        <path className="heavy-rain-drop" d="M44 84q-2.4 5 0 10q2.4-5 0-10Z" />
+                        <path className="heavy-rain-drop" d="M53 82q-2.4 6 0 12q2.4-6 0-12Z" />
+                        <path className="heavy-rain-drop" d="M62 84q-2.4 5 0 10q2.4-5 0-10Z" />
+                        <path className="heavy-rain-drop" d="M71 82q-2.4 6 0 12q2.4-6 0-12Z" />
+                        <path className="heavy-rain-drop" d="M80 84q-2.4 5 0 10q2.4-5 0-10Z" />
+                        <path className="heavy-rain-drop" d="M89 82q-2.4 6 0 12q2.4-6 0-12Z" />
+                        <path className="heavy-rain-drop" d="M98 84q-2.4 5 0 10q2.4-5 0-10Z" />
+                        <path className="heavy-rain-drop" d="M107 83q-2.4 5.5 0 11q2.4-5.5 0-11Z" />
+                      </g>
+                    </g>
+                  </>
+                ) : isRainy ? (
                   <>
                     <g
                       className="illustration-rain"
@@ -925,6 +1089,148 @@ export function HomeTab({
                       />
                     </g>
                   </>
+                ) : isFoggy ? (
+                  <g
+                    className="cloud-character cloud-character-fog"
+                    data-fog-phase={isNight ? "night" : "day"}
+                  >
+                    <defs>
+                      {/* The overcast cloud's ramps, shifted down with the
+                          body. User-space so every lobe shares one gradient
+                          instead of each getting its own, which seams. */}
+                      <linearGradient
+                        id="fogCloudGrad"
+                        gradientUnits="userSpaceOnUse"
+                        x1="0" y1="57.5" x2="0" y2="123.4"
+                      >
+                        <stop offset="0%" stopColor={overcastArt.cloud[0]} />
+                        <stop offset="100%" stopColor={overcastArt.cloud[1]} />
+                      </linearGradient>
+                      <linearGradient
+                        id="fogBackGrad"
+                        gradientUnits="userSpaceOnUse"
+                        x1="0" y1="38.9" x2="0" y2="70.9"
+                      >
+                        <stop offset="0%" stopColor={overcastArt.back[0]} />
+                        <stop offset="100%" stopColor={overcastArt.back[1]} />
+                      </linearGradient>
+                      {/* Feathers the bands out at both ends. Flat-alpha
+                          bands over the card read as hard stripes rather
+                          than fog, and the companion's own overflow clip
+                          cannot do the fading: a gradient painted onto the
+                          bands travels with them as they drift, so it
+                          arrives at the clip line still part-opaque and
+                          leaves a blunt vertical edge that slides back and
+                          forth. The fade therefore lives in a mask on the
+                          static parent below, anchored to the viewBox, and
+                          the bands drift underneath it — so the alpha is
+                          zero at x=0 and x=140 whatever the drift phase. */}
+                      <linearGradient
+                        id="fogBandFade"
+                        gradientUnits="userSpaceOnUse"
+                        x1="0" y1="0" x2="140" y2="0"
+                      >
+                        <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+                        <stop offset="18%" stopColor="#fff" stopOpacity="1" />
+                        <stop offset="82%" stopColor="#fff" stopOpacity="1" />
+                        <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                      </linearGradient>
+                      <mask
+                        id="fogBandMask"
+                        maskUnits="userSpaceOnUse"
+                        x="0" y="0" width="140" height="140"
+                      >
+                        <rect x="0" y="0" width="140" height="140" fill="url(#fogBandFade)" />
+                      </mask>
+                    </defs>
+                    {/* Sitting low: the body is the overcast cloud's, moved
+                        down 6 units, and the shadow is wider and closer for
+                        a character resting rather than floating. No sun or
+                        moon behind it — fog is what hides the sky. */}
+                    <ellipse cx="70" cy="130" rx="47" ry="6.5" fill="#475569" opacity=".22" />
+
+                    {/* Smaller, fainter cloud behind — slower drift, parallax */}
+                    <g className="fog-cloud-back" opacity=".5">
+                      <g fill="url(#fogBackGrad)">
+                        <circle cx="32.9" cy="53.4" r="14.4" />
+                        <circle cx="49.4" cy="56.4" r="11.3" />
+                        <rect x="20.6" y="55.4" width="41.2" height="15.4" rx="7.7" />
+                      </g>
+                    </g>
+
+                    {/* The character. Outer group drifts, inner group settles,
+                        so the two run on independent periods. Both offsets
+                        are baked into the coordinates rather than carried on
+                        a transform attribute, which the CSS transform
+                        animations on these same nodes would override. */}
+                    <g className="fog-cloud">
+                      <g className="fog-cloud-settle">
+                        <g fill="url(#fogCloudGrad)">
+                          <circle cx="49.4" cy="84.2" r="26.8" />
+                          <circle cx="90.6" cy="76" r="25.7" />
+                          <circle cx="111.2" cy="90.4" r="17.5" />
+                          <rect x="20.6" y="86.3" width="98.8" height="37.1" rx="18.5" />
+                        </g>
+                        <ellipse cx="45.3" cy="67.8" rx="16.5" ry="7.4" fill="#ffffff" opacity=".28" />
+                        <ellipse cx="38" cy="105" rx="8" ry="5" fill={overcastArt.blush} opacity=".45" />
+                        <ellipse cx="98" cy="105" rx="8" ry="5" fill={overcastArt.blush} opacity=".45" />
+                        {/* Half-closed: only the lower arc of each eye is
+                            drawn, so the flat top edge reads as a lowered
+                            lid. Set wider apart than the overcast face,
+                            which scales up over-weighted at hero size. */}
+                        <g className="fog-eyes" fill={overcastArt.ink}>
+                          <path d="M46.6 92.5Q52 99.7 57.4 92.5Z" />
+                          <path d="M80.6 92.5Q86 99.7 91.4 92.5Z" />
+                        </g>
+                        <path
+                          d="M61 104q9 7 18 0"
+                          fill="none"
+                          stroke={overcastArt.ink}
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      </g>
+                    </g>
+
+                    {/* Fog bands drift across the body, the second one over
+                        the face. Each band's own opacity is an attribute on
+                        the outer group; the inner one carries the CSS
+                        opacity animation. A CSS opacity animation on the
+                        outer group would override the attribute and flash
+                        the band to full strength, so the two are split and
+                        their opacities multiply instead — the same reason
+                        the overcast disc is split above.
+                        .fog-bands itself never moves: it carries the fade
+                        mask, which stays aligned to the viewBox while the
+                        bands drift beneath it. Nothing here may animate or
+                        it would drag the fade along with it. */}
+                    <g
+                      className="fog-bands"
+                      mask="url(#fogBandMask)"
+                      fill={overcastArt.band}
+                    >
+                      <g className="fog-band" opacity={fogBandOpacity(0.22)}>
+                        <g className="fog-band-drift fog-band-drift-1">
+                          <rect x="-14" y="66" width="168" height="6" rx="3" />
+                        </g>
+                      </g>
+                      <g className="fog-band" opacity={fogBandOpacity(0.34)}>
+                        <g className="fog-band-drift fog-band-drift-2">
+                          <rect x="-14" y="90" width="168" height="7" rx="3.5" />
+                        </g>
+                      </g>
+                      <g className="fog-band" opacity={fogBandOpacity(0.26)}>
+                        <g className="fog-band-drift fog-band-drift-3">
+                          <rect x="-14" y="108" width="168" height="6.5" rx="3.25" />
+                        </g>
+                      </g>
+                      <g className="fog-band" opacity={fogBandOpacity(0.18)}>
+                        <g className="fog-band-drift fog-band-drift-4">
+                          <rect x="-14" y="116" width="168" height="5.5" rx="2.75" />
+                        </g>
+                      </g>
+                    </g>
+                  </g>
                 ) : isOvercast ? (
                   <g
                     className="cloud-character cloud-character-overcast"

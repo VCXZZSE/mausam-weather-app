@@ -658,6 +658,43 @@ export function getWeatherHeroVariant(
   return isDay === false ? "night" : "sunny"
 }
 
+/** Which of the three rain characters a rainy sky gets. */
+export type RainCharacter = "thunderstorm" | "heavy-rain" | "drizzle"
+
+/**
+ * Splits a sky that is already known to be rainy into its character. Both
+ * preset systems — the hero card in App.tsx and resolveWidgetPreset in
+ * widgets/widgetBridge.ts — call this, so the two cannot drift apart.
+ *
+ * It reads the condition text as well as the code because the normalizer
+ * collapses WMO 61 "Slight rain" and 63 "Moderate rain" onto the same
+ * `rain` code, and 80 "Slight showers" onto `showers`; the code alone
+ * cannot tell a drizzle from a downpour.
+ *
+ * Callers are expected to have established the sky is rainy first (via
+ * getWeatherHeroVariant, or a rain-family conditionKey). A dry condition
+ * passed in here would come back "drizzle", which is meaningless rather
+ * than wrong — this never decides *whether* it is raining.
+ */
+export function getRainCharacter(
+  conditionCode: string,
+  condition = "",
+): RainCharacter {
+  const text = `${conditionCode} ${condition}`.toLowerCase()
+  if (/thunder|storm/.test(text)) return "thunderstorm"
+  // "moderate rain" and "moderate showers" are matched in full: a bare
+  // "moderate" would also catch WMO 53 "Moderate drizzle", which is not it.
+  // "heavy" covers both the heavy_rain code and the text, so WMO 65, 67 and
+  // 82 all land here.
+  if (
+    /heavy|violent|torrential|downpour|moderate rain|moderate showers/.test(
+      text,
+    )
+  )
+    return "heavy-rain"
+  return "drizzle"
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value))
 }

@@ -41,8 +41,12 @@ public class MausamMinimalAProvider extends AppWidgetProvider {
         String mode = prefs.getString("mode", "dark");
         String preset = prefs.getString("preset", "sunny");
         boolean isLight = "light".equalsIgnoreCase(mode);
+        // Every preset whose name carries the night phase, not just "moon" —
+        // a new *-night preset that is missing here silently falls back to
+        // the daytime glyph.
         boolean isNight = "moon".equalsIgnoreCase(preset)
-                || "overcast-night".equalsIgnoreCase(preset);
+                || "overcast-night".equalsIgnoreCase(preset)
+                || "fog-night".equalsIgnoreCase(preset);
 
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_minimal_a);
 

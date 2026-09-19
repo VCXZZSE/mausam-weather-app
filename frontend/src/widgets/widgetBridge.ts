@@ -1,4 +1,5 @@
 import { registerPlugin, Capacitor } from '@capacitor/core';
+import { getRainCharacter } from '@/services/weatherData';
 import type { DashboardWeatherData } from '@/services/weatherData';
 import type { ConditionKey } from './minimal/WeatherIcon';
 
@@ -8,7 +9,11 @@ export type WidgetPreset =
   | 'thunderstorm'
   | 'moon'
   | 'overcast'
-  | 'overcast-night';
+  | 'overcast-night'
+  | 'fog'
+  | 'fog-night'
+  | 'drizzle'
+  | 'heavy-rain';
 
 export interface WidgetPayload {
   location: string;
@@ -74,8 +79,20 @@ export function resolveWidgetPreset(weather: DashboardWeatherData): WidgetPreset
   const current = weather.current;
   const key = resolveConditionKey(current.condition, current.conditionCode);
 
-  if (key === 'thunderstorm' || key === 'rain' || key === 'heavy-rain') {
-    return 'thunderstorm';
+  // The rain family splits three ways by intensity. 'drizzle' joins the
+  // family here: resolveConditionKey has always produced that key, but this
+  // resolver used to omit it, so 51/53/55 fell past the rain branch
+  // entirely and came out sunny by day and moon by night.
+  // getRainCharacter is shared with the hero card, so the two agree; the
+  // conditionKey in the payload is deliberately untouched, since the
+  // native MinimalA widget switches its glyph on that.
+  if (
+    key === 'thunderstorm' ||
+    key === 'rain' ||
+    key === 'heavy-rain' ||
+    key === 'drizzle'
+  ) {
+    return getRainCharacter(current.conditionCode, current.condition);
   }
 
   const isNightTime = (() => {
@@ -100,13 +117,21 @@ export function resolveWidgetPreset(weather: DashboardWeatherData): WidgetPreset
     return hour >= 18 || hour < 5.5;
   })();
 
-  // A fully covered sky gets the overcast character in either daylight state:
-  // 'cloudy' (overcast plus the normalizer's generic fallback) and 'foggy'
-  // (fog / mist / haze / smoke), matching the hero card's bucket in App.tsx.
+  // Fog / mist / haze / smoke has its own character, checked ahead of the
+  // overcast bucket, matching the hero card's chain in App.tsx. Rain
+  // outranks fog in resolveConditionKey above, so a payload like "Foggy
+  // Rain" never reaches here — it takes a rain character, and with no
+  // intensity word in it, that is drizzle rather than the thunderstorm it
+  // got when the whole rain family shared one preset.
+  if (key === 'foggy') {
+    return isNightTime ? 'fog-night' : 'fog';
+  }
+
+  // A fully covered sky gets the overcast character in either daylight
+  // state: 'cloudy' is overcast plus the normalizer's generic fallback.
   // 'partly-cloudy' is deliberately excluded and still falls through to
-  // sunny / moon. Rain outranks fog in resolveConditionKey above, so a
-  // payload like "Foggy Rain" stays on the thunderstorm preset.
-  if (key === 'cloudy' || key === 'foggy') {
+  // sunny / moon.
+  if (key === 'cloudy') {
     return isNightTime ? 'overcast-night' : 'overcast';
   }
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <!-- Coordinates mirror DrizzleIcon.tsx, which shares its cloud with
+         HeavyRainIcon and ThunderstormIcon so the three rain tiles read as
+         one set. Three drops, widely spaced — the count and spacing are the
+         whole difference from the heavy tile. -->
+
+    <path
+        android:fillColor="#8496B0"
+        android:fillAlpha="0.55"
+        android:pathData="M10,35.5 a8,8 0 0 1 5.8,-7.7 a11.5,11.5 0 0 1 21.2,-5.3 a9.5,9.5 0 0 1 15.8,7.1 a7.5,7.5 0 0 1 -0.8,14.4 H18 a8.5,8.5 0 0 1 -8,-8.5 z" />
+    <path
+        android:fillColor="#93A6C2"
+        android:pathData="M13,38.5 a8.5,8.5 0 0 1 7.2,-8.4 a13,13 0 0 1 24.8,-4.8 a10,10 0 0 1 14.1,9 A8.8,8.8 0 0 1 54,51 H21.5 A12.5,12.5 0 0 1 13,38.5 z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeAlpha="0.2"
+        android:strokeLineCap="round"
+        android:pathData="M20,34 c4,-8 15,-11 22,-5" />
+
+    <!-- Content face, set wide and lightly stroked -->
+    <path
+        android:fillColor="#26313C"
+        android:pathData="M29,40 m-2.1,0 a2.1,2.1 0 1 1 4.2,0 a2.1,2.1 0 1 1 -4.2,0
+                          M43,40 m-2.1,0 a2.1,2.1 0 1 1 4.2,0 a2.1,2.1 0 1 1 -4.2,0" />
+    <path
+        android:strokeColor="#26313C"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M32,45 q4,2.6 8,0" />
+
+    <!-- Three slow, widely-spaced drops -->
+    <path
+        android:strokeColor="#9BD6FF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M22,50 L20,57 M37,48 L35,55 M51,50 L49,57" />
+</vector>

@@ -4300,6 +4300,128 @@ input:-webkit-autofill {
   .widget-enter { animation: none !important; }
 }
 
+/* ── Fog hero character ────────────────────────────────────── */
+/* Transform/opacity only, same as the overcast character above — this runs
+   inside the Android WebView, where anything that touches layout or paint
+   drops frames. Offsets are in viewBox units (the companion's 140x140
+   space). Everything here is slower than its overcast counterpart: the
+   character is dozing, and fog does not hurry. */
+@keyframes fogDrift {
+  0%, 100% { transform: translateX(-3.4px); }
+  50% { transform: translateX(3.4px); }
+}
+@keyframes fogSettle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2.2px); }
+}
+@keyframes fogDriftBack {
+  0%, 100% { transform: translateX(2.6px); }
+  50% { transform: translateX(-2.6px); }
+}
+/* A droop, not a blink: the lids settle further shut and come back up,
+   scaled about the lower edge of the eye so the flat top edge is what
+   moves down. */
+@keyframes fogDoze {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(.55); }
+}
+/* Multiplies with the per-band opacity attribute on the parent .fog-band.
+   Symmetric end to end so `alternate` reverses without a seam. */
+@keyframes fogBandDrift {
+  0% { transform: translateX(-13px); opacity: .25; }
+  50% { opacity: 1; }
+  100% { transform: translateX(13px); opacity: .25; }
+}
+
+.cloud-character-fog .fog-cloud { animation: fogDrift 13s ease-in-out infinite; }
+.cloud-character-fog .fog-cloud-settle { animation: fogSettle 9s ease-in-out infinite; }
+.cloud-character-fog .fog-cloud-back { animation: fogDriftBack 19s ease-in-out infinite; }
+.cloud-character-fog .fog-eyes {
+  transform-origin: 69px 99.7px;
+  animation: fogDoze 6.5s ease-in-out infinite;
+}
+.cloud-character-fog .fog-band-drift { animation: fogBandDrift 11s ease-in-out infinite alternate; }
+.cloud-character-fog .fog-band-drift-2 { animation-duration: 15s; animation-delay: -4s; }
+.cloud-character-fog .fog-band-drift-3 { animation-duration: 9s; animation-delay: -2s; }
+.cloud-character-fog .fog-band-drift-4 { animation-duration: 17s; animation-delay: -7s; }
+
+/* The .weather-companion * rule above already stops these; repeated here so
+   the static fallback travels with the art rather than depending on it. */
+@media (prefers-reduced-motion: reduce) {
+  .cloud-character-fog .fog-cloud,
+  .cloud-character-fog .fog-cloud-settle,
+  .cloud-character-fog .fog-cloud-back,
+  .cloud-character-fog .fog-eyes,
+  .cloud-character-fog .fog-band-drift { animation: none; }
+}
+
+/* ── Drizzle and heavy-rain hero characters ───────────────── */
+/* Two of the three rain characters; the third (thunderstorm) keeps the
+   cross-fading pair above. Transform/opacity only, same as every character
+   in this file — this runs inside the Android WebView. The difference
+   between the two is rate and spacing, not a different drawing: drizzle
+   falls at 2.4s, heavy rain at 0.62s. */
+@keyframes drizzleBob {
+  0%, 100% { transform: translate(-7px, 0) scale(.88); }
+  50% { transform: translate(-7px, -2.4px) scale(.88); }
+}
+@keyframes drizzleFall {
+  0% { opacity: 0; transform: translate3d(0, -2px, 0) scaleY(.75); }
+  22% { opacity: .85; }
+  70% { opacity: .8; transform: translate3d(1px, 13px, 0) scaleY(1.08); }
+  100% { opacity: 0; transform: translate3d(2px, 20px, 0) scaleY(.75); }
+}
+@keyframes heavyRainShiver {
+  0%, 100% { transform: translate(-7.6px, 0) scale(.88); }
+  50% { transform: translate(-6.4px, 0) scale(.88); }
+}
+@keyframes heavyRainFall {
+  0% { opacity: 0; transform: translate3d(0, -3px, 0) scaleY(.8); }
+  12% { opacity: .95; }
+  72% { opacity: .9; transform: translate3d(3px, 17px, 0) scaleY(1.22); }
+  100% { opacity: 0; transform: translate3d(4px, 26px, 0) scaleY(.85); }
+}
+
+.cloud-character-drizzle { animation: drizzleBob 5.5s ease-in-out infinite; }
+.cloud-character-drizzle .drizzle-drop {
+  fill: #4ba8df;
+  stroke: #b8e9ff;
+  stroke-width: .8;
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: drizzleFall 2.4s cubic-bezier(.35,0,.7,1) infinite;
+}
+.cloud-character-drizzle .drizzle-drop:nth-child(2) { animation-delay: -1.5s; }
+.cloud-character-drizzle .drizzle-drop:nth-child(3) { animation-delay: -.75s; }
+
+.cloud-character-heavy-rain { animation: heavyRainShiver 2.2s ease-in-out infinite; }
+.cloud-character-heavy-rain .heavy-rain-drop {
+  fill: #3f9ad6;
+  stroke: #b8e9ff;
+  stroke-width: .7;
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: heavyRainFall .62s cubic-bezier(.35,0,.7,1) infinite;
+}
+/* Staggered off a prime-ish fraction of the period so the eight drops never
+   line up into a visible sheet. */
+.cloud-character-heavy-rain .heavy-rain-drop:nth-child(2) { animation-delay: -.44s; }
+.cloud-character-heavy-rain .heavy-rain-drop:nth-child(3) { animation-delay: -.13s; }
+.cloud-character-heavy-rain .heavy-rain-drop:nth-child(4) { animation-delay: -.51s; }
+.cloud-character-heavy-rain .heavy-rain-drop:nth-child(5) { animation-delay: -.27s; }
+.cloud-character-heavy-rain .heavy-rain-drop:nth-child(6) { animation-delay: -.58s; }
+.cloud-character-heavy-rain .heavy-rain-drop:nth-child(7) { animation-delay: -.06s; }
+.cloud-character-heavy-rain .heavy-rain-drop:nth-child(8) { animation-delay: -.35s; }
+
+/* The .weather-companion * rule above already stops these; repeated here so
+   the static fallback travels with the art rather than depending on it. */
+@media (prefers-reduced-motion: reduce) {
+  .cloud-character-drizzle,
+  .cloud-character-drizzle .drizzle-drop,
+  .cloud-character-heavy-rain,
+  .cloud-character-heavy-rain .heavy-rain-drop { animation: none; }
+}
+
 /* ── 2×2 Widget Presets & Weather Icon Animations ── */
 @keyframes sun-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
@@ -4414,4 +4536,48 @@ input:-webkit-autofill {
 .overcast-cloud-front { animation: overcast-front-drift 4.5s ease-in-out infinite; }
 .overcast-cloud-back { animation: overcast-back-drift 6s ease-in-out infinite; }
 .mist-line { animation: mist-breathe 3.2s ease-in-out infinite; }
+
+/* Fog tile. These names are shared with the hero character, whose own rules
+   are scoped under .cloud-character-fog and so outrank these on the hero's
+   nodes — leaving these to the 72x72 tile, where the drift has to be shorter.
+   The reduced-motion fallback is the .weather-icon * rule above, which
+   already covers every tile glyph.
+   Multiplies with the per-band opacity attribute on the parent .fog-band;
+   symmetric end to end so `alternate` reverses without a seam. */
+@keyframes fog-band-drift {
+  0% { transform: translateX(-6px); opacity: .3; }
+  50% { opacity: 1; }
+  100% { transform: translateX(6px); opacity: .3; }
+}
+
+.fog-cloud-front { animation: overcast-front-drift 5.5s ease-in-out infinite; }
+.fog-cloud-back { animation: overcast-back-drift 7.5s ease-in-out infinite; }
+.fog-band-drift { animation: fog-band-drift 6s ease-in-out infinite alternate; }
+.fog-band-drift-2 { animation-duration: 8s; animation-delay: -2.5s; }
+.fog-band-drift-3 { animation-duration: 5s; animation-delay: -1.2s; }
+
+/* Drizzle and heavy-rain tiles. The drops reuse svg-rain-fall's shape at two
+   different rates — 2.4s against 0.6s — which is the whole difference
+   between the two presets, the same way it is on the hero card.
+   The reduced-motion fallback is the .weather-icon * rule above, which
+   already covers every tile glyph. */
+@keyframes svg-drizzle-fall {
+  0% { transform: translate(2px, -6px); opacity: 0; }
+  22% { opacity: .85; }
+  100% { transform: translate(-3px, 11px); opacity: 0; }
+}
+
+@keyframes svg-heavy-rain-fall {
+  0% { transform: translate(4px, -10px); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate(-6px, 18px); opacity: 0; }
+}
+
+.drizzle-cloud-main { animation: cloud-drift 5.5s ease-in-out infinite; }
+.drizzle-back-cloud { animation: back-cloud-drift 7s ease-in-out infinite; }
+.svg-drizzle-drop { animation: svg-drizzle-fall 2.4s linear infinite; }
+
+.heavy-rain-cloud-main { animation: cloud-drift 3.2s ease-in-out infinite; }
+.heavy-rain-back-cloud { animation: back-cloud-drift 4s ease-in-out infinite; }
+.svg-heavy-rain-drop { animation: svg-heavy-rain-fall .6s linear infinite; }
 
