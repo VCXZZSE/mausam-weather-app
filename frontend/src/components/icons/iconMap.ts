@@ -87,7 +87,7 @@ import aqiSevere from "@/assets/icons/aqi/aqi-severe.svg?raw"
 
 /** Every icon name the app may render. Adding art means extending this union. */
 export type IconName = // --- interface / navigation (was ProfileSidebar's local Icon) ---
-"close" | "pin" | "spark" | "logout" | "arrow" | "shield-lock" | "help" | // --- interface / documents (was FAQPage's local Icon) ---
+"close" | "pin" | "spark" | "logout" | "arrow" | "shield-lock" | "help" | "settings" | // --- interface / documents (was FAQPage's local Icon) ---
 "copy" | "check" | "link" | "search" | // --- personalized briefing (was App's PersonalizedIconGraphic) ---
 "sun" | "outdoor" | "comfort" | "shield" | "cold" | "temperature" | "evening" | "air" | "indoor" | "rain" | "wind" | // --- weather conditions (vendored Meteocons, see assets/icons/weather) ---
 WeatherIconName | // --- CPCB NAQI bands (hand-drawn, see assets/icons/aqi) ---
@@ -173,6 +173,13 @@ export const ICON_SPECS: Record<LineIconName, IconSpec> = {
     paths: [
       "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-2.2-11.3A2.3 2.3 0 0 1 12 8.1c1.3 0 2.2.8 2.2 1.9 0 1.8-2.2 1.7-2.2 3.4M12 16.6h.01",
     ],
+    strokeWidth: 1.6,
+  },
+  settings: {
+    paths: [
+      "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
+    ],
+    circles: [{ cx: 12, cy: 12, r: 3 }],
     strokeWidth: 1.6,
   },
 

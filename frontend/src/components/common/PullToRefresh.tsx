@@ -72,8 +72,11 @@ export function PullToRefresh({
       return
     }
 
-    // Resistance formula
-    const distance = Math.min(MAX_PULL, Math.pow(deltaY, 0.82))
+    // Require deliberate 10px downward pull deadband so regular scrolling is effortless
+    if (deltaY < 10) return
+
+    // Resistance formula with deadband offset
+    const distance = Math.min(MAX_PULL, Math.pow(deltaY - 10, 0.82))
     setPullDistance(distance)
 
     if (distance >= PULL_THRESHOLD) {

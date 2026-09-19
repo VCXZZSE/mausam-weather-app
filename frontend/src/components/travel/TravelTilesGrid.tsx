@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useTranslation } from "@/i18n/LanguageContext"
 import { type UserLocation } from "@/services/locationService"
 import { resolveWeatherIcon } from "@/services/weatherData"
 import { Icon } from "@/components/icons/Icon"
+import { useSettings, convertTemperature } from "@/services/settingsStore"
 import {
   SpotlightLocationSearch,
   type SelectedLocationData,
@@ -76,17 +77,28 @@ function decodeWmoWeather(code: number, isDay: boolean = true) {
   }
 }
 
-export async function fetchSlotWeather(
-  lat: number,
-  lon: number,
-  signal?: AbortSignal,
-): Promise<{
+interface SlotWeatherData {
   temperature: number
   condition: string
   conditionCode: string
   icon?: string
   isDay?: boolean
-}> {
+}
+
+const slotWeatherCache = new Map<string, { data: SlotWeatherData; timestamp: number }>()
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
+export async function fetchSlotWeather(
+  lat: number,
+  lon: number,
+  signal?: AbortSignal,
+): Promise<SlotWeatherData> {
+  const cacheKey = `${lat.toFixed(3)},${lon.toFixed(3)}`
+  const cached = slotWeatherCache.get(cacheKey)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data
+  }
+
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&timezone=auto`
   const res = await fetch(url, { signal })
   if (!res.ok) throw new Error("Failed to fetch weather for location")
@@ -96,13 +108,15 @@ export async function fetchSlotWeather(
   const isDay = current.is_day === 1 || current.is_day === undefined
   const wmo = decodeWmoWeather(Number(current.weather_code ?? 0), isDay)
 
-  return {
+  const result: SlotWeatherData = {
     temperature: temp,
     condition: wmo.condition,
     conditionCode: wmo.conditionCode,
     icon: wmo.icon,
     isDay,
   }
+  slotWeatherCache.set(cacheKey, { data: result, timestamp: Date.now() })
+  return result
 }
 
 export const TravelTilesGrid: React.FC<TravelTilesGridProps> = ({
@@ -110,6 +124,15 @@ export const TravelTilesGrid: React.FC<TravelTilesGridProps> = ({
   theme = "light",
 }) => {
   const { t, td, nu } = useTranslation()
+  const [settings] = useSettings()
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   // Initialize 4 slots from localStorage or empty
   const [slots, setSlots] = useState<(TravelLocationSlot | null)[]>(() => {
@@ -141,27 +164,32 @@ export const TravelTilesGrid: React.FC<TravelTilesGridProps> = ({
     }
   }
 
-  // Refresh weather for filled slots on mount or when user location changes
+  // Refresh weather for filled slots concurrently in parallel
   const refreshSlotsWeather = useCallback(async () => {
     const nextSlots = [...slots]
-    let changed = false
+    const filledIndices = nextSlots
+      .map((slot, index) => (slot ? index : -1))
+      .filter((index) => index !== -1)
 
-    for (let i = 0; i < nextSlots.length; i++) {
-      const slot = nextSlots[i]
-      if (slot) {
-        try {
-          const fresh = await fetchSlotWeather(slot.latitude, slot.longitude)
-          let distStr = slot.distance
-          if (userLocation) {
-            const d = computeDistanceKm(
-              userLocation.latitude,
-              userLocation.longitude,
-              slot.latitude,
-              slot.longitude,
-            )
-            distStr = `${d} km`
-          }
-          nextSlots[i] = {
+    if (filledIndices.length === 0) return
+
+    const fetchPromises = filledIndices.map(async (i) => {
+      const slot = nextSlots[i]!
+      try {
+        const fresh = await fetchSlotWeather(slot.latitude, slot.longitude)
+        let distStr = slot.distance
+        if (userLocation) {
+          const d = computeDistanceKm(
+            userLocation.latitude,
+            userLocation.longitude,
+            slot.latitude,
+            slot.longitude,
+          )
+          distStr = d > 0 ? `${d} km` : slot.distance
+        }
+        return {
+          index: i,
+          updated: {
             ...slot,
             temperature: fresh.temperature,
             condition: fresh.condition,
@@ -170,15 +198,25 @@ export const TravelTilesGrid: React.FC<TravelTilesGridProps> = ({
             isDay: fresh.isDay,
             distance: distStr,
             lastUpdated: Date.now(),
-          }
-          changed = true
-        } catch {
-          // Keep existing cached weather if offline
+          },
         }
+      } catch {
+        return null
       }
-    }
+    })
 
-    if (changed) {
+    const results = await Promise.allSettled(fetchPromises)
+    if (!isMountedRef.current) return
+
+    let changed = false
+    results.forEach((res) => {
+      if (res.status === "fulfilled" && res.value) {
+        nextSlots[res.value.index] = res.value.updated
+        changed = true
+      }
+    })
+
+    if (changed && isMountedRef.current) {
       saveSlots(nextSlots)
     }
   }, [slots, userLocation])
@@ -359,7 +397,7 @@ export const TravelTilesGrid: React.FC<TravelTilesGridProps> = ({
 
               <div className="travel-tile-bottom">
                 <div className="travel-tile-temp">
-                  {nu(slot.temperature, "unit.degree")}
+                  {nu(convertTemperature(slot.temperature, settings.temperatureUnit), "unit.degree")}
                 </div>
                 {updatingSlot === index && (
                   <div className="travel-tile-updating">{t("alerts.searching")}</div>

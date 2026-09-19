@@ -6,11 +6,18 @@ html, body, #root {
   min-height: 100%;
   margin: 0;
   background: #04050a;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, input, select, textarea, a, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
@@ -3161,7 +3168,7 @@ input:-webkit-autofill {
 #root .mausam-app .horizontal-scroll {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   scroll-snap-type: x proximity;
   scroll-padding-inline: 2px;
   touch-action: pan-x;
@@ -3171,14 +3178,27 @@ input:-webkit-autofill {
   scroll-snap-stop: normal;
 }
 
-/* Keep the long page out of permanent GPU layers. Promote only the small,
-   continuously animated pieces that benefit from compositor rendering. */
+/* Promote blurred cards to independent GPU compositor layers to prevent scroll lag */
 #root .mausam-app .interactive-tile,
 #root .mausam-app .audience-focus-card,
 #root .mausam-app .hourly-tile,
 #root .mausam-app .sun-time-tile,
-#root .mausam-app .sun-detail-tile {
-  will-change: auto;
+#root .mausam-app .sun-detail-tile,
+#root .mausam-app .travel-tile-empty,
+#root .mausam-app .travel-tile-filled {
+  transform: translateZ(0);
+  contain: layout style;
+}
+
+/* Tactile spring press feedback for buttons and tabs */
+#root .mausam-app .mausam-nav-button:active {
+  transform: scale(0.91) !important;
+  transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+#root .mausam-app .mausam-menu-button:active {
+  transform: scale(0.91) !important;
+  transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 #root .mausam-app .theme-toggle-thumb,
 #root .mausam-app .theme-icon,

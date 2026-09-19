@@ -64,13 +64,20 @@ import { I18nDebugOverlay } from "./i18n/I18nDebugOverlay"
 import { LanguageSelector } from "@/components/language/LanguageSelector"
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicy"
 import { FAQPage } from "@/pages/FAQPage"
+import { SettingsPage } from "@/pages/SettingsPage"
+import {
+  useSettings,
+  convertTemperature,
+  convertRain,
+  formatClockTimeStr,
+} from "@/services/settingsStore"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = "home" | "health" | "forecast" | "alerts"
 // Full-screen views that take over the tab area. A single value keeps them
 // mutually exclusive, and "back" from a document returns to the briefing it
 // was opened from.
-type Overlay = "none" | "briefing" | "privacy" | "faq"
+type Overlay = "none" | "briefing" | "privacy" | "faq" | "settings"
 
 // ── Shared UI ──────────────────────────────────────────────────────────────────
 
@@ -520,6 +527,7 @@ export function HomeTab({
   advisoryRefreshKey?: number
 }) {
   const { t, td, n, nu } = useTranslation()
+  const [settings] = useSettings()
   const { current } = weather
   const [now, setNow] = useState(() => new Date())
   const locationLabel = formatUserLocation(location)
@@ -749,7 +757,7 @@ export function HomeTab({
                   gap: 6,
                 }}
               >
-                <span>{n(current.temperature)}</span>
+                <span>{n(convertTemperature(current.temperature, settings.temperatureUnit))}</span>
                 <span
                   style={{
                     fontSize: 38,
@@ -780,12 +788,15 @@ export function HomeTab({
                   marginTop: 3,
                 }}
               >
-                {t("hero.feels", { value: current.feelsLike })} &nbsp;·&nbsp;{" "}
-                {t("hero.highLow", { high: current.high, low: current.low })}
+                {t("hero.feels", { value: convertTemperature(current.feelsLike, settings.temperatureUnit) })} &nbsp;·&nbsp;{" "}
+                {t("hero.highLow", {
+                  high: convertTemperature(current.high, settings.temperatureUnit),
+                  low: convertTemperature(current.low, settings.temperatureUnit),
+                })}
               </div>
               <div className="weather-estimate-note" style={{ fontSize: 11, marginTop: 8, opacity: 0.7 }}>
                 {isLiveWeatherEnabled()
-                  ? t("hero.areaEstimate", { time: td(weather.updatedAt) })
+                  ? t("hero.areaEstimate", { time: formatClockTimeStr(td(weather.updatedAt), settings.timeFormat) })
                   : t("hero.demoPreview")}
               </div>
             </div>
@@ -1243,7 +1254,7 @@ export function HomeTab({
                   marginBottom: 6,
                 }}
               >
-                {td(hour.time)}
+                {formatClockTimeStr(td(hour.time), settings.timeFormat)}
               </div>
               <div
                 data-testid={i === 0 ? "hourly-now-icon" : undefined}
@@ -1266,7 +1277,7 @@ export function HomeTab({
                   marginTop: 4,
                 }}
               >
-                {nu(hour.temperature, "unit.degree")}
+                {nu(convertTemperature(hour.temperature, settings.temperatureUnit), "unit.degree")}
               </div>
               <div
                 style={{
@@ -1383,7 +1394,7 @@ export function HomeTab({
             </CardLabel>
             <div className="metric-card-number metric-run-time">
               {weather.running.start
-                ? `${weather.running.start}–${weather.running.end}`
+                ? `${formatClockTimeStr(weather.running.start, settings.timeFormat)}–${formatClockTimeStr(weather.running.end, settings.timeFormat)}`
                 : t("common.unavailable")}
             </div>
             <div className="metric-card-emphasis">
@@ -1391,41 +1402,52 @@ export function HomeTab({
             </div>
             <div className="metric-card-note metric-card-accent">
               {t("run.sunrise", {
-                value:
+                value: formatClockTimeStr(
                   weather.running.sunrise ??
                   (weather.running.dayLabel === "Tomorrow"
                     ? t("common.unavailable")
                     : weather.astronomy.sunrise),
+                  settings.timeFormat,
+                ),
               })}
             </div>
           </Card>
 
           {/* Rain Today */}
-          <Card
-            className="metric-primary-card rainfall-tile"
-            grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)"
-            border="rgba(96,165,250,0.1)"
-          >
-            <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">
-              {nu(weather.rainfall.chance, "unit.percent")}
-            </Badge>
-            <CardLabel>{t("card.rainfallToday")}</CardLabel>
-            <div className="metric-card-number metric-rainfall">
-              {n(weather.rainfall.today)}
-              <span> {td(weather.rainfall.unit)}</span>
-            </div>
-            <div className="metric-card-emphasis">
-              {td(weather.rainfall.periodLabel)}
-            </div>
-            <div className="metric-card-note">
-              {t("rainfall.month", {
-                value:
-                  weather.rainfall.month !== undefined
-                    ? `${n(weather.rainfall.month)} ${td(weather.rainfall.unit)}`
-                    : t("common.unavailable"),
-              })}
-            </div>
-          </Card>
+          {(() => {
+            const rainToday = convertRain(weather.rainfall.today, settings.rainUnit)
+            const rainMonth =
+              weather.rainfall.month !== undefined
+                ? convertRain(weather.rainfall.month, settings.rainUnit)
+                : null
+            return (
+              <Card
+                className="metric-primary-card rainfall-tile"
+                grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)"
+                border="rgba(96,165,250,0.1)"
+              >
+                <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">
+                  {nu(weather.rainfall.chance, "unit.percent")}
+                </Badge>
+                <CardLabel>{t("card.rainfallToday")}</CardLabel>
+                <div className="metric-card-number metric-rainfall">
+                  {n(rainToday.value)}
+                  <span> {td(rainToday.unit)}</span>
+                </div>
+                <div className="metric-card-emphasis">
+                  {td(weather.rainfall.periodLabel)}
+                </div>
+                <div className="metric-card-note">
+                  {t("rainfall.month", {
+                    value:
+                      rainMonth !== null
+                        ? `${n(rainMonth.value)} ${td(rainMonth.unit)}`
+                        : t("common.unavailable"),
+                  })}
+                </div>
+              </Card>
+            )
+          })()}
 
           {/* Commute — full width */}
           <Card
@@ -2178,6 +2200,7 @@ function SunArcCard({
   theme?: "dark" | "light"
 }) {
   const { t, td } = useTranslation()
+  const [settings] = useSettings()
   const isLight = theme === "light"
 
   // Live wall-clock tick every 20 seconds
@@ -2241,15 +2264,19 @@ function SunArcCard({
   const dMinute = normMin % 60
   const dPeriod = dHour24 >= 12 ? "PM" : "AM"
   const dHour12 = dHour24 % 12 || 12
-  const timeString = `${dHour12}:${dMinute.toString().padStart(2, "0")} ${dPeriod}`
+  const timeString =
+    settings.timeFormat === "24h"
+      ? `${dHour24.toString().padStart(2, "0")}:${dMinute.toString().padStart(2, "0")}`
+      : `${dHour12}:${dMinute.toString().padStart(2, "0")} ${dPeriod}`
 
   // Stage name
-  let stageLabel = t("forecast.solarNoon", { time: astronomy.solarNoon })
+  const solarNoonDisplay = formatClockTimeStr(astronomy.solarNoon, settings.timeFormat)
+  let stageLabel = t("forecast.solarNoon", { time: solarNoonDisplay })
   if (activeProgress < -0.05 || activeProgress > 1.05) stageLabel = t("forecast.stageNight")
   else if (activeProgress < 0.05) stageLabel = t("forecast.sunrise")
   else if (activeProgress < 0.25) stageLabel = t("forecast.stageMorning")
   else if (activeProgress < 0.45) stageLabel = t("forecast.stageMidday")
-  else if (activeProgress <= 0.55) stageLabel = t("forecast.solarNoon", { time: astronomy.solarNoon })
+  else if (activeProgress <= 0.55) stageLabel = t("forecast.solarNoon", { time: solarNoonDisplay })
   else if (activeProgress < 0.8) stageLabel = t("forecast.stageAfternoon")
   else if (activeProgress <= 0.95) stageLabel = t("forecast.goldenHour")
   else if (activeProgress <= 1.05) stageLabel = t("forecast.sunset")
@@ -2385,7 +2412,9 @@ function SunArcCard({
               <path d="M16 14l-3 3h6l-3-3z" fill="#ffffff" opacity="0.9" />
             </svg>
           </div>
-          <div className="sun-arc-time sunrise-val">{astronomy.sunrise}</div>
+          <div className="sun-arc-time sunrise-val">
+            {formatClockTimeStr(astronomy.sunrise, settings.timeFormat)}
+          </div>
           <div className="sun-arc-label-sm">{t("forecast.sunrise")}</div>
         </div>
 
@@ -2405,7 +2434,9 @@ function SunArcCard({
               <path d="M16 22l-3-3h6l-3 3z" fill="#ffffff" opacity="0.9" />
             </svg>
           </div>
-          <div className="sun-arc-time sunset-val">{astronomy.sunset}</div>
+          <div className="sun-arc-time sunset-val">
+            {formatClockTimeStr(astronomy.sunset, settings.timeFormat)}
+          </div>
           <div className="sun-arc-label-sm">{t("forecast.sunset")}</div>
         </div>
       </div>
@@ -2816,6 +2847,7 @@ function ForecastTab({
   menuOpen: boolean
 }) {
   const { t, td, n, nu } = useTranslation()
+  const [settings] = useSettings()
   const rainfallHistory = weather.rainfall.history
   const maxRainfall = rainfallHistory
     ? Math.max(1, ...rainfallHistory.map((item) => item.value))
@@ -2827,6 +2859,14 @@ function ForecastTab({
     hasMonthlyRainfall && weather.rainfall.monthlyAverage! > 0
       ? (weather.rainfall.month! / weather.rainfall.monthlyAverage!) * 100
       : 0
+  const monthlyRain =
+    weather.rainfall.month !== undefined
+      ? convertRain(weather.rainfall.month, settings.rainUnit)
+      : null
+  const monthlyAvg =
+    weather.rainfall.monthlyAverage !== undefined
+      ? convertRain(weather.rainfall.monthlyAverage, settings.rainUnit)
+      : null
   const comfortColor = comfortTone(
     weather.comfort.label,
     weather.comfort.icon,
@@ -2916,7 +2956,7 @@ function ForecastTab({
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span style={{ fontSize: 12, color: "rgba(255,255,255,0.32)" }}>
-                  {nu(day.low, "unit.degree")}
+                  {nu(convertTemperature(day.low, settings.temperatureUnit), "unit.degree")}
                 </span>
                 <div
                   style={{
@@ -2937,7 +2977,7 @@ function ForecastTab({
                   />
                 </div>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-                  {nu(day.high, "unit.degree")}
+                  {nu(convertTemperature(day.high, settings.temperatureUnit), "unit.degree")}
                 </span>
               </div>
             </div>
@@ -2982,7 +3022,7 @@ function ForecastTab({
                       lineHeight: 1,
                     }}
                   >
-                    {n(weather.rainfall.month)}{" "}
+                    {n(monthlyRain ? monthlyRain.value : weather.rainfall.month)}{" "}
                     <span
                       style={{
                         fontSize: 14,
@@ -2990,7 +3030,7 @@ function ForecastTab({
                         color: "rgba(255,255,255,0.35)",
                       }}
                     >
-                      {td(weather.rainfall.unit)}
+                      {monthlyRain ? td(monthlyRain.unit) : td(weather.rainfall.unit)}
                     </span>
                   </div>
                   <div
@@ -3001,8 +3041,8 @@ function ForecastTab({
                     }}
                   >
                     {t("forecast.ofAverage", {
-                      value: weather.rainfall.monthlyAverage ?? "",
-                      unit: td(weather.rainfall.unit),
+                      value: monthlyAvg ? monthlyAvg.value : (weather.rainfall.monthlyAverage ?? ""),
+                      unit: monthlyAvg ? td(monthlyAvg.unit) : td(weather.rainfall.unit),
                       month: td(weather.rainfall.monthLabel),
                     })}
                   </div>
@@ -6547,7 +6587,9 @@ function MausamApp() {
         >
           <PullToRefresh scrollRef={scrollRef} onRefresh={handlePullRefresh} theme={theme}>
             {overlay !== "none" && <header className="secondary-menu-header"><MausamMenuButton onClick={() => setMenuOpen(true)} expanded={menuOpen} /></header>}
-            {overlay === "privacy" ? (
+            {overlay === "settings" ? (
+              <SettingsPage onBack={() => setOverlay("none")} />
+            ) : overlay === "privacy" ? (
               <PrivacyPolicyPage
                 onBack={() => setOverlay("briefing")}
                 onHome={() => {
@@ -6620,7 +6662,8 @@ function MausamApp() {
           onClose={() => setMenuOpen(false)} onChangeLocation={changeLocation} onLogout={logout}
           onBriefing={() => { setMenuOpen(false); setOverlay("briefing") }}
           onPrivacy={() => { setMenuOpen(false); setOverlay("privacy") }}
-          onFAQ={() => { setMenuOpen(false); setOverlay("faq") }} />
+          onFAQ={() => { setMenuOpen(false); setOverlay("faq") }}
+          onSettings={() => { setMenuOpen(false); setOverlay("settings") }} />
       </div>
     </div>
   )

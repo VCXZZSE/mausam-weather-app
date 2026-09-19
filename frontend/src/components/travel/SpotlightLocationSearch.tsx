@@ -44,6 +44,8 @@ export function computeDistanceKm(
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
 }
 
+const searchSessionCache = new Map<string, LocationSearchResult[]>()
+
 export const SpotlightLocationSearch: React.FC<SpotlightLocationSearchProps> = ({
   isOpen,
   onClose,
@@ -78,10 +80,12 @@ export const SpotlightLocationSearch: React.FC<SpotlightLocationSearchProps> = (
         inputRef.current?.focus({ preventScroll: true })
       }, 50)
       return () => clearTimeout(timer)
+    } else {
+      inputRef.current?.blur()
     }
   }, [isOpen])
 
-  // Debounced search
+  // Instant cache lookup + Debounced network search
   useEffect(() => {
     if (!isOpen) return
     const trimmed = query.trim()
@@ -91,11 +95,20 @@ export const SpotlightLocationSearch: React.FC<SpotlightLocationSearchProps> = (
       return
     }
 
+    const cacheKey = trimmed.toLowerCase()
+    if (searchSessionCache.has(cacheKey)) {
+      setResults(searchSessionCache.get(cacheKey)!)
+      setLoading(false)
+      setSelectedIndex(0)
+      return
+    }
+
     setLoading(true)
     const controller = new AbortController()
     const timer = setTimeout(async () => {
       try {
         const searchRes = await searchLocations(trimmed, controller.signal)
+        searchSessionCache.set(cacheKey, searchRes)
         setResults(searchRes)
         setSelectedIndex(0)
       } catch (err) {
@@ -107,7 +120,7 @@ export const SpotlightLocationSearch: React.FC<SpotlightLocationSearchProps> = (
           setLoading(false)
         }
       }
-    }, 280)
+    }, 220)
 
     return () => {
       clearTimeout(timer)

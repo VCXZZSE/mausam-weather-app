@@ -50,9 +50,10 @@ type Props = {
   onBriefing: () => void
   onPrivacy: () => void
   onFAQ: () => void
+  onSettings?: () => void
 }
 
-export function ProfileSidebar({ open, profile, location, theme, onClose, onChangeLocation, onLogout, onBriefing, onPrivacy, onFAQ }: Props) {
+export function ProfileSidebar({ open, profile, location, theme, onClose, onChangeLocation, onLogout, onBriefing, onPrivacy, onFAQ, onSettings }: Props) {
   const { t, td } = useTranslation()
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
@@ -81,9 +82,21 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
           {profile.persona && (() => {
             const persona = getPersonaById(profile.persona)
             return persona ? (
-              <div className="sidebar-persona-chip">
-                <span className="sidebar-persona-icon"><Icon name={persona.icon} /></span>
-                <span className="sidebar-persona-label">{td(persona.title)}</span>
+              <div
+                className="sidebar-persona-chip"
+                style={{
+                  "--persona-accent": persona.accentColor,
+                  background: `linear-gradient(135deg, ${persona.accentColor}22, ${persona.accentColor}0e)`,
+                  borderColor: `${persona.accentColor}55`,
+                  boxShadow: `0 3px 12px ${persona.accentColor}22`,
+                } as React.CSSProperties}
+              >
+                <span className="sidebar-persona-icon" style={{ color: persona.accentColor }}>
+                  <Icon name={persona.icon} />
+                </span>
+                <span className="sidebar-persona-label" style={{ color: persona.accentColor, fontWeight: 700 }}>
+                  {td(persona.title)}
+                </span>
               </div>
             ) : null
           })()}
@@ -119,13 +132,14 @@ export function ProfileSidebar({ open, profile, location, theme, onClose, onChan
           <LanguageSelector size="full" />
         </div>
         <nav className="sidebar-actions" aria-label={t("sidebar.settingsAria")}>
-          <button className="sidebar-action" type="button" onClick={onChangeLocation}><span className="sidebar-action-icon"><Icon name="pin" /></span><span><strong>{t("sidebar.changeLocation")}</strong><small data-i18n-ignore>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onChangeLocation}><span className="sidebar-action-icon sidebar-icon-blue"><Icon name="pin" /></span><span><strong>{t("sidebar.changeLocation")}</strong><small data-i18n-ignore>{location.locality}{location.postalCode ? ` · ${location.postalCode}` : ""}</small></span><Icon name="arrow" /></button>
           <button className="sidebar-action" type="button" onClick={onBriefing}><span className="sidebar-action-icon sidebar-icon-violet"><Icon name="spark" /></span><span><strong>{t("sidebar.briefing")}</strong><small>{t("sidebar.briefingHint")}</small></span><Icon name="arrow" /></button>
-          <button className="sidebar-action" type="button" onClick={onPrivacy}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="shield-lock" /></span><span><strong>{t("sidebar.privacy")}</strong><small>{t("sidebar.privacyHint")}</small></span><Icon name="arrow" /></button>
-          <button className="sidebar-action" type="button" onClick={onFAQ}><span className="sidebar-action-icon sidebar-icon-teal"><Icon name="help" /></span><span><strong>{t("sidebar.faq")}</strong><small>{t("sidebar.faqHint")}</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onPrivacy}><span className="sidebar-action-icon sidebar-icon-emerald"><Icon name="shield-lock" /></span><span><strong>{t("sidebar.privacy")}</strong><small>{t("sidebar.privacyHint")}</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onFAQ}><span className="sidebar-action-icon sidebar-icon-amber"><Icon name="help" /></span><span><strong>{t("sidebar.faq")}</strong><small>{t("sidebar.faqHint")}</small></span><Icon name="arrow" /></button>
+          <button className="sidebar-action" type="button" onClick={onSettings}><span className="sidebar-action-icon sidebar-icon-indigo"><Icon name="settings" /></span><span><strong>{t("sidebar.settings")}</strong><small>{t("sidebar.settingsHint")}</small></span><Icon name="arrow" /></button>
         </nav>
       </div>
-      <footer className="sidebar-footer"><button type="button" className="sidebar-logout" onClick={onLogout}><Icon name="logout" /><span>{t("sidebar.logout")}</span><Icon name="arrow" /></button><p>{t("sidebar.logoutNote")}</p><div className="sidebar-signoff"><Icon name="spark" /> {t("sidebar.signoff")}</div></footer>
+      <footer className="sidebar-footer"><button type="button" className="sidebar-logout" onClick={onLogout}><Icon name="logout" /><span>{t("sidebar.logout")}</span><Icon name="arrow" /></button><p className="sidebar-logout-note">{t("sidebar.logoutNote")}</p></footer>
     </div>
   </dialog>, document.body)
 }
