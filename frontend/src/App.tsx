@@ -157,13 +157,16 @@ function Badge({
   children,
   color,
   bg,
+  className,
 }: {
   children: ReactNode
   color: string
   bg: string
+  className?: string
 }) {
   return (
     <span
+      className={`badge metric-tile-badge${className ? ` ${className}` : ""}`}
       style={{
         position: "absolute",
         top: 12,
@@ -237,14 +240,86 @@ function IconByName({ name, label }: { name: string; label?: string }) {
  * could match a key. `tone` is optional, so a payload from before the change
  * still renders — just without the mark.
  */
+const ADVICE_EMOJIS: Array<[string, IconName]> = [
+  ["☂️", "umbrella"],
+  ["☂", "umbrella"],
+  ["😎", "sunglasses"],
+  ["🕶️", "sunglasses"],
+  ["🕶", "sunglasses"],
+  ["🧴", "sunscreen"],
+  ["🌿", "pollen"],
+  ["🌱", "sprout"],
+  ["🌾", "wheat"],
+  ["💧", "hydration"],
+  ["😷", "mask"],
+  ["🤧", "pollen"],
+  ["💡", "tip"],
+  ["⚠️", "warning"],
+  ["⚠", "warning"],
+  ["🚨", "alert"],
+  ["✅", "success"],
+  ["🚫", "blocked"],
+  ["⚡️", "bolt"],
+  ["⚡", "bolt"],
+  ["🐟", "fish"],
+]
+
+function parseAdviceSegment(
+  segment: string,
+  fallbackTone?: string,
+): { icon: IconName | null; text: string } {
+  let cleaned = segment.trim()
+  let matchedIcon: IconName | null = null
+
+  for (const [emoji, iconName] of ADVICE_EMOJIS) {
+    if (cleaned.includes(emoji)) {
+      matchedIcon = matchedIcon ?? iconName
+      cleaned = cleaned.split(emoji).join("").trim()
+    }
+  }
+
+  if (!matchedIcon) {
+    if (/umbrella|छाता|ছাতা/i.test(cleaned)) matchedIcon = "umbrella"
+    else if (/sunglasses|चश्मा|রোদচশমা/i.test(cleaned)) matchedIcon = "sunglasses"
+    else if (/spf|sunscreen|सनस्क्रीन/i.test(cleaned)) matchedIcon = "sunscreen"
+    else if (/drink|water|hydrat|पानी|जल|ors/i.test(cleaned)) matchedIcon = "hydration"
+    else if (/pollen|allergy|antihistamine|पराग/i.test(cleaned)) matchedIcon = "pollen"
+    else if (/exertion|strenuous|heat|मेहनत|गर्मी|পরিশ্রম|গরম/i.test(cleaned)) matchedIcon = "hot"
+    else if (/mask|मास्क/i.test(cleaned)) matchedIcon = "mask"
+    else if (/window|खिड़की|জানালা/i.test(cleaned)) matchedIcon = "home"
+    else if (fallbackTone) matchedIcon = resolveIconName(fallbackTone)
+  }
+
+  return { icon: matchedIcon, text: cleaned }
+}
+
 function AdviceLine({ text, tone }: { text: string; tone?: string }) {
-  const icon = tone ? resolveIconName(tone) : null
-  if (!icon) return <>{text}</>
+  if (!text) return null
+  const segments = text.split(/\s*·\s*/).filter(Boolean)
+
+  if (segments.length <= 1) {
+    const item = parseAdviceSegment(text, tone)
+    return (
+      <span className="advice-line-single">
+        {item.icon && <Icon name={item.icon} className="advice-tone" />}
+        <span>{item.text}</span>
+      </span>
+    )
+  }
+
+  const items = segments.map((seg, i) =>
+    parseAdviceSegment(seg, i === 0 ? tone : undefined),
+  )
+
   return (
-    <>
-      <Icon name={icon} className="advice-tone" />
-      {text}
-    </>
+    <span className="advice-items-wrap">
+      {items.map((item, idx) => (
+        <span key={idx} className="advice-chip">
+          {item.icon && <Icon name={item.icon} className="advice-tone" />}
+          <span>{item.text}</span>
+        </span>
+      ))}
+    </span>
   )
 }
 
@@ -830,7 +905,7 @@ export function HomeTab({
                   low: convertTemperature(current.low, settings.temperatureUnit),
                 })}
               </div>
-              <div className="weather-estimate-note" style={{ fontSize: 11, marginTop: 8, opacity: 0.7 }}>
+              <div className="weather-estimate-note" style={{ fontSize: 11, marginTop: 8, opacity: 0.7, color: "rgba(255,255,255,0.7)" }}>
                 {isLiveWeatherEnabled()
                   ? t("hero.areaEstimate", { time: formatClockTimeStr(td(weather.updatedAt), settings.timeFormat) })
                   : t("hero.demoPreview")}
@@ -1757,6 +1832,7 @@ export function HomeTab({
 
           {/* Commute — full width */}
           <Card
+            className="commute-card commute-tile"
             grad="linear-gradient(140deg,#2e1065 0%,#100522 100%)"
             border="rgba(167,139,250,0.1)"
             span2
@@ -2293,8 +2369,11 @@ function HealthTab({
         </div>
         <div
           style={{
+            background: "rgba(251,146,60,0.08)",
+            borderRadius: 10,
+            padding: "10px 12px",
             fontSize: 11,
-            color: "rgba(255,255,255,0.38)",
+            color: "#fdba74",
             lineHeight: 1.6,
           }}
         >
@@ -2355,10 +2434,10 @@ function HealthTab({
           style={{
             marginTop: 8,
             fontSize: 11,
-            color: "rgba(255,255,255,0.38)",
-            background: "rgba(255,255,255,0.04)",
+            color: "#86efac",
+            background: "rgba(74,222,128,0.08)",
             borderRadius: 10,
-            padding: "9px 12px",
+            padding: "10px 12px",
             lineHeight: 1.55,
           }}
         >
@@ -2449,7 +2528,7 @@ function HealthTab({
             borderRadius: 10,
             padding: "10px 12px",
             fontSize: 11,
-            color: "#60a5fa",
+            color: "#93c5fd",
             lineHeight: 1.6,
           }}
         >
@@ -3713,106 +3792,70 @@ function AlertsTab({
       {/* Seasonal event planner */}
       <SectionLabel>{td(weather.event.sectionLabel)}</SectionLabel>
       <Card
-        grad="linear-gradient(140deg,rgba(251,191,36,0.08) 0%,rgba(239,68,68,0.04) 100%)"
-        border="rgba(251,191,36,0.14)"
-        pad={18}
+        grad="rgba(255,255,255,0.05)"
+        border="rgba(255,255,255,0.08)"
+        pad={16}
+        className="event-planner-card"
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 14,
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#fbbf24",
-                marginBottom: 3,
-              }}
-            >
-              <IconByName name={weather.event.icon} />{" "}
-              <span data-i18n-ignore>{td(weather.event.title)}</span>
-            </div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.38)" }}>
-              <span data-i18n-ignore>{td(weather.event.dateRange)}</span> ·{" "}
-              {t("event.startsIn", { days: weather.event.daysAway })}
-            </div>
+        {/* Top meta row: Category/Season pill on left, Countdown on right */}
+        <div className="event-meta-row">
+          <div className="event-category-pill">
+            <IconByName name={weather.event.icon} />
+            <span>{td(weather.event.expectedSeason)}</span>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>
-              {t("event.expected")}
-            </div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-              {td(weather.event.expectedSeason)}
-            </div>
+          <div className="event-countdown-pill">
+            <span className="event-countdown-dot" />
+            <span>{t("event.startsIn", { days: weather.event.daysAway })}</span>
           </div>
         </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 8,
-            marginBottom: 12,
-          }}
-        >
-          <div
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              borderRadius: 10,
-              padding: 10,
-              textAlign: "center",
-            }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 800, color: "white" }}>
+
+        {/* Event identity: Full title and clean date range */}
+        <div className="event-identity">
+          <div className="event-title" data-i18n-ignore>
+            {td(weather.event.title)}
+          </div>
+          <div className="event-dates" data-i18n-ignore>
+            {td(weather.event.dateRange)}
+          </div>
+        </div>
+
+        {/* Telemetry Metrics Grid */}
+        <div className="event-metrics-grid">
+          <div className="event-metric-tile">
+            <div className="event-metric-eyebrow">
+              <Icon name="temperature" size={12} className="event-metric-icon" />
+              <span>{t("event.expectedTemp")}</span>
+            </div>
+            <div className="event-metric-val">
+              {weather.event.expectedTemperature}°
+            </div>
+            <div className="event-metric-caption">
               {t("event.avgTemp", { value: weather.event.expectedTemperature })}
             </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: "rgba(255,255,255,0.32)",
-                marginTop: 2,
-              }}
-            >
-              {t("event.expectedTemp")}
-            </div>
           </div>
-          <div
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              borderRadius: 10,
-              padding: 10,
-              textAlign: "center",
-            }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#4ade80" }}>
+
+          <div className="event-metric-tile">
+            <div className="event-metric-eyebrow">
+              <Icon name="rain" size={12} className="event-metric-icon" />
+              <span>{t("event.precipitation")}</span>
+            </div>
+            <div className="event-metric-val">
               {td(weather.event.rainLabel)}
             </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: "rgba(255,255,255,0.32)",
-                marginTop: 2,
-              }}
-            >
+            <div className="event-metric-caption">
               {t("event.rainChance", { chance: weather.event.rainChance })}
             </div>
           </div>
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: "rgba(255,255,255,0.45)",
-            lineHeight: 1.55,
-          }}
-        >
-          <AdviceLine
-            text={td(weather.event.advice)}
-            tone={weather.event.adviceTone}
-          />
+
+        {/* Actionable recommendation callout: clean, straight to the point */}
+        <div className="event-callout">
+          <div className="event-callout-header">
+            <span>{t("event.recommendation")}</span>
+          </div>
+          <div className="event-callout-text">
+            {td(weather.event.advice).replace(/💡/g, "").trim()}
+          </div>
         </div>
       </Card>
     </div>

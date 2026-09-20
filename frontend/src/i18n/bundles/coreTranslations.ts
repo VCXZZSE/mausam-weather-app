@@ -84,7 +84,7 @@ const coreEn = {
   "section.todaysMetrics": "Today's Metrics",
   "section.sevenDay": "7-Day Forecast",
   "card.airQuality": "Air Quality",
-  "badge.indiaAqi": "INDIA AQI {index}",
+  "badge.indiaAqi": "AQI : {index}",
   "aqi.unavailable": "Unavailable",
   "aqi.noStation": "No nearby CPCB station reading is available.",
   "card.uvIndex": "UV Index",
@@ -158,6 +158,8 @@ const coreEn = {
   "event.avgTemp": "{value}°C avg",
   "event.expectedTemp": "Expected temp",
   "event.rainChance": "~{chance}% chance",
+  "event.precipitation": "Precipitation",
+  "event.recommendation": "Planner Recommendation",
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
   "sidebar.open": "Open Mausam menu",
@@ -444,7 +446,7 @@ const coreHi = {
   "section.todaysMetrics": "आज के आँकड़े",
   "section.sevenDay": "7-दिन का पूर्वानुमान",
   "card.airQuality": "वायु गुणवत्ता",
-  "badge.indiaAqi": "भारत AQI {index}",
+  "badge.indiaAqi": "AQI : {index}",
   "aqi.unavailable": "अनुपलब्ध",
   "aqi.noStation": "आस-पास किसी CPCB स्टेशन की रीडिंग उपलब्ध नहीं है।",
   "card.uvIndex": "UV सूचकांक",
@@ -515,6 +517,8 @@ const coreHi = {
   "event.avgTemp": "{value}°C औसत",
   "event.expectedTemp": "संभावित तापमान",
   "event.rainChance": "~{chance}% संभावना",
+  "event.precipitation": "बारिश",
+  "event.recommendation": "इवेंट सलाह",
 
   "sidebar.open": "मौसम मेन्यू खोलें",
   "sidebar.close": "मेन्यू बंद करें",
@@ -786,7 +790,7 @@ const coreBn = {
   "section.todaysMetrics": "আজকের পরিমাপ",
   "section.sevenDay": "৭-দিনের পূর্বাভাস",
   "card.airQuality": "বায়ুর মান",
-  "badge.indiaAqi": "ভারত AQI {index}",
+  "badge.indiaAqi": "AQI : {index}",
   "aqi.unavailable": "অনুপলব্ধ",
   "aqi.noStation": "কাছাকাছি কোনো CPCB স্টেশনের রিডিং পাওয়া যাচ্ছে না।",
   "card.uvIndex": "UV সূচক",
@@ -857,6 +861,8 @@ const coreBn = {
   "event.avgTemp": "{value}°C গড়",
   "event.expectedTemp": "প্রত্যাশিত তাপমাত্রা",
   "event.rainChance": "~{chance}% সম্ভাবনা",
+  "event.precipitation": "বৃষ্টিপাত",
+  "event.recommendation": "ইভেন্ট পরামর্শ",
 
   "sidebar.open": "মৌসম মেনু খুলুন",
   "sidebar.close": "মেনু বন্ধ করুন",

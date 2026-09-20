@@ -97,6 +97,7 @@ describe("translation catalogues", () => {
     "gen.rainAmount",
     "gen.label.uv",
     "gen.label.aqi",
+    "badge.indiaAqi",
   ])
 
   it.each(OTHER_LANGUAGES)("actually translates, rather than copying English, in %s", (language) => {

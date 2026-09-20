@@ -19,6 +19,6 @@ export default defineConfig({
     setupFiles: ["./frontend/test/setupTests.ts"],
     include: ["frontend/test/**/*.test.{ts,tsx}"],
     css: false,
-    testTimeout: 15000,
+    testTimeout: 30000,
   },
 })

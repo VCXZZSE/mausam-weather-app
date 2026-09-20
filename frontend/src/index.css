@@ -2062,6 +2062,7 @@ input:-webkit-autofill {
 .mausam-app .weather-hero-card .weather-temp-value > span { color: white !important; }
 .mausam-app .weather-hero-card .weather-condition { color: rgba(255,255,255,0.6) !important; }
 .mausam-app .weather-hero-card .weather-meta { color: rgba(255,255,255,0.3) !important; }
+.mausam-app .weather-hero-card .weather-estimate-note { color: rgba(255,255,255,0.7) !important; }
 .mausam-app .weather-hero-card .rain-drop { background: linear-gradient(to bottom, transparent, rgba(147,197,253,0.28)) !important; opacity: .4 !important; }
 .mausam-app .weather-hero-card::before { background-image: none !important; opacity: 0 !important; }
 
@@ -2301,6 +2302,7 @@ input:-webkit-autofill {
 }
 #root .mausam-app .weather-hero-card .weather-condition { color: rgba(255,255,255,0.6) !important; }
 #root .mausam-app .weather-hero-card .weather-meta { color: rgba(255,255,255,0.3) !important; }
+#root .mausam-app .weather-hero-card .weather-estimate-note { color: rgba(255,255,255,0.7) !important; }
 #root .mausam-app .weather-hero-card .weather-stats-grid span { color: rgba(255,255,255,0.35) !important; }
 #root .mausam-app .weather-hero-card .weather-stats-grid > div > div:last-child { color: rgba(255,255,255,0.3) !important; }
 
@@ -2491,6 +2493,61 @@ input:-webkit-autofill {
   vertical-align: -0.16em;
   margin-right: 0.45em;
   flex: 0 0 auto;
+}
+
+.advice-items-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.advice-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: inherit;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.theme-light .advice-chip {
+  background: rgba(0, 0, 0, 0.045);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.advice-chip .advice-tone {
+  width: 1.15em;
+  height: 1.15em;
+  margin-right: 0;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+
+.advice-line-single {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.5;
+}
+
+.advice-line-single .advice-tone {
+  width: 1.15em;
+  height: 1.15em;
+  margin-right: 0;
+  flex-shrink: 0;
+  opacity: 0.95;
 }
 
 /* ── Final dashboard theme and reference header alignment ───────────────── */
@@ -2780,6 +2837,9 @@ input:-webkit-autofill {
 }
 #root .mausam-app .weather-hero-card .weather-meta {
   color: rgba(218, 240, 245, .7) !important;
+}
+#root .mausam-app .weather-hero-card .weather-estimate-note {
+  color: rgba(235, 248, 252, .85) !important;
 }
 #root .mausam-app .weather-hero-card .weather-stat-label {
   color: rgba(221, 243, 247, .68) !important;
@@ -3893,6 +3953,7 @@ input:-webkit-autofill {
 }
 #root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-temp-value > span:last-child,
 #root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-meta,
+#root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-estimate-note,
 #root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-stat-label,
 #root .mausam-app.theme-light .weather-hero-card.is-sunny .weather-stat-value span {
   color: rgba(73, 49, 13, .65) !important;
@@ -3983,6 +4044,7 @@ input:-webkit-autofill {
 }
 #root .mausam-app.theme-light .weather-hero-card.is-night .weather-temp-value > span:last-child,
 #root .mausam-app.theme-light .weather-hero-card.is-night .weather-meta,
+#root .mausam-app.theme-light .weather-hero-card.is-night .weather-estimate-note,
 #root .mausam-app.theme-light .weather-hero-card.is-night .weather-stat-label,
 #root .mausam-app.theme-light .weather-hero-card.is-night .weather-stat-value span {
   color: rgba(42, 55, 78, .65) !important;
@@ -4580,4 +4642,268 @@ input:-webkit-autofill {
 .heavy-rain-cloud-main { animation: cloud-drift 3.2s ease-in-out infinite; }
 .heavy-rain-back-cloud { animation: back-cloud-drift 4s ease-in-out infinite; }
 .svg-heavy-rain-drop { animation: svg-heavy-rain-fall .6s linear infinite; }
+
+/* ── Event Planner Card (Apple Weather aesthetic) ───────── */
+
+.event-planner-card {
+  margin-bottom: 20px;
+}
+
+/* Top Meta Row: Category/Season Pill & Countdown */
+.event-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.event-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.theme-light .event-category-pill {
+  background: rgba(22, 59, 92, 0.06) !important;
+  border: 1px solid rgba(22, 59, 92, 0.12) !important;
+  color: #1e3a5f !important;
+}
+
+.event-category-pill svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0.85;
+}
+
+.event-countdown-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.theme-light .event-countdown-pill {
+  background: rgba(22, 59, 92, 0.06) !important;
+  border: 1px solid rgba(22, 59, 92, 0.12) !important;
+  color: #334155 !important;
+}
+
+.event-countdown-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #38bdf8;
+}
+
+.theme-light .event-countdown-dot {
+  background: #0284c7;
+}
+
+/* Event Identity (Title & Date) */
+.event-identity {
+  margin-bottom: 14px;
+}
+
+.event-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+.theme-light .event-title {
+  color: #0f172a !important;
+}
+
+.event-dates {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.theme-light .event-dates {
+  color: #64748b !important;
+}
+
+/* Telemetry Metrics Grid */
+.event-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.event-metric-tile {
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.theme-light .event-metric-tile {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(89, 164, 198, 0.18) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+.event-metric-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.theme-light .event-metric-eyebrow {
+  color: #64748b !important;
+}
+
+.event-metric-eyebrow .event-metric-icon {
+  opacity: 0.75;
+}
+
+.event-metric-val {
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  margin: 1px 0;
+}
+
+.theme-light .event-metric-val {
+  color: #0f172a !important;
+}
+
+.event-metric-caption {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.25;
+}
+
+.theme-light .event-metric-caption {
+  color: #64748b !important;
+}
+
+/* Callout Box */
+.event-callout {
+  border-radius: 14px;
+  padding: 11px 13px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.theme-light .event-callout {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(89, 164, 198, 0.18) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+.event-callout-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 5px;
+}
+
+.theme-light .event-callout-header {
+  color: #475569 !important;
+}
+
+.event-callout-text {
+  font-size: 11.5px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.theme-light .event-callout-text {
+  color: #1e293b !important;
+}
+
+/* ── Metric Tile Badges (Homepage Today's Metrics) ─────── */
+
+.metric-tile-badge,
+.badge {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Plus Jakarta Sans", sans-serif !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Light Mode: rich, vibrant, readable colored badges */
+#root .mausam-app.theme-light .metric-grid > .aqi-tile .metric-tile-badge,
+.theme-light .metric-grid > .aqi-tile .metric-tile-badge,
+.theme-light .aqi-tile .metric-tile-badge {
+  color: #b45309 !important;
+  background: rgba(245, 158, 11, 0.16) !important;
+  border: 1px solid rgba(245, 158, 11, 0.38) !important;
+}
+
+#root .mausam-app.theme-light .metric-grid > .uv-tile .metric-tile-badge,
+.theme-light .metric-grid > .uv-tile .metric-tile-badge,
+.theme-light .uv-tile .metric-tile-badge {
+  color: #c2410c !important;
+  background: rgba(249, 115, 22, 0.16) !important;
+  border: 1px solid rgba(249, 115, 22, 0.38) !important;
+}
+
+#root .mausam-app.theme-light .metric-grid > .run-tile .metric-tile-badge,
+.theme-light .metric-grid > .run-tile .metric-tile-badge,
+.theme-light .run-tile .metric-tile-badge {
+  color: #047857 !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  border: 1px solid rgba(16, 185, 129, 0.38) !important;
+}
+
+#root .mausam-app.theme-light .metric-grid > .rainfall-tile .metric-tile-badge,
+.theme-light .metric-grid > .rainfall-tile .metric-tile-badge,
+.theme-light .rainfall-tile .metric-tile-badge {
+  color: #1d4ed8 !important;
+  background: rgba(59, 130, 246, 0.16) !important;
+  border: 1px solid rgba(59, 130, 246, 0.38) !important;
+}
+
+#root .mausam-app.theme-light .commute-tile .metric-tile-badge,
+.theme-light .commute-tile .metric-tile-badge {
+  color: #dc2626 !important;
+  background: rgba(239, 68, 68, 0.16) !important;
+  border: 1px solid rgba(239, 68, 68, 0.38) !important;
+}
+
 
