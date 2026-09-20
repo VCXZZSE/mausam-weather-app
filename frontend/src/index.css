@@ -1772,7 +1772,7 @@ input:-webkit-autofill {
   .theme-light {
     color: #12304c !important;
   }
-  .theme-light > div {
+  .mausam-app.theme-light > div {
     background:
       radial-gradient(circle at 88% 0%, rgba(139, 224, 255, .55), transparent 30%),
       linear-gradient(145deg, #e9fbff 0%, #c7eef8 46%, #b8d9ff 100%) !important;

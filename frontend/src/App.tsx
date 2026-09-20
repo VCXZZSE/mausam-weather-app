@@ -5,6 +5,7 @@ import { syncWeatherToWidget } from "@/widgets/widgetBridge"
 import { PullToRefresh } from "@/components/common/PullToRefresh"
 import { SlideToDiveIn } from "@/components/common/SlideToDiveIn"
 import { TravelTilesGrid } from "@/components/travel/TravelTilesGrid"
+import { OfflineScreen } from "@/components/offline/OfflineScreen"
 import { Icon } from "@/components/icons/Icon"
 import {
   aqiBandForIndex,
@@ -6890,13 +6891,31 @@ function MausamApp() {
   if (!userLocation) return null
   if (!weather || weatherLocationKey !== `${userLocation.latitude},${userLocation.longitude}`) {
     const failed = weatherSource === "error"
-    return <main className="setup-shell" data-weather-source={failed ? "error" : "loading"}>
+    if (failed) {
+      return (
+        <OfflineScreen
+          theme={theme}
+          onRetry={() => setWeatherRetry(value => value + 1)}
+          onDemoMode={() => {
+            setWeatherSource("demo")
+            setWeather(DEMO_WEATHER_DATA)
+            setWeatherLocationKey(`${userLocation.latitude},${userLocation.longitude}`)
+          }}
+          onChangeLocation={() => {
+            clearStoredLocation()
+            setUserLocation(null)
+            setWeather(null)
+            setWeatherLocationKey(null)
+          }}
+        />
+      )
+    }
+    return <main className="setup-shell" data-weather-source="loading">
       <div className="setup-topbar" />
       <div className="setup-content"><section className="setup-panel">
         <div className="setup-eyebrow">{t("gate.liveWeather", { place: userLocation.locality })}</div>
-        <h2>{t(failed ? "gate.errorTitle" : "gate.loadingTitle")}</h2>
-        <p className="setup-copy" role="status">{t(failed ? "gate.errorCopy" : "gate.loadingCopy")}</p>
-        {failed && <button type="button" className="setup-primary" onClick={() => setWeatherRetry(value => value + 1)}>{t("gate.tryAgain")} <Icon name="retry" /></button>}
+        <h2>{t("gate.loadingTitle")}</h2>
+        <p className="setup-copy" role="status">{t("gate.loadingCopy")}</p>
         <button type="button" className="location-manual-toggle" onClick={() => { clearStoredLocation(); setUserLocation(null); setWeather(null); setWeatherLocationKey(null) }}>{t("gate.changeLocation")}</button>
       </section></div>
     </main>

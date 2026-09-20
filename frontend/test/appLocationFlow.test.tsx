@@ -362,9 +362,9 @@ describe("App — location-first state machine", () => {
     expect(screen.getByText("Getting your weather")).toBeInTheDocument()
     expect(screen.queryByText(/Bright & Sunny/)).not.toBeInTheDocument()
     await act(async () => { rejectRequest(new Error("offline")) })
-    expect(await screen.findByText("Weather unavailable")).toBeInTheDocument()
+    expect(await screen.findByText(/The Clouds Are Sleeping|Weather unavailable/)).toBeInTheDocument()
     expect(screen.queryByText(/Bright & Sunny/)).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: /Try again/ }))
+    fireEvent.click(screen.getByRole("button", { name: /Wake Up & Reconnect|Try again/i }))
     await screen.findByText("29")
   })
 

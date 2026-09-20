@@ -160,6 +160,12 @@ const coreEn = {
   "event.rainChance": "~{chance}% chance",
   "event.precipitation": "Precipitation",
   "event.recommendation": "Planner Recommendation",
+  "offline.sleepingTitle": "The Clouds Are Sleeping",
+  "offline.wakingTitle": "Checking the Sky...",
+  "offline.sleepingCopy": "Mausam cannot reach the weather satellites right now. Poke the cloud or check your connection.",
+  "offline.pokeHint": "Tap to poke awake!",
+  "offline.wakeBtn": "Wake Up & Reconnect",
+  "offline.demoBtn": "Explore Offline Demo Mode",
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
   "sidebar.open": "Open Mausam menu",
@@ -519,6 +525,12 @@ const coreHi = {
   "event.rainChance": "~{chance}% संभावना",
   "event.precipitation": "बारिश",
   "event.recommendation": "इवेंट सलाह",
+  "offline.sleepingTitle": "बादल सो रहे हैं",
+  "offline.wakingTitle": "आसमान देख रहे हैं...",
+  "offline.sleepingCopy": "मौसम उपग्रहों से संपर्क नहीं हो पा रहा है। बादल को जगाएं या इंटरनेट जांचें।",
+  "offline.pokeHint": "जगाने के लिए टैप करें!",
+  "offline.wakeBtn": "जगाएं और पुनः प्रयास करें",
+  "offline.demoBtn": "ऑफ़लाइन डेमो मोड देखें",
 
   "sidebar.open": "मौसम मेन्यू खोलें",
   "sidebar.close": "मेन्यू बंद करें",
@@ -863,6 +875,12 @@ const coreBn = {
   "event.rainChance": "~{chance}% সম্ভাবনা",
   "event.precipitation": "বৃষ্টিপাত",
   "event.recommendation": "ইভেন্ট পরামর্শ",
+  "offline.sleepingTitle": "মেঘেরা ঘুমোচ্ছে",
+  "offline.wakingTitle": "আকাশ দেখা হচ্ছে...",
+  "offline.sleepingCopy": "মৌসম এখন আবহাওয়া উপগ্রহের সাথে সংযোগ করতে পারছে না। মেঘটিকে জাগিয়ে তুলুন বা সংযোগ পরীক্ষা করুন।",
+  "offline.pokeHint": "জাগাতে আলতো চাপুন!",
+  "offline.wakeBtn": "জাগিয়ে তুলুন ও পুনরায় চেষ্টা করুন",
+  "offline.demoBtn": "অফলাইন ডেমো মোড দেখুন",
 
   "sidebar.open": "মৌসম মেনু খুলুন",
   "sidebar.close": "মেনু বন্ধ করুন",
