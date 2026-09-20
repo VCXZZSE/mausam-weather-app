@@ -31,9 +31,8 @@ const briefingResponseSchema = z.object({
 
 /**
  * Validates a generated briefing before it is ever sent to the client.
- * This is what makes the future-LLM seam safe: whatever produces the
- * BriefingResponse (deterministic today, potentially model-based later),
- * the route can never forward malformed JSON.
+ * Whatever produces the BriefingResponse, the route can never forward
+ * malformed payload data to the client.
  */
 export function validateBriefingResponse(value: unknown): BriefingResponse {
   const result = briefingResponseSchema.safeParse(value)
