@@ -102,6 +102,12 @@ export function Badge({
         position: "absolute",
         top: 12,
         right: 12,
+        // The badge is out of flow, so nothing stops a long reading - a
+        // translated "VERY HIGH", a four-digit AQI - from growing leftwards
+        // past the tile. It stops at the card's own padding instead.
+        maxWidth: "calc(100% - 24px)",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
         background: bg,
         border: `1px solid ${color}44`,
         borderRadius: 20,

@@ -619,7 +619,7 @@ function SeaTile({ weather, wide }: { weather: Weather; wide?: boolean }) {
   const [settings] = useSettings()
   return (
     <Card
-      className="metric-primary-card sea-tile"
+      className="metric-primary-card tile-flow sea-tile"
       grad="linear-gradient(140deg,#0c4a6e 0%,#062330 100%)"
       border="rgba(56,189,248,0.12)"
       span2={wide}
@@ -837,7 +837,7 @@ function VisibilityTile({ weather, wide }: { weather: Weather; wide?: boolean })
   const pct = Math.min(100, (current.visibility / 10) * 100)
   return (
     <Card
-      className="metric-primary-card visibility-tile"
+      className="metric-primary-card tile-flow visibility-tile"
       grad="linear-gradient(140deg,#1f2937 0%,#0a0f17 100%)"
       border="rgba(148,163,184,0.14)"
       span2={wide}
@@ -865,7 +865,7 @@ function HeatTile({ weather, wide }: { weather: Weather; wide?: boolean }) {
   const { current } = weather
   return (
     <Card
-      className="metric-primary-card heat-tile"
+      className="metric-primary-card tile-flow heat-tile"
       grad="linear-gradient(140deg,#7f1d1d 0%,#280808 100%)"
       border="rgba(248,113,113,0.12)"
       span2={wide}
@@ -994,9 +994,12 @@ export function MetricGrid({
   metrics: readonly MetricTile[]
 }) {
   return (
+    // The gap stays in the stylesheet: a one-column tile derives its square
+    // minimum height from the column width, and that sum needs the gap as a
+    // value it can read (--metric-grid-gap) rather than an inline literal.
     <div
       className="metric-grid"
-      style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
+      style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}
     >
       {metrics.map((tile) => (
         <MetricTileView

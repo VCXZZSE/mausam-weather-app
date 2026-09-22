@@ -100,27 +100,95 @@
   height: auto !important;
   min-height: 0 !important;
 }
-/* A one-column flow tile keeps the square footprint, so it lines up with the
- * axis tiles beside it in the same row — but with a content-based minimum
- * rather than the fixed `min-height: 0` the axis tiles use, so a pollen ladder
- * or a longer sun & moon list grows instead of being cut off. */
+
+/* ── The square is a floor, not a ceiling ───────────────────────── */
+/* index.css sizes a one-column tile with `aspect-ratio: 1 / 1`, which fixes its
+ * height to its width. The card also clips (`overflow: hidden`), so a tile
+ * whose contents do not fit loses them silently, and anything still in flow
+ * underneath an absolutely positioned reading is drawn straight through it —
+ * the heat tile's "Heat Index" line landing on top of its hydration advice is
+ * that, and so is the visibility meter sitting under its own kilometre figure.
+ * Translations are the usual trigger: a Hindi or Bengali advice line runs to
+ * three lines where English runs to two.
+ *
+ * The grid is a size container, which makes a column's width a length the tiles
+ * can read: `min-height` reproduces the square exactly while the contents fit,
+ * and the tile grows past it when they do not. Row-mates stretch to match,
+ * which is also what keeps the shared reading axis honest — `top: 47%` only
+ * lines up across a row while the tiles in it are the same height.
+ *
+ * 164px appears twice on purpose: as the whole value for a browser with no
+ * container query units, and inside the `max()` as the floor explained below. */
+#root .mausam-app .metric-grid {
+  --metric-grid-gap: 10px;
+  gap: var(--metric-grid-gap);
+  container-type: inline-size;
+}
 #root
   .mausam-app
   .metric-grid
-  > .futuristic-card.metric-primary-card.tile-flow:not(.metric-tile-wide) {
-  aspect-ratio: 1 / 1;
+  > .futuristic-card.metric-primary-card:not(.metric-tile-wide) {
+  align-self: stretch !important;
+  aspect-ratio: auto !important;
   height: auto !important;
-  min-height: auto !important;
+  min-height: 164px !important;
+  min-height: max(164px, calc((100cqw - var(--metric-grid-gap)) / 2)) !important;
 }
+
+/* An axis tile's reading and the line under it are both out of flow, pinned to
+ * a share of the tile's height; its closing note is in flow against the bottom
+ * edge. On a 320px screen the square is short enough that a two-line
+ * recommendation — "Use SPF 50+ · Seek shade at midday" — reaches the note, so
+ * the square has a 164px floor of its own: below that the two meet. The clamp
+ * is the other half of the same guarantee, since nothing else caps how many
+ * lines a translated recommendation takes. */
+#root
+  .mausam-app
+  .metric-grid
+  > .metric-primary-card:not(.tile-flow):not(.metric-tile-wide)
+  .metric-card-emphasis {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 #root .mausam-app .metric-grid > .futuristic-card.metric-primary-card.metric-tile-wide {
   text-align: start;
 }
 #root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide > .card-label {
-  margin-top: 2px;
   text-align: start;
 }
-#root .mausam-app .metric-grid > .metric-primary-card.tile-flow > .card-label {
-  margin-top: 2px;
+
+/* ── One label rhythm, clear of the badge ───────────────────────── */
+/* The badge is taken out of flow at `top: 12px; right: 12px` and stands about
+ * 18px tall, so anything drawn in the first ~30px of a card shares its row.
+ * Flow and wide tiles used to start their label at 2px to buy back the vertical
+ * space, which put a centred label — "POLLEN OUTLOOK" under a "LOW" badge —
+ * directly beneath it. A single offset for every metric tile clears the badge
+ * and lines the labels up across a row at the same time; the tiles can afford
+ * it now that they grow rather than clip.
+ *
+ * The .aqi-tile copy of the selector is only there to outweigh index.css's own
+ * .aqi-tile rule, which is otherwise just as specific and loaded later. */
+#root .mausam-app .metric-grid > .futuristic-card.metric-primary-card > .card-label,
+#root
+  .mausam-app
+  .metric-grid
+  > .futuristic-card.metric-primary-card.aqi-tile
+  > .card-label {
+  margin-top: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* A flow tile has nothing pinned below its label, so a label too long for one
+ * line may take a second one rather than lose its ending to an ellipsis. */
+#root .mausam-app .metric-grid > .futuristic-card.metric-primary-card.tile-flow > .card-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 #root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .aqi-status,
 #root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-index,
@@ -168,9 +236,21 @@
 #root .mausam-app .metric-grid > .metric-primary-card .tile-advice {
   margin-top: auto;
 }
-#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .tile-advice,
-#root .mausam-app .metric-grid > .metric-primary-card.tile-flow .tile-advice {
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .tile-advice {
   margin-top: 11px;
+}
+/* A one-column flow tile is a square with whatever slack the reading leaves, so
+ * its advice sits on the bottom edge the way a .metric-card-note does — but the
+ * rule above it is drawn by the advice's own border, and `margin-top: auto`
+ * collapses to nothing on a tile that has grown past the square. The padding is
+ * what guarantees the gap in that case. */
+#root
+  .mausam-app
+  .metric-grid
+  > .metric-primary-card.tile-flow:not(.metric-tile-wide)
+  .tile-advice {
+  margin-top: auto;
+  padding-top: 11px;
 }
 
 /* ── Shared tile furniture ──────────────────────────────────────── */
@@ -205,14 +285,16 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* Three stats share a row, so each gets a third of a tile — not enough for
+ * "Post-monsoon" on one line at 320px. The value wraps rather than ending in an
+ * ellipsis; the row is in flow, so the tile takes the extra line. */
 .tile-stat-value {
   margin-top: 4px;
-  overflow: hidden;
   color: #fff;
   font-size: 12px;
   font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .tile-advice {
   margin-top: 11px;
@@ -298,25 +380,28 @@
 
 /* ── Sun & Moon tile ────────────────────────────────────────────── */
 .sunmoon-rows { display: flex; flex-direction: column; gap: 9px; margin-top: 2px; }
-.sunmoon-row { display: flex; align-items: center; gap: 9px; }
+.sunmoon-row { display: flex; align-items: center; gap: 7px; }
 .sunmoon-icon {
   display: grid;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
   place-items: center;
   border-radius: 8px;
   background: rgba(250, 204, 21, 0.14);
   color: #facc15;
 }
-.sunmoon-icon svg { width: 13px; height: 13px; }
+.sunmoon-icon svg { width: 12px; height: 12px; }
+/* "Golden Hour" and a 12-hour clock do not both fit on one line in a
+ * one-column tile, and an ellipsis there reads as a bug ("Golden …"). The
+ * label wraps instead; the tile has the room because it grows. */
 .sunmoon-label {
   flex: 1;
-  overflow: hidden;
+  min-width: 0;
   color: rgba(255, 255, 255, 0.5);
   font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .sunmoon-value { color: #fff; font-size: 11px; font-weight: 800; white-space: nowrap; }
 
