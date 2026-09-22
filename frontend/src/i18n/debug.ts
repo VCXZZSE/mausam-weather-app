@@ -126,6 +126,9 @@ const ALLOWED_TOKENS = new Set([
   "mausam",
   "km",
   "kmh",
+  // SI symbol for pressure. Hindi and Bengali meteorological copy writes it in
+  // Latin too, so all three catalogues agree — see localization.test.tsx.
+  "hPa",
   "h",
   "L",
   "mm",

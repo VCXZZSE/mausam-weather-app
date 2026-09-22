@@ -162,7 +162,10 @@
 /* ── Specialties Grid ── */
 .official-specialties {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* A reader sees only their own sector bulletin, so this row usually holds
+     one box, not two. auto-fit lets a lone box take the full width instead of
+     sitting next to an empty cell. */
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 10px;
 }
 

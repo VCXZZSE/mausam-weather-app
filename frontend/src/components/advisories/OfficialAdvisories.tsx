@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { z } from "zod"
 import type { UserLocation } from "@/services/locationService"
+import type { SpecialtyAdvisoryId } from "@/services/homePresets"
 import { formatDateTime, useTranslation, type Language } from "@/i18n"
 import { Icon } from "@/components/icons/Icon"
 import "./OfficialAdvisories.css"
@@ -48,11 +49,32 @@ function Bulletin({ alert }: { alert: OfficialAlert }) {
     {href && <a href={href} target="_blank" rel="noopener noreferrer">{t("advisories.viewOfficial")} <Icon name="external" /></a>}
   </article>
 }
+/**
+ * Which sector bulletins to show, if any.
+ *
+ * Only the ones belonging to the reader: agromet for the agriculture persona,
+ * marine for the coastal one, and neither for everybody else. A commuter has no
+ * use for a crop advisory, and showing one to them buries the bulletin that
+ * does concern them.
+ *
+ * This cannot hide a life-safety warning. The backend sorts a bulletin into
+ * "fishing" or "farming" only when its own title says so (fisher/fishing/marine,
+ * agromet/agricultur/farming/crop advisory); a cyclone or heavy-rain warning is
+ * therefore always "general", which is the block above and is shown to
+ * everyone, always.
+ */
+const SPECIALTIES = ["farming", "fishing"] as const
+function chooseSpecialties(
+  specialties?: readonly SpecialtyAdvisoryId[],
+): SpecialtyAdvisoryId[] {
+  return SPECIALTIES.filter(id => (specialties ?? []).includes(id))
+}
+
 function Shield() {
   return <svg aria-hidden="true" width="19" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="M12 8v5m0 3h.01"/></svg>
 }
 
-export function LiveOfficialAdvisories({ location, refreshKey }: { location: UserLocation; refreshKey?: number }) {
+export function LiveOfficialAdvisories({ location, refreshKey, specialties }: { location: UserLocation; refreshKey?: number; specialties?: readonly SpecialtyAdvisoryId[] }) {
   const { t, language } = useTranslation()
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -109,7 +131,7 @@ export function LiveOfficialAdvisories({ location, refreshKey }: { location: Use
       </> : <div className="official-empty"><span className={`official-status-dot ${generalAvailable ? "is-clear" : ""}`} aria-hidden="true"/><div><h3>{loading ? t("advisories.checking") : generalAvailable ? t("advisories.noneActive") : t("advisories.unavailable")}</h3><p>{loading ? t("advisories.checkingCopy") : generalAvailable ? t("advisories.noneActiveCopy") : t("advisories.unavailableCopy")}</p></div></div>}
       {generalAlerts.length > 0 && !generalAvailable && <p className="official-partial">{t("advisories.partial")}</p>}
     </div>
-    <div className="official-specialties">{(["farming", "fishing"] as const).map(category => {
+    {chooseSpecialties(specialties).length > 0 && <div className="official-specialties">{chooseSpecialties(specialties).map(category => {
       const info = currentCategory(data?.categories[category], now)
       const alerts = info?.alerts ?? []
       const title = t(category === "farming" ? "advisories.farming" : "advisories.fishing")
@@ -121,15 +143,18 @@ export function LiveOfficialAdvisories({ location, refreshKey }: { location: Use
             ? t(category === "farming" ? "advisories.noFarming" : "advisories.noFishing")
             : t("advisories.specialtyUnavailable")
       const label = <><span className="official-specialty-icon"><Icon name={category === "farming" ? "wheat" : "fish"} /></span><span><strong>{title}</strong><span className="official-specialty-status">{status}</span></span>{alerts.length > 0 && <span className="official-expand"><Icon name="chevron-down" /></span>}</>
-      return alerts.length ? <details className="official-specialty has-advisory" key={category}><summary>{label}</summary><div className="official-specialty-bulletins">{alerts.map(alert => <Bulletin key={alert.id} alert={alert} />)}{info?.status !== "available" && <p className="official-partial">{t("advisories.partialShort")}</p>}</div></details> : <div className="official-specialty" key={category}>{label}</div>
-    })}</div>
+      // Everything shown here is this reader's own sector, so every row is
+      // marked, and one carrying an advisory opens rather than hiding it
+      // behind a tap.
+      return alerts.length ? <details className="official-specialty has-advisory is-primary" key={category} open><summary>{label}</summary><div className="official-specialty-bulletins">{alerts.map(alert => <Bulletin key={alert.id} alert={alert} />)}{info?.status !== "available" && <p className="official-partial">{t("advisories.partialShort")}</p>}</div></details> : <div className="official-specialty is-primary" key={category}>{label}</div>
+    })}</div>}
     <footer className="official-advisories-footer"><span>{t("advisories.footerLeft")}</span><span>{checked ? t("advisories.checked", { time: checked }) : loading ? t("advisories.connecting") : t("advisories.awaiting")}</span></footer>
   </section>
 }
 
 // Government-feed access is paused at the user's request. Keep the future live
 // component separate so the homepage cannot start requests or imply an all-clear.
-export function OfficialAdvisories({ location, refreshKey }: { location: UserLocation; refreshKey?: number }) {
+export function OfficialAdvisories({ location, refreshKey, specialties }: { location: UserLocation; refreshKey?: number; specialties?: readonly SpecialtyAdvisoryId[] }) {
   const { t } = useTranslation()
   return <section className="official-advisories" aria-label={t("advisories.aria")}>
     <header className="official-advisories-header">
@@ -146,11 +171,11 @@ export function OfficialAdvisories({ location, refreshKey }: { location: UserLoc
         <div><h3>{t("advisories.none")}</h3></div>
       </div>
     </div>
-    <div className="official-specialties">
-      {(["advisories.farming", "advisories.fishing"] as const).map(key => <div className="official-specialty" key={key}>
-        <span className="official-specialty-icon"><Icon name={key === "advisories.farming" ? "wheat" : "fish"} /></span>
-        <span><strong>{t(key)}</strong><span className="official-specialty-status">{t("advisories.none")}</span></span>
+    {chooseSpecialties(specialties).length > 0 && <div className="official-specialties">
+      {chooseSpecialties(specialties).map(category => <div className="official-specialty is-primary" key={category}>
+        <span className="official-specialty-icon"><Icon name={category === "farming" ? "wheat" : "fish"} /></span>
+        <span><strong>{t(category === "farming" ? "advisories.farming" : "advisories.fishing")}</strong><span className="official-specialty-status">{t("advisories.none")}</span></span>
       </div>)}
-    </div>
+    </div>}
   </section>
 }

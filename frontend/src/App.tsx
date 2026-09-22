@@ -1,6 +1,32 @@
 import { MausamMenuButton, ProfileSidebar } from "@/components/layout/ProfileSidebar"
 import { OfficialAdvisories } from "@/components/advisories/OfficialAdvisories"
 import { ComfortIndicator, comfortTone } from "@/components/common/ComfortIndicator"
+import {
+  AdviceLine,
+  Bar,
+  Card,
+  CardLabel,
+  IconByName,
+  INDIA_NAQI_GRADIENT,
+  SectionLabel,
+} from "@/components/common/Tiles"
+import {
+  GlanceRail,
+  HeroStatStrip,
+  MetricGrid,
+  NearbySection,
+  PackingSection,
+} from "@/components/home/PersonaHome"
+import "@/components/home/PersonaHome.css"
+import {
+  clearHomePreset,
+  getHomePreset,
+  resolveHomePreset,
+  saveHomePreset,
+  type HomePreset,
+  type SectionId,
+  type UserPersonaId,
+} from "@/services/homePresets"
 import { syncWeatherToWidget } from "@/widgets/widgetBridge"
 import { PullToRefresh } from "@/components/common/PullToRefresh"
 import { SlideToDiveIn } from "@/components/common/SlideToDiveIn"
@@ -9,7 +35,6 @@ import { OfflineScreen } from "@/components/offline/OfflineScreen"
 import { Icon } from "@/components/icons/Icon"
 import {
   aqiBandForIndex,
-  resolveIconName,
   type IconName,
 } from "@/components/icons/iconMap"
 import type { PersonalizedIcon } from "@/components/icons/iconMap"
@@ -55,7 +80,6 @@ import { getTimeGreeting } from "@/utils/timeGreeting"
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_STORAGE_KEY,
-  isTightUnit,
   LanguageProvider,
   translate,
   useTranslation,
@@ -82,247 +106,6 @@ type Tab = "home" | "health" | "forecast" | "alerts"
 type Overlay = "none" | "briefing" | "privacy" | "faq" | "settings"
 
 // ── Shared UI ──────────────────────────────────────────────────────────────────
-
-function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className="section-label"
-      style={{
-        fontSize: 10,
-        fontWeight: 800,
-        color: "rgba(255,255,255,0.3)",
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        marginBottom: 10,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function Card({
-  grad,
-  border,
-  children,
-  span2,
-  pad = 16,
-  className,
-}: {
-  grad: string
-  border?: string
-  children: ReactNode
-  span2?: boolean
-  pad?: number
-  className?: string
-}) {
-  return (
-    <div
-      className={`futuristic-card interactive-tile${
-        className ? ` ${className}` : ""
-      }`}
-      style={{
-        background: grad,
-        border: `1px solid ${border ?? "rgba(255,255,255,0.05)"}`,
-        borderRadius: 20,
-        padding: pad,
-        overflow: "hidden",
-        position: "relative",
-        gridColumn: span2 ? "1 / -1" : undefined,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function CardLabel({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className="card-label"
-      style={{
-        fontSize: 9,
-        fontWeight: 800,
-        color: "rgba(255,255,255,0.3)",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        marginBottom: 8,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function Badge({
-  children,
-  color,
-  bg,
-  className,
-}: {
-  children: ReactNode
-  color: string
-  bg: string
-  className?: string
-}) {
-  return (
-    <span
-      className={`badge metric-tile-badge${className ? ` ${className}` : ""}`}
-      style={{
-        position: "absolute",
-        top: 12,
-        right: 12,
-        background: bg,
-        border: `1px solid ${color}44`,
-        borderRadius: 20,
-        padding: "3px 8px",
-        fontSize: 8,
-        fontWeight: 900,
-        color,
-        letterSpacing: "0.07em",
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-      }}
-    >
-      {children}
-    </span>
-  )
-}
-
-function Bar({
-  pct,
-  fill,
-  height = 4,
-}: {
-  pct: number
-  fill: string
-  height?: number
-}) {
-  return (
-    <div
-      style={{
-        height,
-        background: "rgba(255,255,255,0.08)",
-        borderRadius: height / 2,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          width: `${Math.max(0, Math.min(100, pct))}%`,
-          height: "100%",
-          background: fill,
-          borderRadius: height / 2,
-        }}
-      />
-    </div>
-  )
-}
-
-// The scale itself is defined once in index.css as --aqi-* custom properties,
-// so the meter and the band icons cannot drift apart.
-const INDIA_NAQI_GRADIENT = "var(--aqi-gradient)"
-
-/**
- * Renders an icon named by the API payload. Unlike a literal <Icon name="..." />
- * the value is not known at build time: a cached response or an older backend
- * may still carry an emoji, which resolveIconName maps to its replacement.
- * Anything it cannot place renders nothing rather than a broken glyph.
- */
-function IconByName({ name, label }: { name: string; label?: string }) {
-  const resolved = resolveIconName(name)
-  if (!resolved) return null
-  return <Icon name={resolved} label={label} />
-}
-
-/**
- * A line of advice with the icon that leads it. The icon used to be an emoji
- * glued to the front of the sentence, which meant every hi/bn translation had
- * to carry its own copy and the i18n layer had to strip it back off before it
- * could match a key. `tone` is optional, so a payload from before the change
- * still renders — just without the mark.
- */
-const ADVICE_EMOJIS: Array<[string, IconName]> = [
-  ["☂️", "umbrella"],
-  ["☂", "umbrella"],
-  ["😎", "sunglasses"],
-  ["🕶️", "sunglasses"],
-  ["🕶", "sunglasses"],
-  ["🧴", "sunscreen"],
-  ["🌿", "pollen"],
-  ["🌱", "sprout"],
-  ["🌾", "wheat"],
-  ["💧", "hydration"],
-  ["😷", "mask"],
-  ["🤧", "pollen"],
-  ["💡", "tip"],
-  ["⚠️", "warning"],
-  ["⚠", "warning"],
-  ["🚨", "alert"],
-  ["✅", "success"],
-  ["🚫", "blocked"],
-  ["⚡️", "bolt"],
-  ["⚡", "bolt"],
-  ["🐟", "fish"],
-]
-
-function parseAdviceSegment(
-  segment: string,
-  fallbackTone?: string,
-): { icon: IconName | null; text: string } {
-  let cleaned = segment.trim()
-  let matchedIcon: IconName | null = null
-
-  for (const [emoji, iconName] of ADVICE_EMOJIS) {
-    if (cleaned.includes(emoji)) {
-      matchedIcon = matchedIcon ?? iconName
-      cleaned = cleaned.split(emoji).join("").trim()
-    }
-  }
-
-  if (!matchedIcon) {
-    if (/umbrella|छाता|ছাতা/i.test(cleaned)) matchedIcon = "umbrella"
-    else if (/sunglasses|चश्मा|রোদচশমা/i.test(cleaned)) matchedIcon = "sunglasses"
-    else if (/spf|sunscreen|सनस्क्रीन/i.test(cleaned)) matchedIcon = "sunscreen"
-    else if (/drink|water|hydrat|पानी|जल|ors/i.test(cleaned)) matchedIcon = "hydration"
-    else if (/pollen|allergy|antihistamine|पराग/i.test(cleaned)) matchedIcon = "pollen"
-    else if (/exertion|strenuous|heat|मेहनत|गर्मी|পরিশ্রম|গরম/i.test(cleaned)) matchedIcon = "hot"
-    else if (/mask|मास्क/i.test(cleaned)) matchedIcon = "mask"
-    else if (/window|खिड़की|জানালা/i.test(cleaned)) matchedIcon = "home"
-    else if (fallbackTone) matchedIcon = resolveIconName(fallbackTone)
-  }
-
-  return { icon: matchedIcon, text: cleaned }
-}
-
-function AdviceLine({ text, tone }: { text: string; tone?: string }) {
-  if (!text) return null
-  const segments = text.split(/\s*·\s*/).filter(Boolean)
-
-  if (segments.length <= 1) {
-    const item = parseAdviceSegment(text, tone)
-    return (
-      <span className="advice-line-single">
-        {item.icon && <Icon name={item.icon} className="advice-tone" />}
-        <span>{item.text}</span>
-      </span>
-    )
-  }
-
-  const items = segments.map((seg, i) =>
-    parseAdviceSegment(seg, i === 0 ? tone : undefined),
-  )
-
-  return (
-    <span className="advice-items-wrap">
-      {items.map((item, idx) => (
-        <span key={idx} className="advice-chip">
-          {item.icon && <Icon name={item.icon} className="advice-tone" />}
-          <span>{item.text}</span>
-        </span>
-      ))}
-    </span>
-  )
-}
 
 function WeatherIcon({
   conditionCode,
@@ -485,42 +268,6 @@ function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
   )
 }
 
-function AudienceFocus({ items }: { items: DashboardWeatherData["overview"] }) {
-  const { t, td } = useTranslation()
-  return (
-    <div className="audience-focus">
-      <div className="audience-focus-heading">{t("audience.heading")}</div>
-      <div className="audience-focus-grid">
-        {items.map((item) => {
-          let val = item.value
-          if (item.label === "Move") {
-            if (
-              val === "Best window most of the day" ||
-              val.toLowerCase().includes("most of the day")
-            ) {
-              val = "Good all day"
-            } else if (val.startsWith("Best window ")) {
-              val = val.replace(/^Best window\s+/i, "Best: ")
-            }
-          }
-
-          return (
-            <div key={item.label} className={`audience-focus-card ${item.tone}`}>
-              <span className="audience-focus-icon">
-                <IconByName name={item.icon} />
-              </span>
-              <div>
-                <strong>{td(item.label)}</strong>
-                <small>{td(val)}</small>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 function AppHeader({
   onOpenMenu,
   menuOpen,
@@ -582,6 +329,39 @@ function AppHeader({
 
 // ── Home Tab ───────────────────────────────────────────────────────────────────
 
+/**
+ * The one-line "this page is arranged for X" strap under the greeting.
+ *
+ * Reordering someone's homepage silently is disorienting, so the persona the
+ * layout came from is named, in its own accent colour, right where the change
+ * is visible.
+ */
+function PresetStrap({
+  profile,
+  preset,
+}: {
+  profile: Profile
+  preset: HomePreset
+}) {
+  const { t, td } = useTranslation()
+  const persona = getPersonaById(profile.persona)
+  if (!persona) return null
+  return (
+    <div
+      className="preset-strap"
+      style={{ "--persona-accent": persona.accentColor } as React.CSSProperties}
+    >
+      <span className="preset-strap-icon">
+        <Icon name={persona.icon} />
+      </span>
+      <span className="preset-strap-text">
+        <strong>{t("preset.tuned", { persona: td(persona.shortTitle) })}</strong>
+        <small>{t(preset.focusKey)}</small>
+      </span>
+    </div>
+  )
+}
+
 export function HomeTab({
   profile,
   location,
@@ -603,10 +383,17 @@ export function HomeTab({
   weather: DashboardWeatherData
   advisoryRefreshKey?: number
 }) {
-  const { t, td, n, nu } = useTranslation()
+  const { t, td, n } = useTranslation()
   const [settings] = useSettings()
   const { current } = weather
   const [now, setNow] = useState(() => new Date())
+  // The layout for this profile's persona, and the saved copy kept in step
+  // with it. Resolving here rather than in MausamApp means a persona change
+  // reaches the homepage on the next render, with no extra plumbing.
+  const preset = useMemo(
+    () => resolveHomePreset(profile.persona),
+    [profile.persona],
+  )
   const locationLabel = formatUserLocation(location)
   const locationTimeZone =
     weather.location?.timezone || location.timezone || "Asia/Kolkata"
@@ -781,6 +568,11 @@ export function HomeTab({
         </div>
         <div className="insight-arrow" aria-hidden="true">›</div>
       </button>
+
+      {/* What this layout is tuned for, so the persona choice made during
+          onboarding stays visible rather than quietly rearranging the page. */}
+      <PresetStrap profile={profile} preset={preset} />
+
       {/* Hero Card */}
       <div
         className={`weather-hero-card is-${weatherHeroVariant}`}
@@ -1537,69 +1329,64 @@ export function HomeTab({
             </div>
           </div>
 
-          <div
-            className="weather-stats-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              marginTop: 20,
-              paddingTop: 18,
-              borderTop: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            {[
-              {
-                v: n(current.windSpeed),
-                u: t("unit.kmh"),
-                l: t("stat.wind", { direction: td(current.windDirection) }),
-              },
-              {
-                v: n(current.humidity),
-                u: t("unit.percent"),
-                l: t("stat.humidity"),
-              },
-              {
-                v: n(current.visibility),
-                u: t("unit.km"),
-                l: t("stat.visibility"),
-              },
-            ].map((s, i) => (
-              <div
-                className="weather-stat"
-                key={i}
-                style={{ textAlign: "center" }}
-              >
-                <div className="weather-stat-label">{s.l}</div>
-                <div
-                  className="weather-stat-value"
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: "white",
-                    marginTop: 4,
-                  }}
-                >
-                  {s.v}
-                  <span
-                    style={{
-                      fontSize: 9,
-                      fontWeight: 400,
-                      color: "rgba(255,255,255,0.35)",
-                      marginInlineStart: isTightUnit(s.u) ? 0 : 2,
-                    }}
-                  >
-                    {s.u}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Which three readings sit here is the persona preset's call. */}
+          <HeroStatStrip weather={weather} stats={preset.heroStats} />
         </div>
       </div>
 
-      <AudienceFocus items={weather.overview} />
-      <OfficialAdvisories location={location} refreshKey={advisoryRefreshKey} />
+      {preset.sections.map((section) => (
+        <HomeSection key={section} id={section} preset={preset} weather={weather} />
+      ))}
+    </div>
+  )
+}
 
+/**
+ * One block of the homepage, drawn where the active preset put it.
+ *
+ * Every branch renders from the weather payload the page already holds; a
+ * section with nothing to show returns null rather than an empty shell.
+ *
+ * No branch here draws a warning. Severe-weather alerts and the government
+ * bulletins both live on the Alerts tab, so a warning has exactly one home and
+ * the dashboard never becomes a second, quieter place to half-see one.
+ */
+function HomeSection({
+  id,
+  preset,
+  weather,
+}: {
+  id: SectionId
+  preset: HomePreset
+  weather: DashboardWeatherData
+}) {
+  const { t } = useTranslation()
+  switch (id) {
+    case "glance":
+      return <GlanceRail weather={weather} glance={preset.glance} />
+    case "packing":
+      return <PackingSection weather={weather} />
+    case "nearby":
+      return <NearbySection weather={weather} />
+    case "metrics":
+      return (
+        <div style={{ marginBottom: 22 }}>
+          <SectionLabel>{t("section.todaysMetrics")}</SectionLabel>
+          <MetricGrid weather={weather} metrics={preset.metrics} />
+        </div>
+      )
+    case "hourly":
+      return <HourlySection weather={weather} />
+    case "sevenDay":
+      return <SevenDaySection weather={weather} />
+  }
+}
+
+function HourlySection({ weather }: { weather: DashboardWeatherData }) {
+  const { t, td, nu } = useTranslation()
+  const [settings] = useSettings()
+  if (!weather.hourly.length) return null
+  return (<>
       {/* Hourly Forecast */}
       <div style={{ marginBottom: 22 }}>
         <SectionLabel>{t("section.hourlyRain")}</SectionLabel>
@@ -1675,238 +1462,14 @@ export function HomeTab({
           ))}
         </div>
       </div>
+    </>
+  )
+}
 
-      {/* Metric Grid */}
-      <div style={{ marginBottom: 22 }}>
-        <SectionLabel>{t("section.todaysMetrics")}</SectionLabel>
-        <div
-          className="metric-grid"
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
-        >
-          {/* AQI */}
-          <Card
-            className="metric-primary-card aqi-tile"
-            grad="linear-gradient(140deg,#431407 0%,#1c0803 100%)"
-            border="rgba(245,158,11,0.12)"
-          >
-            {weather.airQuality ? (
-              <>
-                <Badge color="#fbbf24" bg="rgba(245,158,11,0.14)">
-                  {t("badge.indiaAqi", { index: weather.airQuality.index })}
-                </Badge>
-                <CardLabel>{t("card.airQuality")}</CardLabel>
-                <div className="aqi-status">{td(weather.airQuality.label)}</div>
-                <div className="aqi-meter">
-                  <Bar
-                    pct={
-                      (weather.airQuality.index / weather.airQuality.scaleMax) *
-                      100
-                    }
-                    fill={INDIA_NAQI_GRADIENT}
-                    height={5}
-                  />
-                </div>
-                <div className="aqi-pollutants">
-                  {weather.airQuality.pollutants
-                    .slice(0, 2)
-                    .map((pollutant) => (
-                      <div className="aqi-pollutant" key={pollutant.label}>
-                        <div className="aqi-pollutant-label">
-                          {pollutant.label}
-                        </div>
-                        <div
-                          className="aqi-pollutant-value"
-                          style={{ color: pollutant.color }}
-                        >
-                          {n(pollutant.value)}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </>
-            ) : (
-              <>
-                <CardLabel>{t("card.airQuality")}</CardLabel>
-                <div className="aqi-unavailable">
-                  <div className="aqi-unavailable-title">
-                    {t("aqi.unavailable")}
-                  </div>
-                  <div className="aqi-unavailable-note">
-                    {t("aqi.noStation")}
-                  </div>
-                </div>
-              </>
-            )}
-          </Card>
-
-          {/* UV */}
-          <Card
-            className="metric-primary-card uv-tile"
-            grad="linear-gradient(140deg,#7c2d12 0%,#2c0e07 100%)"
-            border="rgba(251,146,60,0.1)"
-          >
-            <Badge color="#fb923c" bg="rgba(251,146,60,0.14)">
-              {td(weather.uv.label).toUpperCase()}
-            </Badge>
-            <CardLabel>{t("card.uvIndex")}</CardLabel>
-            <div className="metric-card-number metric-index">
-              {n(weather.uv.index)}
-            </div>
-            <div className="metric-card-emphasis">
-              {td(weather.uv.recommendation)}
-            </div>
-            <div className="metric-card-note">
-              {t("uv.peak", { value: td(weather.uv.peakHours) })}
-            </div>
-          </Card>
-
-          {/* Best Run */}
-          <Card
-            className="metric-primary-card run-tile"
-            grad="linear-gradient(140deg,#064e3b 0%,#022c22 100%)"
-            border="rgba(52,211,153,0.1)"
-          >
-            <Badge color="#34d399" bg="rgba(52,211,153,0.14)">
-              {td(weather.running.badge)}
-            </Badge>
-            <CardLabel>
-              {weather.running.dayLabel
-                ? t("card.bestRunOn", { day: td(weather.running.dayLabel) })
-                : t("card.bestRun")}
-            </CardLabel>
-            <div className="metric-card-number metric-run-time">
-              {weather.running.start
-                ? `${formatClockTimeStr(weather.running.start, settings.timeFormat)}–${formatClockTimeStr(weather.running.end, settings.timeFormat)}`
-                : t("common.unavailable")}
-            </div>
-            <div className="metric-card-emphasis">
-              {td(weather.running.summary)}
-            </div>
-            <div className="metric-card-note metric-card-accent">
-              {t("run.sunrise", {
-                value: formatClockTimeStr(
-                  weather.running.sunrise ??
-                  (weather.running.dayLabel === "Tomorrow"
-                    ? t("common.unavailable")
-                    : weather.astronomy.sunrise),
-                  settings.timeFormat,
-                ),
-              })}
-            </div>
-          </Card>
-
-          {/* Rain Today */}
-          {(() => {
-            const rainToday = convertRain(weather.rainfall.today, settings.rainUnit)
-            const rainMonth =
-              weather.rainfall.month !== undefined
-                ? convertRain(weather.rainfall.month, settings.rainUnit)
-                : null
-            return (
-              <Card
-                className="metric-primary-card rainfall-tile"
-                grad="linear-gradient(140deg,#1e3a5f 0%,#0a1830 100%)"
-                border="rgba(96,165,250,0.1)"
-              >
-                <Badge color="#60a5fa" bg="rgba(96,165,250,0.14)">
-                  {nu(weather.rainfall.chance, "unit.percent")}
-                </Badge>
-                <CardLabel>{t("card.rainfallToday")}</CardLabel>
-                <div className="metric-card-number metric-rainfall">
-                  {n(rainToday.value)}
-                  <span> {td(rainToday.unit)}</span>
-                </div>
-                <div className="metric-card-emphasis">
-                  {td(weather.rainfall.periodLabel)}
-                </div>
-                <div className="metric-card-note">
-                  {t("rainfall.month", {
-                    value:
-                      rainMonth !== null
-                        ? `${n(rainMonth.value)} ${td(rainMonth.unit)}`
-                        : t("common.unavailable"),
-                  })}
-                </div>
-              </Card>
-            )
-          })()}
-
-          {/* Commute — full width */}
-          <Card
-            className="commute-card commute-tile"
-            grad="linear-gradient(140deg,#2e1065 0%,#100522 100%)"
-            border="rgba(167,139,250,0.1)"
-            span2
-          >
-            <Badge color="#f87171" bg="rgba(239,68,68,0.14)">
-              {td(weather.commute.status)}
-            </Badge>
-            <CardLabel>
-              <span data-i18n-ignore>
-                {t("card.commuteStatus", { location: weather.commute.location })}
-              </span>
-            </CardLabel>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 8,
-                marginTop: 4,
-              }}
-            >
-              {weather.commute.items.map((c) => (
-                <div
-                  key={c.name}
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    borderRadius: 12,
-                    padding: "10px 8px",
-                    textAlign: "center",
-                  }}
-                >
-                  <div style={{ fontSize: 18 }}>
-                    <IconByName name={c.icon} />
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 8,
-                      color: "#a78bfa",
-                      fontWeight: 800,
-                      marginTop: 5,
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    {td(c.name)}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 800,
-                      color: "white",
-                      marginTop: 2,
-                    }}
-                  >
-                    {td(c.value)}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 8,
-                      color: "rgba(255,255,255,0.28)",
-                      marginTop: 1,
-                    }}
-                  >
-                    {td(c.detail)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-
-        </div>
-      </div>
-
-      {/* 7-Day Forecast */}
+function SevenDaySection({ weather }: { weather: DashboardWeatherData }) {
+  const { t, td, nu } = useTranslation()
+  if (!weather.daily.length) return null
+  return (
       <div style={{ marginBottom: 14 }}>
         <SectionLabel>{t("section.sevenDay")}</SectionLabel>
         <div
@@ -2019,7 +1582,6 @@ export function HomeTab({
           ))}
         </div>
       </div>
-    </div>
   )
 }
 
@@ -3598,17 +3160,24 @@ function ForecastTab({
 function AlertsTab({
   weather,
   userLocation,
+  profile,
   theme = "light",
   onOpenMenu,
   menuOpen,
+  advisoryRefreshKey,
 }: {
   weather: DashboardWeatherData
   userLocation?: UserLocation | null
+  profile?: Profile | null
   theme?: "dark" | "light"
   onOpenMenu: () => void
   menuOpen: boolean
+  advisoryRefreshKey?: number
 }) {
   const { t, td, nu } = useTranslation()
+  // Only the preset's sector bulletins; the general ones are shown to everyone.
+  // Read, not resolved: HomeTab owns saving the layout.
+  const preset = getHomePreset(profile?.persona)
   return (
     <div className="app-page alerts-screen">
       <AppHeader
@@ -3721,6 +3290,18 @@ function AlertsTab({
           ))}
         </div>
       </div>
+
+      {/* Official bulletins, directly under the severe-weather alerts they
+          belong beside. This is the only place in the app that shows one. */}
+      {userLocation && (
+        <div style={{ marginBottom: 20 }}>
+          <OfficialAdvisories
+            location={userLocation}
+            refreshKey={advisoryRefreshKey}
+            specialties={preset.advisorySpecialties}
+          />
+        </div>
+      )}
 
       {/* Saved Locations */}
       <div style={{ marginBottom: 20 }}>
@@ -3868,15 +3449,10 @@ function AlertsTab({
 type SetupStep = "welcome" | "name" | "body" | "sensitivities" | "routine"
 export type ProfileGender = "Female" | "Male" | "Non-binary" | "Prefer not to say"
 
-export type UserPersonaId =
-  | "health"
-  | "fitness"
-  | "beach"
-  | "travel"
-  | "family"
-  | "garden"
-  | "commute"
-  | "event"
+// The union itself lives beside the homepage presets, which are keyed by it:
+// that module must know every persona, and a second copy here could drift out
+// of step with the registry. Re-exported so existing importers are unaffected.
+export type { UserPersonaId }
 
 export interface UserPersona {
   id: UserPersonaId
@@ -5939,7 +5515,11 @@ function Setup({
 
             <button
               className="setup-primary"
-              onClick={() =>
+              onClick={() => {
+                // Write the homepage layout at the moment the persona is
+                // chosen, so the first frame of the dashboard is already the
+                // right one rather than the default rearranging itself.
+                saveHomePreset(activePersona.id)
                 onComplete({
                   dob,
                   gender: sex,
@@ -5957,7 +5537,7 @@ function Setup({
                   activity: activePersona.defaultActivity,
                   persona: activePersona.id,
                 })
-              }
+              }}
               type="button"
             >
               {t("setup.continue")} <Icon name="arrow-right" />
@@ -6692,6 +6272,7 @@ function MausamApp() {
   const logout = () => {
     changeLocation()
     localStorage.removeItem(PROFILE_STORAGE_KEY)
+    clearHomePreset()
     localStorage.removeItem("mausam-theme")
     setTheme("light")
     setLanguage(DEFAULT_LANGUAGE)
@@ -7016,9 +6597,11 @@ function MausamApp() {
                   <AlertsTab
                     weather={weather}
                     userLocation={userLocation}
+                    profile={profile}
                     theme={theme}
                     onOpenMenu={() => setMenuOpen(true)}
                     menuOpen={menuOpen}
+                    advisoryRefreshKey={advisoryRefreshKey}
                   />
                 )}
               </>

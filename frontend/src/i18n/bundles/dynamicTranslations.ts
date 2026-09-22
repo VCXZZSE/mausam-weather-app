@@ -332,6 +332,49 @@ const ENTRIES: readonly Entry[] = [
     "সাঁতারের জন্য অনুকূল অবস্থা",
   ],
 
+  // ── Field & soil card (rules/garden.ts) ────────────────────────────
+  // These values have been in the payload since the rules engine landed but
+  // had no screen to appear on until the agriculture persona homepage.
+  ["Saturated", "संतृप्त", "সম্পৃক্ত"],
+  ["Moist", "नम", "আর্দ্র"],
+  ["Dry", "सूखी", "শুকনো"],
+  ["GOOD", "अनुकूल", "অনুকূল"],
+  ["RAINY", "वर्षा", "বৃষ্টি"],
+  ["HOT", "गर्म", "গরম"],
+  ["WINDY", "हवादार", "বাতাসপূর্ণ"],
+  ["AMAN", "आमन", "আমন"],
+  [
+    "Aman rice transplanting season",
+    "आमन धान की रोपाई का मौसम",
+    "আমন ধান রোপণের মরসুম",
+  ],
+  [
+    "Aman rice harvesting season",
+    "आमन धान की कटाई का मौसम",
+    "আমন ধান কাটার মরসুম",
+  ],
+  [
+    "Boro rice & winter vegetable season",
+    "बोरो धान और सर्दियों की सब्ज़ियों का मौसम",
+    "বোরো ধান ও শীতের সবজির মরসুম",
+  ],
+  [
+    "Pre-monsoon planting preparation",
+    "मानसून से पहले बुवाई की तैयारी",
+    "বর্ষার আগে রোপণের প্রস্তুতি",
+  ],
+
+  // ── Sea & surf card (rules/swimming.ts) ────────────────────────────
+  ["FAVORABLE", "अनुकूल", "অনুকূল"],
+  ["CAUTION", "सावधानी", "সতর্কতা"],
+  ["ROUGH", "अशांत", "উত্তাল"],
+  ["UNSAFE", "असुरक्षित", "অনিরাপদ"],
+
+  // ── Pollen card levels (data/pollenSeasonalTable.ts) ───────────────
+  ["Tree", "वृक्ष", "গাছ"],
+  ["Grass", "घास", "ঘাস"],
+  ["Weed", "खरपतवार", "আগাছা"],
+
   // ── Seasonal notes (data/gardenSeasonalTable.ts) ───────────────────
   // Hilsa is the monsoon FISHING season, not a crop — the source table
   // says so explicitly; it is a regional seasonal note sitting in the
@@ -657,6 +700,13 @@ const ENTRIES: readonly Entry[] = [
     "समुद्री स्थिति, लहरें और ज्वार समय",
     "সমুদ্রের অবস্থা, ঢেউ ও জোয়ারের সময়",
   ],
+  // Persona short titles (App.tsx USER_PERSONAS.shortTitle). The long titles
+  // above are what the crown wheel and the sidebar show; these four are the
+  // compact forms, which only the homepage persona strap renders.
+  ["Beach & Surf", "समुद्र तट और लहरें", "সমুদ্রতট ও ঢেউ"],
+  ["Parents & Families", "माता-पिता और परिवार", "অভিভাবক ও পরিবার"],
+  ["Agri & Gardeners", "कृषि और बाग़वानी", "কৃষি ও বাগানচর্চা"],
+  ["Event Planners", "आयोजनकर्ता", "অনুষ্ঠান পরিকল্পক"],
   ["Sea Conditions", "समुद्री स्थिति", "সমুদ্রের অবস্থা"],
   ["Tide Timings", "ज्वार-भाटा समय", "জোয়ার-ভাটার সময়"],
   ["Wave Height", "लहर की ऊँचाई", "ঢেউয়ের উচ্চতা"],

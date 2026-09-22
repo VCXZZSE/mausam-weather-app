@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/re
 import App from "../src/App"
 import { setLanguage } from "../src/i18n/languageStore"
 import { findUntranslatedText } from "../src/i18n/debug"
+import { HOME_PRESETS } from "../src/services/homePresets"
 
 // Renders the real app and asserts that no English prose survives into Hindi or
 // Bengali. The scanner is the same one the in-app debug overlay uses, so this
@@ -46,7 +47,15 @@ afterEach(() => {
   localStorage.clear()
 })
 
-async function renderDashboard(code: (typeof LANGUAGES)[number]) {
+async function renderDashboard(
+  code: (typeof LANGUAGES)[number],
+  persona = PROFILE.persona,
+) {
+  if (persona !== PROFILE.persona)
+    localStorage.setItem(
+      "mausam-profile",
+      JSON.stringify({ ...PROFILE, persona }),
+    )
   setLanguage(code)
   const view = render(<App />)
   await waitFor(() =>
@@ -64,6 +73,17 @@ describe("translation audit", () => {
   it.each(LANGUAGES)("leaves no English prose on the homepage in %s", async (code) => {
     await renderDashboard(code)
     expect(scan()).toEqual([])
+  })
+
+  // Each persona lays the homepage out differently, and several of its tiles
+  // (soil, sea, pollen, sun & moon, wind, visibility, heat, event) appear on no
+  // other screen - so scanning one persona cannot stand in for the rest.
+  const PERSONAS = Object.keys(HOME_PRESETS) as Array<keyof typeof HOME_PRESETS>
+  const MATRIX = LANGUAGES.flatMap(code => PERSONAS.map(persona => [code, persona] as const))
+
+  it.each(MATRIX)("leaves no English prose on the %s homepage for the %s persona", async (code, persona) => {
+    await renderDashboard(code, persona)
+    expect({ persona, misses: scan() }).toEqual({ persona, misses: [] })
   })
 
   it.each(LANGUAGES)("leaves no English prose on the other tabs in %s", async (code) => {

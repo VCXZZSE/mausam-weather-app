@@ -16,7 +16,7 @@ describe("Official advisories tile", () => {
   it("shows verified empty states in all three categories and queries the pincode and coordinates", async () => {
     const fetcher = vi.fn().mockResolvedValue(reply(payload()))
     vi.stubGlobal("fetch", fetcher)
-    render(<OfficialAdvisories location={location} />)
+    render(<OfficialAdvisories location={location} specialties={["farming", "fishing"]} />)
     expect(await screen.findByText("No active general alerts")).toBeInTheDocument()
     expect(screen.getByText("No farming advisory today")).toBeInTheDocument()
     expect(screen.getByText("No fishing advisory today")).toBeInTheDocument()
@@ -26,9 +26,37 @@ describe("Official advisories tile", () => {
     expect(url.searchParams.get("latitude")).toBe("22.57")
   })
 
+  it("shows a reader only their own sector bulletin, and the general one always", async () => {
+    // A crop advisory is noise to a commuter and a marine one is noise to
+    // anyone not on the water, so a persona sees only its own sector — or
+    // neither. This cannot hide a life-safety warning: the backend files a
+    // bulletin under farming/fishing only when its own title says so, which
+    // makes a cyclone or rainfall warning always "general".
+    const data = reply(payload("available", [makeAlert("general")], [makeAlert("farm")]))
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(data))
+
+    const farmer = render(<OfficialAdvisories location={location} specialties={["farming"]} />)
+    expect(await screen.findByText("Government warning general")).toBeInTheDocument()
+    expect(screen.getByText("Farming")).toBeInTheDocument()
+    expect(screen.queryByText("Fishing")).not.toBeInTheDocument()
+    farmer.unmount()
+
+    const fisher = render(<OfficialAdvisories location={location} specialties={["fishing"]} />)
+    expect(await screen.findByText("Government warning general")).toBeInTheDocument()
+    expect(screen.getByText("Fishing")).toBeInTheDocument()
+    expect(screen.queryByText("Farming")).not.toBeInTheDocument()
+    fisher.unmount()
+
+    // Everyone else: no sector rows at all, but the general block stays.
+    const other = render(<OfficialAdvisories location={location} specialties={[]} />)
+    expect(await screen.findByText("Government warning general")).toBeInTheDocument()
+    expect(other.container.querySelector(".official-specialties")).toBeNull()
+    expect(other.container.querySelector(".official-general")).not.toBeNull()
+  })
+
   it("never reports no advisories when official sources are unavailable", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(reply(payload("unavailable"))))
-    render(<OfficialAdvisories location={location} />)
+    render(<OfficialAdvisories location={location} specialties={["farming", "fishing"]} />)
     expect(await screen.findByText("Official updates unavailable")).toBeInTheDocument()
     expect(screen.getAllByText("Updates unavailable")).toHaveLength(2)
     expect(screen.queryByText(/No .*advisory today/)).not.toBeInTheDocument()
@@ -36,15 +64,16 @@ describe("Official advisories tile", () => {
 
   it("shows the highest severity first and expands the real government bulletins", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(reply(payload("available", [makeAlert("minor", "minor"), makeAlert("severe", "severe")], [makeAlert("farm")]))))
-    render(<OfficialAdvisories location={location} />)
+    render(<OfficialAdvisories location={location} specialties={["farming", "fishing"]} />)
     await screen.findByText("Government warning severe")
     expect(screen.getByText("Government warning severe").closest("details")).toBeNull()
     const more = screen.getByText("1 more alert for your area")
     expect(more.closest("details")).not.toHaveAttribute("open")
     fireEvent.click(more)
     expect(more.closest("details")).toHaveAttribute("open")
+    // A sector bulletin only renders for the persona whose sector it is, so
+    // when one is there it is already open rather than hidden behind a tap.
     const farming = screen.getByText("Farming").closest("summary")!
-    fireEvent.click(farming)
     expect(farming.closest("details")).toHaveAttribute("open")
     expect(screen.getByText("Government warning farm")).toBeVisible()
     expect(screen.getAllByRole("link", { name: /View official bulletin/ })[0]).toHaveAttribute("href", "https://mausam.imd.gov.in/")

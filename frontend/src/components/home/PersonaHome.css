@@ -1,0 +1,515 @@
+/* Persona homepage surfaces.
+ *
+ * Everything here sits inside .mausam-app, whose stylesheet already gives the
+ * cards their frosted base: a translucent white fill, a hairline border, an
+ * inset top highlight and a backdrop blur. These rules add only what is new -
+ * the persona strap, the glance rail's per-topic accents and the tiles that had
+ * no home before (soil, sea, pollen, comfort, sun & moon, wind, visibility,
+ * heat, event) - and lean on those inherited values rather than restating them.
+ *
+ * Light mode is handled at the bottom in one block, the way index.css does it,
+ * so a colour is only ever defined twice: once dark, once light. */
+
+/* ── Persona strap ──────────────────────────────────────────────── */
+.preset-strap {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 16px;
+  padding: 11px 14px;
+  border: 1px solid color-mix(in srgb, var(--persona-accent, #7dd3fc) 34%, transparent);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--persona-accent, #7dd3fc) 18%, transparent),
+      rgba(255, 255, 255, 0.04) 62%
+    ),
+    rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.16),
+    0 10px 24px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(20px) saturate(125%);
+  -webkit-backdrop-filter: blur(20px) saturate(125%);
+}
+.preset-strap-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--persona-accent, #7dd3fc) 22%, transparent);
+  color: var(--persona-accent, #7dd3fc);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.24);
+}
+.preset-strap-icon svg { width: 16px; height: 16px; }
+.preset-strap-text { min-width: 0; }
+.preset-strap-text strong,
+.preset-strap-text small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preset-strap-text strong {
+  color: #f5f5f7;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.preset-strap-text small {
+  margin-top: 2px;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 10px;
+}
+
+/* ── Glance rail accents ────────────────────────────────────────── */
+/* One tint per topic, so a reading keeps the same colour wherever the persona
+ * puts it. The card itself is the shared .audience-focus-card. */
+.glance-air .audience-focus-icon      { background: rgba(255, 152, 170, 0.18); color: #ff8aa0; }
+.glance-pollen .audience-focus-icon   { background: rgba(216, 180, 254, 0.18); color: #d8b4fe; }
+.glance-sun .audience-focus-icon      { background: rgba(255, 195, 96, 0.18);  color: #ffb648; }
+.glance-water .audience-focus-icon    { background: rgba(124, 200, 255, 0.18); color: #7cc8ff; }
+.glance-wind .audience-focus-icon     { background: rgba(94, 234, 212, 0.18);  color: #5eead4; }
+.glance-heat .audience-focus-icon     { background: rgba(251, 146, 60, 0.2);   color: #fb923c; }
+.glance-road .audience-focus-icon     { background: rgba(167, 139, 250, 0.2);  color: #a78bfa; }
+.glance-soil .audience-focus-icon     { background: rgba(134, 239, 172, 0.18); color: #86efac; }
+.glance-sea .audience-focus-icon      { background: rgba(56, 189, 248, 0.2);   color: #38bdf8; }
+.glance-move .audience-focus-icon     { background: rgba(200, 235, 108, 0.18); color: #b6db52; }
+.glance-comfort .audience-focus-icon  { background: rgba(203, 213, 225, 0.18); color: #cbd5e1; }
+.glance-warn .audience-focus-icon     { background: rgba(248, 113, 113, 0.2);  color: #f87171; }
+.glance-clear .audience-focus-icon    { background: rgba(52, 211, 153, 0.18);  color: #34d399; }
+
+/* ── Opting out of the square-tile reading axis ─────────────────── */
+/* index.css lays a square metric tile out by pinning its big reading, and the
+ * line under it, to a shared absolute axis, so the four original tiles line up
+ * across the grid. That model assumes a fixed set of parts and a 1/1 box.
+ *
+ * Two kinds of tile cannot use it. A full-width lead tile (.metric-tile-wide)
+ * would be as tall as it is wide, and the axis would centre its reading in all
+ * that dead space. A tile whose reading is not a single number — a pollen
+ * ladder, a sun & moon list, a comfort dial beside its index — has nothing to
+ * put on the axis, and pinning part of its contents tears the layout apart.
+ * Both flow normally instead.
+ *
+ * The #root prefix and the .metric-grid > child combinator are there to match
+ * the specificity of the rules being turned off; the extra class then wins. */
+#root .mausam-app .metric-grid > .futuristic-card.metric-primary-card.metric-tile-wide {
+  aspect-ratio: auto;
+  height: auto !important;
+  min-height: 0 !important;
+}
+/* A one-column flow tile keeps the square footprint, so it lines up with the
+ * axis tiles beside it in the same row — but with a content-based minimum
+ * rather than the fixed `min-height: 0` the axis tiles use, so a pollen ladder
+ * or a longer sun & moon list grows instead of being cut off. */
+#root
+  .mausam-app
+  .metric-grid
+  > .futuristic-card.metric-primary-card.tile-flow:not(.metric-tile-wide) {
+  aspect-ratio: 1 / 1;
+  height: auto !important;
+  min-height: auto !important;
+}
+#root .mausam-app .metric-grid > .futuristic-card.metric-primary-card.metric-tile-wide {
+  text-align: start;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide > .card-label {
+  margin-top: 2px;
+  text-align: start;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.tile-flow > .card-label {
+  margin-top: 2px;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .aqi-status,
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-index,
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-run-time,
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-rainfall,
+#root .mausam-app .metric-grid > .metric-primary-card.tile-flow .aqi-status,
+#root .mausam-app .metric-grid > .metric-primary-card.tile-flow .metric-index,
+#root .mausam-app .metric-grid > .metric-primary-card.tile-flow .metric-run-time,
+#root .mausam-app .metric-grid > .metric-primary-card.tile-flow .metric-rainfall {
+  position: static !important;
+  top: auto !important;
+  right: auto;
+  left: auto;
+  transform: none;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-card-emphasis,
+#root .mausam-app .metric-grid > .metric-primary-card.tile-flow .metric-card-emphasis {
+  position: static;
+  top: auto;
+  right: auto;
+  left: auto;
+  margin-top: 7px;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-card-number,
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-card-emphasis,
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .metric-card-note,
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .aqi-status {
+  text-align: start;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .aqi-meter {
+  position: static;
+  top: auto;
+  right: auto;
+  left: auto;
+  width: 100%;
+  margin: 10px 0 0;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .aqi-pollutants {
+  margin-top: 12px;
+}
+
+/* On a tile that kept the axis, the reading is out of flow, so an advice line
+ * would otherwise start at the top and run straight through the number. Pinning
+ * it to the bottom is what .metric-card-note already does on those tiles. */
+#root .mausam-app .metric-grid > .metric-primary-card .tile-advice {
+  margin-top: auto;
+}
+#root .mausam-app .metric-grid > .metric-primary-card.metric-tile-wide .tile-advice,
+#root .mausam-app .metric-grid > .metric-primary-card.tile-flow .tile-advice {
+  margin-top: 11px;
+}
+
+/* ── Shared tile furniture ──────────────────────────────────────── */
+.metric-card-unit {
+  margin-inline-start: 3px;
+  font-size: 0.42em;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+}
+.tile-stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+.tile-stat {
+  min-width: 0;
+  padding: 9px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+.tile-stat-label {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tile-stat-value {
+  margin-top: 4px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tile-advice {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* ── Commute tile ───────────────────────────────────────────────── */
+.commute-items {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+.commute-item {
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+.commute-item-icon { font-size: 18px; }
+.commute-item-name {
+  overflow: hidden;
+  margin-top: 5px;
+  color: #a78bfa;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.commute-item-value {
+  margin-top: 2px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.commute-item-detail {
+  overflow: hidden;
+  margin-top: 1px;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Soil tile ──────────────────────────────────────────────────── */
+.metric-primary-card .metric-soil {
+  font-size: 30px;
+  letter-spacing: -0.03em;
+}
+
+/* ── Pollen tile ────────────────────────────────────────────────── */
+.pollen-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.pollen-bar-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.pollen-bar-type {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 9px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pollen-bar-track { display: block; min-width: 0; }
+.pollen-bar-level { font-size: 9px; font-weight: 800; white-space: nowrap; }
+
+/* ── Comfort tile ───────────────────────────────────────────────── */
+.comfort-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ── Sun & Moon tile ────────────────────────────────────────────── */
+.sunmoon-rows { display: flex; flex-direction: column; gap: 9px; margin-top: 2px; }
+.sunmoon-row { display: flex; align-items: center; gap: 9px; }
+.sunmoon-icon {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(250, 204, 21, 0.14);
+  color: #facc15;
+}
+.sunmoon-icon svg { width: 13px; height: 13px; }
+.sunmoon-label {
+  flex: 1;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sunmoon-value { color: #fff; font-size: 11px; font-weight: 800; white-space: nowrap; }
+
+/* ── Visibility tile ────────────────────────────────────────────── */
+.visibility-meter { margin: 10px 0 8px; }
+
+/* ── Event tile ─────────────────────────────────────────────────── */
+.event-tile-title { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.event-tile-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(167, 139, 250, 0.18);
+  color: #c4b5fd;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.2);
+}
+.event-tile-title strong,
+.event-tile-title small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-tile-title strong { color: #fff; font-size: 14px; font-weight: 750; }
+.event-tile-title small {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 10px;
+}
+
+/* ── Packing strip ──────────────────────────────────────────────── */
+.persona-packing { margin-bottom: 20px; }
+.persona-packing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.persona-packing-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 11px 10px;
+  border: 1px solid rgba(240, 249, 250, 0.16);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04) 55%),
+    rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.persona-packing-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.11);
+  color: #d8f7ff;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.24);
+}
+.persona-packing-icon svg { width: 15px; height: 15px; }
+.persona-packing-item div { min-width: 0; }
+.persona-packing-item strong,
+.persona-packing-item small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.persona-packing-item strong { color: #f5f5f7; font-size: 11px; font-weight: 650; }
+.persona-packing-item small {
+  margin-top: 2px;
+  color: rgba(245, 245, 247, 0.46);
+  font-size: 9px;
+}
+
+/* ── Nearby rail ────────────────────────────────────────────────── */
+.persona-nearby { margin-bottom: 20px; }
+.persona-nearby-rail {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.persona-nearby-card {
+  width: 92px;
+  flex-shrink: 0;
+  padding: 12px 9px;
+  border: 1px solid rgba(240, 249, 250, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04) 55%),
+    rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.14);
+  text-align: center;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.persona-nearby-icon {
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+.persona-nearby-card strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 6px;
+  color: #f5f5f7;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.persona-nearby-temp {
+  margin-top: 3px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.persona-nearby-card small {
+  display: block;
+  overflow: hidden;
+  color: rgba(245, 245, 247, 0.45);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.persona-nearby-distance { margin-top: 2px; color: rgba(245, 245, 247, 0.3); }
+
+/* ── Sector bulletins ───────────────────────────────────────────── */
+/* Only the persona's own sector reaches this row at all, so every one of them is
+ * tinted: it is there because it concerns this reader. */
+.official-specialty.is-primary {
+  border-color: rgba(125, 211, 252, 0.34);
+  background: rgba(125, 211, 252, 0.08);
+}
+
+/* ── Light mode ─────────────────────────────────────────────────── */
+.theme-light .preset-strap-text strong,
+.theme-light .tile-stat-value,
+.theme-light .commute-item-value,
+.theme-light .sunmoon-value,
+.theme-light .persona-packing-item strong,
+.theme-light .persona-nearby-card strong,
+.theme-light .persona-nearby-temp,
+.theme-light .event-tile-title strong {
+  color: #0f2b3c;
+}
+.theme-light .preset-strap-text small,
+.theme-light .tile-stat-label,
+.theme-light .tile-advice,
+.theme-light .commute-item-detail,
+.theme-light .sunmoon-label,
+.theme-light .pollen-bar-type,
+.theme-light .persona-packing-item small,
+.theme-light .persona-nearby-card small,
+.theme-light .event-tile-title small {
+  color: rgba(15, 43, 60, 0.62);
+}
+.theme-light .persona-nearby-distance {
+  color: rgba(15, 43, 60, 0.45);
+}
+.theme-light .metric-card-unit { color: rgba(15, 43, 60, 0.5); }
+.theme-light .tile-stat,
+.theme-light .commute-item {
+  border-color: rgba(15, 43, 60, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+}
+.theme-light .tile-advice { border-top-color: rgba(15, 43, 60, 0.12); }
+.theme-light .persona-packing-item,
+.theme-light .persona-nearby-card,
+.theme-light .preset-strap {
+  border-color: rgba(15, 43, 60, 0.12);
+}
+.theme-light .persona-packing-icon {
+  background: rgba(15, 43, 60, 0.08);
+  color: #0f6f8f;
+}
+
+/* Blur is expensive on low-end Android; index.css already drops it under the
+ * same query, and these surfaces follow so the whole page degrades together. */
+@media (prefers-reduced-transparency: reduce) {
+  .preset-strap,
+  .persona-packing-item,
+  .persona-nearby-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

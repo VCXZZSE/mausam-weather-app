@@ -98,6 +98,10 @@ describe("translation catalogues", () => {
     "gen.label.uv",
     "gen.label.aqi",
     "badge.indiaAqi",
+    // The SI symbol for pressure. Unlike "km" or "mm", which the catalogues
+    // render in Devanagari and Bengali, hPa is written in Latin in Hindi and
+    // Bengali meteorological copy too, so all three entries agree on purpose.
+    "unit.hpa",
   ])
 
   it.each(OTHER_LANGUAGES)("actually translates, rather than copying English, in %s", (language) => {
